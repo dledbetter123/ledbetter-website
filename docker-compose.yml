@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  frontend:
+    build: ./react
+    ports:
+      - "3000:3000" # map computer port 3000 to container port 3000 for frontend
+    depends_on:
+      - backend
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080" # map computer port 8080 to container port 8080 for backend
