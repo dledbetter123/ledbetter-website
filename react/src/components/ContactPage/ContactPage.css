@@ -1,0 +1,69 @@
+/* src/components/ContactPage/ContactPage.css */
+
+.contactPage {
+    display: flex;
+    flex-direction: column; /* Stack items vertically */
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full viewport height */
+    color: white; /* White text for readability */
+    background-color: black; /* Consistent black background */
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+  .contactContent {
+    max-width: 600px; /* Restrict the content's width for better readability */
+    text-align: center; /* Center the text for a cleaner look */
+  }
+  
+  /* Reuse the .accent-green class for consistency */
+  .accent-green {
+    color: #0F0; /* Bright green accent text, as used in IntroPage */
+  }
+  
+  /* Styling for the contact information, such as email, phone number, and social links */
+  .contactInfo {
+    margin: 20px 0; /* Add some space around each item */
+  }
+  
+  /* Styling for icons, assuming you're using an icon library like FontAwesome */
+  .icon {
+    margin-right: 8px; /* Space between the icon and the text */
+  }
+  
+  /* Additional styles for links to ensure they match your design */
+  .contactLink {
+    color: #0F0; /* Optional: match the accent color or choose another */
+    text-decoration: none; /* No underlines for a cleaner look */
+    transition: color 0.3s ease; /* Smooth transition for hover effects */
+  
+  }
+  
+  .contactLink:hover {
+    color: #FFF; /* Change color on hover for interactivity */
+  }
+
+.contactPage ul {
+    list-style-type: none; /* Removes default list styling */
+    padding: 0; /* Removes default padding */
+  }
+  
+  .contactPage li {
+    margin: 10px 0; /* Adds vertical space between list items */
+  }
+  
+  .contactPage .icon {
+    margin-right: 8px; /* Adds space between the icon and the text */
+  }
+  
+  .contactPage .contactLink, .contactPage .contactInfo {
+    color: #0F0; /* Example color */
+    text-decoration: none; /* Removes underline from links */
+    transition: color 0.3s ease; /* Smooth color transition for hover effects */
+  }
+  
+  .contactPage .contactLink:hover {
+    color: #FFF; /* Color change on hover */
+  }
+  
