@@ -2,9 +2,6 @@
 FROM node:18
 
 WORKDIR /usr/src/app
-RUN npm install -g npm@latest
-RUN npm install --save-dev @babel/plugin-proposal-private-property-in-object
-RUN npm install react-router-dom
 
 COPY package*.json ./
 
@@ -19,6 +16,7 @@ ENV NAME Portfolio
 
 # runs npm start on launchtime
 CMD ["npm", "start"]
+
 
 # run command
 # docker build -t ledbetter-website . && docker run -p 3000:3000 ledbetter-website

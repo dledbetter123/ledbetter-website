@@ -1,4 +1,4 @@
-/* src/IntroPage/IntroPage.css */
+/* src/components/IntroPage/IntroPage.css */
 
 .introPage {
     display: flex;
@@ -15,10 +15,13 @@
   z-index: 2; /* Ensure the text is above the image */
 }
 
-/* Add your accent colors as needed */
 .accent-green {
   color: #0F0; /* Bright green accent text */
 }
+.accent-red {
+  color: #F00; /* Bright red accent text */
+}
+
 
 .profilePic {
   position: absolute;
