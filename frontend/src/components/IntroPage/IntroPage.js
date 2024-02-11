@@ -11,7 +11,8 @@ const IntroPage = () => {
 
   useEffect(() => {
     // will need to use the actual IP address or domain of your backend service when in production
-    fetch('http://localhost:8080/api/status') 
+    const backendUri = process.env.REACT_APP_BACKEND_URI || 'http://localhost:8080'; // Fallback to a default
+    fetch(`${backendUri}/api/status`)
       .then(response => response.text())
       .then(text => {
         if (text === "Backend stable") {

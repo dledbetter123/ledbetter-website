@@ -3,10 +3,15 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 )
 
 func enableCors(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*") // Be careful with '*', in production it's better to specify the exact origin
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	// if allowedOrigins == "" {
+	// 	allowedOrigins = "http://something.com" // default
+	// }
+	(*w).Header().Set("Access-Control-Allow-Origin", allowedOrigins)
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {

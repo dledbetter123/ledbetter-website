@@ -1,2 +1,56 @@
+# Dependency directories
 node_modules
+bower_components
+
+# Logs and databases
 npm-debug.log
+yarn-error.log
+.yarn-integrity
+*.log
+*.sql
+*.sqlite
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional gitlab ci
+.gitlab-ci.yml
+
+# Optional gitignore and dockerignore
+.gitignore
+.dockerignore
+
+# Optional editor directories
+.idea
+.vscode
+*.swp
+*.swo
+*.sublime-workspace
+
+# Optional MacOS directory
+.DS_Store
+
+# Optional thumbnails
+._*
+
+# Build directories
+/dist
+/build
+/.next
+/.nuxt
+/.vuepress
+/.cache
+/.parcel-cache
+
+# Optional dotenv files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Optional coverage directory
+/coverage

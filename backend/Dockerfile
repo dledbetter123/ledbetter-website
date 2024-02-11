@@ -1,4 +1,5 @@
-# Use the official Golang image to create a build artifact.
+# ledbetter-website/backend/Dockerfile
+
 FROM golang:1.15 as builder
 
 WORKDIR /app

@@ -1,15 +1,21 @@
+# ledbetter-website/docker-compose.yml
+
 version: '3.8'
 services:
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        - REACT_APP_BACKEND_URI=http://192.168.1.202:8080 # URL for local production builds, changes in AWS
     ports:
-      - "3000:3000" # map computer port 3000 to container port 3000 for frontend
+      - "80:80" # map computer port 3000 to container port 80 for frontend on nginx server.
     depends_on:
       - backend
   backend:
     build: ./backend
     ports:
       - "8080:8080" # map computer port 8080 to container port 8080 for backend
-
+    environment:
+      - ALLOWED_ORIGINS=http://192.168.1.202 # URL for local production builds, changes in AWS
 # run with
 # docker-compose up --build
