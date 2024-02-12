@@ -19,7 +19,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	// Set the content type to plain text for simplicity
 	w.Header().Set("Content-Type", "text/plain")
 	// Respond with the status message
-	fmt.Fprintf(w, "Backend stable")
+	fmt.Fprintf(w, "backend stable")
 }
 
 func main() {

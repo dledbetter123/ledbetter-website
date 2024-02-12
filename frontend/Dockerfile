@@ -3,12 +3,6 @@
 # Build stage
 FROM node:18 as build-stage
 
-# Define build arguments
-ARG REACT_APP_BACKEND_URI
-
-# Set environment variable based on build argument
-ENV REACT_APP_BACKEND_URI=${REACT_APP_BACKEND_URI}
-
 WORKDIR /usr/src/app
 
 COPY package*.json ./
@@ -26,6 +20,15 @@ FROM nginx:stable-alpine as production-stage
 
 # Copy the build from the previous stage
 COPY --from=build-stage /usr/src/app/build /usr/share/nginx/html
+
+# Copy the entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+
+# Make sure the script is executable
+RUN chmod +x /entrypoint.sh
+
+# Set the script to run when the container starts
+ENTRYPOINT ["/entrypoint.sh"]
 
 # port 80 to be accessible from the host
 EXPOSE 80

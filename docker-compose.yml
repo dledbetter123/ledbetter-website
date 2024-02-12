@@ -5,8 +5,8 @@ services:
   frontend:
     build:
       context: ./frontend
-      args:
-        - REACT_APP_BACKEND_URI=http://192.168.1.202:8080 # URL for local production builds, changes in AWS
+    environment:
+      - BACKEND_URI=http://localhost:8080
     ports:
       - "80:80" # map computer port 3000 to container port 80 for frontend on nginx server.
     depends_on:
@@ -16,6 +16,6 @@ services:
     ports:
       - "8080:8080" # map computer port 8080 to container port 8080 for backend
     environment:
-      - ALLOWED_ORIGINS=http://192.168.1.202 # URL for local production builds, changes in AWS
+      - ALLOWED_ORIGINS=http://localhost # URL for local production builds, changes in AWS
 # run with
 # docker-compose up --build

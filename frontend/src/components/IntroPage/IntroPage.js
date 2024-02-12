@@ -11,11 +11,11 @@ const IntroPage = () => {
 
   useEffect(() => {
     // will need to use the actual IP address or domain of your backend service when in production
-    const backendUri = process.env.REACT_APP_BACKEND_URI || 'http://localhost:8080'; // Fallback to a default
+    const backendUri = process.env.BACKEND_URI || 'cheese'; // Fallback to a default
     fetch(`${backendUri}/api/status`)
       .then(response => response.text())
       .then(text => {
-        if (text === "Backend stable") {
+        if (text === "backend stable") {
           setBackendStatus('stable');
           setHoverTitle('Title is green! This means that the backend is successfully communicating, it would be red otherwise.');
         } else {
