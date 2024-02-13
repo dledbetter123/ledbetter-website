@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Example of dynamically setting an environment variable in a config file
-echo "window.BACKEND_URI = '${BACKEND_URI}';" > /usr/share/nginx/html/config.js
+# ledbetter-website/frontend/public/entrypoint.sh
 
-# Execute the CMD from the Dockerfile, e.g., starting Nginx
-exec "$@"
+sed -i "s|REACT_APP_BACKEND_URI_PLACEHOLDER|${REACT_APP_BACKEND_URI}|g" /usr/share/nginx/html/config.js
+# Start Nginx
+nginx -g 'daemon off;'

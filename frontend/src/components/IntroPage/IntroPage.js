@@ -1,17 +1,20 @@
-// src/componentns/IntroPage/IntroPage.js
+// ledbetter-website/frontend/src/components/IntroPage/IntroPage.js
 
 import React, { useEffect, useState } from 'react';
 import './IntroPage.css';
 
-import profilePic from './images/profile.jpeg'; // Update the path accordingly
+import profilePic from './images/profile.jpeg';
 
 const IntroPage = () => {
   const [backendStatus, setBackendStatus] = useState('loading');
   const [hoverTitle, setHoverTitle] = useState('');
 
   useEffect(() => {
-    // will need to use the actual IP address or domain of your backend service when in production
-    const backendUri = process.env.BACKEND_URI || 'cheese'; // Fallback to a default
+    // will need to use the actual IP address or domain of backend service when in production
+    const backendUri = window.env.REACT_APP_BACKEND_URI || 'rice';
+    console.log(backendUri)
+    console.log(window.env.HOSTNAME)
+    console.log(process.env.HOME)
     fetch(`${backendUri}/api/status`)
       .then(response => response.text())
       .then(text => {
