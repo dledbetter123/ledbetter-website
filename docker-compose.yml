@@ -6,9 +6,9 @@ services:
     build:
       context: ./frontend
     environment:
-      - BACKEND_URI=http://localhost:8080
+      - REACT_APP_BACKEND_URI=http://localhost:8080
     ports:
-      - "80:80" # map computer port 3000 to container port 80 for frontend on nginx server.
+      - "80:80" # map computer port 80 to container port 80 for frontend on nginx server.
     depends_on:
       - backend
   backend:
