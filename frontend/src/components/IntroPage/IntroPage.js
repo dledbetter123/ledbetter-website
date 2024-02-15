@@ -26,9 +26,36 @@ const IntroPage = () => {
 
         startParagraphTyping();
       }
-    }, 150); // Adjust typing speed here (milliseconds per character)
+    }, 110); // Adjust typing speed here (milliseconds per character)
 
     return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const profilePic = document.querySelector('.profilePic');
+      const scrollValue = window.scrollY;
+      const height = window.innerHeight;
+      // Adjust these values as needed
+      const fadeStart = 0; // Start fade at 100px scroll
+      const fadeUntil = height / 2; // Full fade by half the viewport height
+
+      let opacity = 1;
+
+      if (scrollValue <= fadeStart) {
+        opacity = 1;
+      } else if (scrollValue <= fadeUntil) {
+        opacity = 1 - (scrollValue - fadeStart)*0.5 / (fadeUntil - fadeStart);
+      } else {
+        opacity = 0;
+      }
+
+      profilePic.style.opacity = opacity;
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const startParagraphTyping = () => {
@@ -44,7 +71,7 @@ const IntroPage = () => {
         clearInterval(intervalId);
         setParagraphCursorVisible(false);
       }
-    }, 20); // Adjust typing speed here (milliseconds per character)
+    }, 15); // Adjust typing speed here (milliseconds per character)
   };
   
   useEffect(() => {
@@ -78,7 +105,7 @@ const IntroPage = () => {
           {welcomeText}
           {welcomeCursorVisible && <span>|</span>} {/* Cursor */}
         </h1>
-        <p style={{ fontSize: '32px' }} title={hoverTitle}>
+        <p style={{ fontSize: '23px' }} title={hoverTitle}>
           {paragraphText}
           {paragraphCursorVisible && <span>|</span>}
         </p>

@@ -18,6 +18,8 @@
 .menuIcon {
   position: fixed;
   z-index: 1999;
+  top: 10px; /* Adjust the distance from the top */
+  left: 30px; /* Adjust the distance from the right */
   display: inline-flex; /* or inline-block */
   flex-direction: column;
   justify-content: center;

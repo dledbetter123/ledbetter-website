@@ -24,12 +24,33 @@
 
 
 .profilePic {
-  position: absolute;
+  position: fixed;
   right: 0;
   top: 0;
-  /* width: 33.33%; Image takes up right third of the screen */
+  /* width: 36.33%; Image takes up right third of the screen */
   height: 100%;
   object-fit: cover; /* Cover the designated area without stretching */
   z-index: 1; /* Below the text content */
-  filter: brightness(50%);
+  filter: brightness(75%);
+}
+
+@media (max-width: 600px) {
+  .introPage {
+    justify-content: center; /* Align content to the top for mobile */
+    align-items: center;
+  }
+
+  .profilePic {
+    position: absolute; /* Make image cover the entire introPage area */
+    width: 100%; /* Full width */
+    height: 100vh; /* Full viewport height */
+    top: 0;
+    left: 0;
+    z-index: 1; /* Ensure image is behind the content */
+  }
+
+  .content {
+    max-width: 600px; /* Maximum width of the content */
+    z-index: 2; /* Ensure the text is above the image */
+  }
 }
