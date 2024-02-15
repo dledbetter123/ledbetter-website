@@ -126,7 +126,7 @@ deploy_service() {
   echo "Updated $service_name to use $image"
 }
 
-backend_env_vars='[{"name":"ALLOWED_ORIGINS","value":"http://dualstack.ledbetter-website-lb-1790002270.us-east-1.elb.amazonaws.com,http://www.davidamosledbetter.com/,https://www.davidamosledbetter.com/"}]'
+backend_env_vars='[{"name":"ALLOWED_ORIGINS","value":"http://dualstack.ledbetter-website-lb-1790002270.us-east-1.elb.amazonaws.com,http://www.davidamosledbetter.com,https://www.davidamosledbetter.com"}]'
 
 frontend_env_vars='[{"name":"REACT_APP_BACKEND_URI","value":"http://ledbetter-website-backend-lb-549200293.us-east-1.elb.amazonaws.com"}]'
 
