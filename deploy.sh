@@ -1,25 +1,6 @@
 #!/bin/bash
 
-export AWS_REGION="us-east-1"
-export CLUSTER_NAME="LedbetterWebsiteCluster"
-export ECR_REPOSITORY_BASE="288994457841.dkr.ecr.us-east-1.amazonaws.com/"
-export IMAGE_TAG=$(date +%Y%m%d%H%M)
-export BACKEND_FAMILY="ledbetter-website-backend"
-export FRONTEND_FAMILY="ledbetter-website-frontend"
-
-export BACKEND_PORT_MAPPING="8080:8080"
-export BACKEND_CPU="1024"
-export BACKEND_MEMORY="2048"
-export BACKEND_MEMORY_RES="1536"
-export BACKEND_C_PORT="8080"
-export BACKEND_H_PORT="8080"
-
-export FRONTEND_PORT_MAPPING="80:80"
-export FRONTEND_CPU="1024"
-export FRONTEND_MEMORY="2048"
-export FRONTEND_MEMORY_RES="1536"
-export FRONTEND_C_PORT="80"
-export FRONTEND_H_PORT="80"
+source .env
 
 # auth
 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY_BASE

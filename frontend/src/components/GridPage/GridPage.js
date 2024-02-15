@@ -17,7 +17,6 @@ const GridPage = () => {
     }
   };
 
-
   return (
     <div className="grid-container"> {/* Centering container */}
       <div className="grid">
@@ -34,3 +33,5 @@ const GridPage = () => {
 };
 
 export default GridPage;
+
+

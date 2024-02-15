@@ -9,7 +9,6 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 4 columns */
   gap: 20px;
   width: 75vw; /* Adjust the width of the grid as per requirement */
 }
@@ -36,4 +35,17 @@
 .grid-item:hover img {
   transform: translate(-50%, -50%) scale(1.1);
   filter: brightness(100%);
+}
+
+/* Media queries for responsive layout */
+@media screen and (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr); /* 4 columns for landscape mode */
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 columns for portrait mode */
+  }
 }

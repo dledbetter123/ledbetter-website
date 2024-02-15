@@ -8,7 +8,45 @@ import profilePic from './images/profile.jpeg';
 const IntroPage = () => {
   const [backendStatus, setBackendStatus] = useState('loading');
   const [hoverTitle, setHoverTitle] = useState('');
+  const [welcomeText, setWelcomeText] = useState('');
+  const [paragraphText, setParagraphText] = useState('');
+  const [welcomeCursorVisible, setWelcomeCursorVisible] = useState(true);
+  const [paragraphCursorVisible, setParagraphCursorVisible] = useState(false);
 
+  useEffect(() => {
+    const welcomeString = 'Welcome. ';
+    let index = 0;
+
+    const intervalId = setInterval(() => {
+      setWelcomeText((prevText) => prevText + welcomeString[index]);
+      index++;
+      if (index === welcomeString.length) {
+        clearInterval(intervalId);
+        setWelcomeCursorVisible(false); // Show cursor after "Welcome" text finishes typing
+
+        startParagraphTyping();
+      }
+    }, 150); // Adjust typing speed here (milliseconds per character)
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const startParagraphTyping = () => {
+    setParagraphCursorVisible(true);
+    const paragraphString =
+      "I'm a software engineer with experience in Web and app development, Operating Systems, as well as DevOps and DevSecOps frameworks. I'm also a machine learning researcher who has developed autonomous systems and robots.";
+    let index = 0;
+
+    const intervalId = setInterval(() => {
+      setParagraphText((prevText) => prevText + paragraphString[index]);
+      index++;
+      if (index === paragraphString.length) {
+        clearInterval(intervalId);
+        setParagraphCursorVisible(false);
+      }
+    }, 20); // Adjust typing speed here (milliseconds per character)
+  };
+  
   useEffect(() => {
     // will need to use the actual IP address or domain of backend service when in production
     const backendUri = window.env.REACT_APP_BACKEND_URI || 'rice';
@@ -35,13 +73,15 @@ const IntroPage = () => {
   return (
     <section className="introPage">
       <div className="content">
-        <h1 style={{ fontSize: '34px' }} className={backendStatus === 'stable' ? 'accent-green' : 'accent-red'}
+        <h1 style={{ fontSize: '48px' }} className={backendStatus === 'stable' ? 'accent-green' : 'accent-red'}
          title={hoverTitle}>
-            Welcome 
+          {welcomeText}
+          {welcomeCursorVisible && <span>|</span>} {/* Cursor */}
         </h1>
-        <p style={{ fontSize: '26px' }} title={hoverTitle}>I'm a software engineer with experience in Web and app development,
-          Operating Systems, as well as DevOps and DevSecOps frameworks. I'm also a machine learning
-          researcher who has developed autonomous systems and robots.</p>
+        <p style={{ fontSize: '32px' }} title={hoverTitle}>
+          {paragraphText}
+          {paragraphCursorVisible && <span>|</span>}
+        </p>
       </div>
       <img src={profilePic} alt="Profile" className="profilePic" />
     </section>

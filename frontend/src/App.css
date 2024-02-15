@@ -1,3 +1,5 @@
+/* App.css */
+
 .App {
   text-align: center;
 }
@@ -13,6 +15,30 @@
   }
 }
 
+.menuIcon {
+  position: fixed;
+  z-index: 1999;
+  display: inline-flex; /* or inline-block */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 35px; /* Adjust based on desired size */
+  height: 30px; /* Adjust based on desired size */
+}
+
+.bar {
+  width: 25px; /* Confirm this is being applied */
+  height: 3px; /* Confirm this is being applied */
+  background-color: #fff; /* Confirm this is visible */
+  margin: 4px 0; /* Adjust if necessary */
+}
+
+/* Adjust the appearance of the bars on hover if needed */
+.menuIcon:hover .bar {
+  background-color: #f00; /* Change color on hover */
+}
+
+/* Remaining Styles */
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
@@ -28,57 +54,39 @@
   color: #61dafb;
 }
 
-/* Apply global styles */
 body, html {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: 'Courier New', monospace; /* Example font */
-  background-color: black; /* Background color */
-  color: white; /* Text color */
-} 
+  font-family: 'Courier New', monospace;
+  background-color: black;
+  color: white;
+}
 
-/* Style for sections that mimics a terminal screen */
 section {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh; /* Full viewport height */
-  color: white; /* White text */
-  background-color: black; /* Black background */
+  height: 100vh;
+  color: white;
+  background-color: black;
   padding: 20px;
   box-sizing: border-box;
 }
 
-/* Style for the fixed navbar */
-/* .navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 200px;
-  height: 100%;
-  background-color: #333;
-  padding: 20px;
-} 
-*/
-
-/* Style for the main content next to the navbar */
 .main-content {
-  margin-left: 200px; /* Same as navbar width */
+  margin-left: 200px;
   padding: 20px;
-  width: calc(100% - 200px); /* Adjust width based on navbar */
+  width: calc(100% - 200px);
 }
 
-/* Accent text colors */
 .accent-green {
-  color: #0F0; /* Bright green accent text */
+  color: #0F0;
 }
 
 .accent-red {
-  color: #F00; /* Bright red accent text */
+  color: #F00;
 }
-
-
 
 @keyframes App-logo-spin {
   from {
