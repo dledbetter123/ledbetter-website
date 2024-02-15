@@ -3,8 +3,8 @@
 version: '3.8'
 services:
   frontend:
-    build:
-      context: ./frontend
+    build: ./frontend
+    image: ${ECR_REPOSITORY_BASE}${FRONTEND_FAMILY}:${IMAGE_TAG}
     environment:
       - REACT_APP_BACKEND_URI=http://localhost:8080
     ports:
@@ -13,6 +13,7 @@ services:
       - backend
   backend:
     build: ./backend
+    image: ${ECR_REPOSITORY_BASE}${BACKEND_FAMILY}:${IMAGE_TAG}
     ports:
       - "8080:8080" # map computer port 8080 to container port 8080 for backend
     environment:

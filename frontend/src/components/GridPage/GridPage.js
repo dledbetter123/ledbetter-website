@@ -7,13 +7,13 @@ import './GridPage.css';
 const GridPage = () => {
   const imageNames = ['bst', 'char', 'crazyflie', 'dog_logo', 'hack', 'nsbe', 'ohlc', 'walker'];
 
-  // Function to dynamically import images based on the image name
+  // dynamically import images based on the image name
   const importImage = imageName => {
     try {
       return require(`./images/${imageName}.jpeg`);
     } catch (err) {
       console.error("Failed to load image:", imageName);
-      return null; // Or a fallback image path
+      return null;
     }
   };
 
