@@ -21,7 +21,6 @@ const App = () => {
     ref.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-
   return (
     <Router>
       <div className="appContainer">
