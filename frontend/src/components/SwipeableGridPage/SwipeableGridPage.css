@@ -1,0 +1,19 @@
+/* src/components/SwipeableGridPage.css */
+
+.project-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  text-align: center;
+}
+
+.mySwiperContainer {
+  justify-items: center;
+  max-width: 960px;
+  margin: auto;
+  /* overflow: hidden; This might not be necessary unless you have a specific reason */
+}
+
+/* Note: Custom scrollbar styling applied to the browser's scrollbar might not affect Swiper's internal scrollbars like those for navigation or pagination. */

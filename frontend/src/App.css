@@ -15,31 +15,6 @@
   }
 }
 
-.menuIcon {
-  position: fixed;
-  z-index: 1999;
-  top: 10px; /* Adjust the distance from the top */
-  left: 30px; /* Adjust the distance from the right */
-  display: inline-flex; /* or inline-block */
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 35px; /* Adjust based on desired size */
-  height: 30px; /* Adjust based on desired size */
-}
-
-.bar {
-  width: 25px; /* Confirm this is being applied */
-  height: 3px; /* Confirm this is being applied */
-  background-color: #fff; /* Confirm this is visible */
-  margin: 4px 0; /* Adjust if necessary */
-}
-
-/* Adjust the appearance of the bars on hover if needed */
-.menuIcon:hover .bar {
-  background-color: #f00; /* Change color on hover */
-}
-
 /* Remaining Styles */
 .App-header {
   background-color: #282c34;

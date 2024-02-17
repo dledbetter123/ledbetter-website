@@ -1,0 +1,134 @@
+/* MainPage overall layout and styles adapted from App.css */
+
+/* .main-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  z-index: 30;
+  flex-direction: column;
+}
+
+  .carousel-item-content h2 {
+    color: #00FF00;
+  }
+  
+  .carousel-item-content p {
+    color: #FFFFFF;
+  }
+  
+  .carousel-item-content {
+    text-align: center;
+    padding: 20px;
+    background-color: #333;
+    height: 100%;
+    box-sizing: border-box;
+  }
+  
+  .section {
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Courier New', monospace;
+    background-color: black;
+    color: white;
+  }
+
+  .menuIcon {
+    position: fixed;
+    z-index: 1999;
+    top: 10px;
+    left: 30px;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 35px;
+    height: 30px;
+    transition: transform 0.3s ease
+  }
+  
+  .bar {
+    width: 25px;
+    height: 3px;
+    background-color: #fff;
+    margin: 4px 0;
+  }
+  
+  .menuIcon:hover .bar {
+    background-color: #f00;
+    transform: scale(1.2);
+  }
+
+  .carousel-style {
+    z-index: 50;
+    position: relative;
+  }
+  
+  .main-content {
+    margin-left: 200px;
+    padding: 20px;
+    width: calc(100% - 200px);
+  }
+  
+  .accent-green {
+    color: #0F0;
+  }
+  
+  .accent-red {
+    color: #F00;
+  }
+  
+  @media (prefers-reduced-motion: no-preference) {
+    .App-logo {
+      animation: App-logo-spin infinite 20s linear;
+    }
+  }
+  
+  @keyframes App-logo-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  } */
+  
+  .menuIcon {
+    position: fixed;
+    z-index: 1999;
+    top: 10px;
+    left: 30px;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 35px;
+    height: 30px;
+  }
+  
+  .bar {
+    width: 25px;
+    height: 3px;
+    background-color: #fff;
+    margin: 4px 0;
+  }
+  
+  .menuIcon:hover .bar {
+    background-color: #f00;
+    transform: scale(1.5);
+  }
+  

@@ -26,7 +26,7 @@ const IntroPage = () => {
 
         startParagraphTyping();
       }
-    }, 110); // Adjust typing speed here (milliseconds per character)
+    }, 100); // Adjust typing speed here (milliseconds per character)
 
     return () => clearInterval(intervalId);
   }, []);
@@ -37,15 +37,15 @@ const IntroPage = () => {
       const scrollValue = window.scrollY;
       const height = window.innerHeight;
       // Adjust these values as needed
-      const fadeStart = 0; // Start fade at 100px scroll
-      const fadeUntil = height / 2; // Full fade by half the viewport height
+      const fadeStart = 0; // Start fade at 0px scroll
+      const fadeUntil = 2*height / 3; // Full fade by 2/3 the viewport height
 
       let opacity = 1;
 
       if (scrollValue <= fadeStart) {
         opacity = 1;
       } else if (scrollValue <= fadeUntil) {
-        opacity = 1 - (scrollValue - fadeStart)*0.5 / (fadeUntil - fadeStart);
+        opacity = 1 - (scrollValue - fadeStart) / (fadeUntil - fadeStart);
       } else {
         opacity = 0;
       }
@@ -61,7 +61,7 @@ const IntroPage = () => {
   const startParagraphTyping = () => {
     setParagraphCursorVisible(true);
     const paragraphString =
-      "I'm a software engineer with experience in Web and app development, Operating Systems, as well as DevOps and DevSecOps frameworks. I'm also a machine learning researcher who has developed autonomous systems and robots.";
+      "I'm a software engineer with experience in Web and app development, Operating Systems, as well as DevOps and DevSecOps frameworks. I'm also a machine learning researcher who has developed autonomous systems and robots. In the next section scroll the cards or use left/right arrows to see my projects. Many more to be hosted here.";
     let index = 0;
 
     const intervalId = setInterval(() => {
@@ -71,7 +71,7 @@ const IntroPage = () => {
         clearInterval(intervalId);
         setParagraphCursorVisible(false);
       }
-    }, 15); // Adjust typing speed here (milliseconds per character)
+    }, 10); // Adjust typing speed here (milliseconds per character)
   };
   
   useEffect(() => {

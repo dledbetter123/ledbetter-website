@@ -22,10 +22,9 @@ deploy_service() {
   local hport=$9
 
   local image="$ECR_REPOSITORY_BASE$container_name:$IMAGE_TAG"
-  local portmapname="$container_name-$HPORT-tcp"
+  local portmapname="$container_name-$hport-tcp"
   local awslogsgroup="/ecs/$container_name"
   if [[ "$container_name" == "ledbetter-website-frontend" ]]; then
-      # Prepare the entryPoint and command JSON
       entry_point_and_command_json=$(jq -n \
           --arg cmd "/entrypoint.sh" \
           '{
@@ -34,7 +33,6 @@ deploy_service() {
           }'
       )
   else
-      # Prepare a JSON object without entryPoint and command
       entry_point_and_command_json="{}"
   fi
   # task definition
@@ -111,7 +109,7 @@ backend_env_vars='[{"name":"ALLOWED_ORIGINS","value":"http://dualstack.ledbetter
 
 frontend_env_vars='[{"name":"REACT_APP_BACKEND_URI","value":"http://ledbetter-website-backend-lb-549200293.us-east-1.elb.amazonaws.com"}]'
 
-# yes yes, task family and container name should be the same!!! ($BACKEND_FAMILY)
+# task family and container name should be the same!!! ($BACKEND_FAMILY)
 deploy_service "ledbetter-website-backend-service-2" $BACKEND_FAMILY $BACKEND_FAMILY "$BACKEND_CPU" "$BACKEND_MEMORY" "$BACKEND_MEMORY_RES" "$backend_env_vars" $BACKEND_C_PORT $BACKEND_H_PORT
 deploy_service "ledbetter-website-frontend-service-3" $FRONTEND_FAMILY $FRONTEND_FAMILY "$FRONTEND_CPU" "$FRONTEND_MEMORY" "$FRONTEND_MEMORY_RES" "$frontend_env_vars" $FRONTEND_C_PORT $FRONTEND_H_PORT
 

@@ -2,10 +2,10 @@
 import React from 'react';
 import './NavBar.css';
 
-// Wrap your component with React.forwardRef to forward refs to it
+// forward refs to navbar
 const NavBar = React.forwardRef(({ isOpen, onHomeClick, onAboutClick, onPortfolioClick, onContactClick }, ref) => {
   return (
-    // Attach the forwarded ref to the nav element
+    // attach the forwarded ref to the nav element
     <nav ref={ref} className={`navbar ${isOpen ? 'open' : ''}`}>
       <ul>
         <li><button onClick={onHomeClick}>Home</button></li>

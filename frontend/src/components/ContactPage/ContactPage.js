@@ -16,7 +16,7 @@ const ContactPage = () => {
           </li>
           <li>
             <FontAwesomeIcon icon={faGithub} className="icon" />
-            <a href="https://github.com" className="contactLink">GitHub</a>
+            <a href="https://github.com/dledbetter123" className="contactLink">GitHub</a>
           </li>
           <li>
             <FontAwesomeIcon icon={faEnvelope} className="icon" />
