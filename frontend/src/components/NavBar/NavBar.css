@@ -4,13 +4,14 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 7vw;
+  width: 160px;
   height: 100%;
   z-index: 2000;
   background-color: #000;
   padding: 20px;
   box-sizing: border-box;
-  transform: translateX(-7vw);
+  overflow: hidden; /* clip menu text so nothing peeks out when closed */
+  transform: translateX(-100%); /* fully hide the panel by its own width */
   transition: transform 0.3s ease;
 }
 
@@ -40,7 +41,7 @@ button {
 @media (max-width: 600px) {
   .navbar {
     width: 40vw;
-    transform: translateX(-40vw);
+    /* transform stays translateX(-100%) from the base rule, hiding the wider panel fully */
   }
-} 
+}
 

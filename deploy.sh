@@ -105,9 +105,9 @@ deploy_service() {
   echo "Updated $service_name to use $image"
 }
 
-backend_env_vars='[{"name":"ALLOWED_ORIGINS","value":"http://dualstack.ledbetter-website-lb-1790002270.us-east-1.elb.amazonaws.com,http://www.davidamosledbetter.com,https://www.davidamosledbetter.com"}]'
+backend_env_vars='[{"name":"ALLOWED_ORIGINS","value":"http://dualstack.ledbetter-website-lb-1790002270.us-east-1.elb.amazonaws.com,http://www.davidamosledbetter.com,https://www.davidamosledbetter.com,https://davidamosledbetter.com"}]'
 
-frontend_env_vars='[{"name":"REACT_APP_BACKEND_URI","value":"http://ledbetter-website-backend-lb-549200293.us-east-1.elb.amazonaws.com"}]'
+frontend_env_vars='[{"name":"REACT_APP_BACKEND_URI","value":"https://api.davidamosledbetter.com"}]'
 
 # task family and container name should be the same!!! ($BACKEND_FAMILY)
 deploy_service "ledbetter-website-backend-service-2" $BACKEND_FAMILY $BACKEND_FAMILY "$BACKEND_CPU" "$BACKEND_MEMORY" "$BACKEND_MEMORY_RES" "$backend_env_vars" $BACKEND_C_PORT $BACKEND_H_PORT

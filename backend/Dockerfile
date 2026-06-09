@@ -1,6 +1,6 @@
 # ledbetter-website/backend/Dockerfile
 
-FROM golang:1.15 as builder
+FROM golang:1.22 AS builder
 
 WORKDIR /app
 COPY . .

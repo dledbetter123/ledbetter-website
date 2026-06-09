@@ -3,20 +3,57 @@
 .introPage {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: stretch; /* let .content span the full height */
     height: 100vh; /* Full viewport height */
     color: white; /* White text */
     background-color: black; /* Black background */
     padding: 20px;
     box-sizing: border-box;
   }
-.content {
+.introPage .content {
   max-width: 600px; /* Maximum width of the content */
+  width: 100%;
   z-index: 2; /* Ensure the text is above the image */
+  display: flex;
+  flex-direction: column;
+  padding-top: 7vh;
+  font-weight: bold; /* bold heading + paragraph */
+}
+.introPage .content h1 {
+  margin: 0; /* Welcome. anchored at the top */
+}
+.introPage .content p {
+  margin-top: 30vh; /* paragraph sits in the lower two-thirds */
 }
 
 .accent-green {
   color: #0F0; /* Bright green accent text */
+}
+
+/* Blinking neon-green block cursor shown at the end once typing finishes */
+.cursorBlock {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.1em;
+  margin-left: 3px;
+  background-color: #39FF14;
+  vertical-align: text-bottom;
+  animation: cursorBlink 1s step-end infinite;
+}
+@keyframes cursorBlink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+/* White block cursor shown after the "Welcome." heading finishes typing */
+.cursorBlockWhite {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.1em;
+  margin-left: 4px;
+  background-color: #fff;
+  vertical-align: text-bottom;
+  animation: cursorBlink 1s step-end infinite;
 }
 .accent-red {
   color: #F00; /* Bright red accent text */
@@ -25,13 +62,17 @@
 
 .profilePic {
   position: fixed;
-  right: 0;
   top: 0;
-  /* width: 36.33%; Image takes up right third of the screen */
+  left: 0;
+  width: 100%; /* Image fills the entire screen */
   height: 100%;
-  object-fit: cover; /* Cover the designated area without stretching */
+  object-fit: cover; /* Always fully occupy the screen, no gaps */
+  object-position: top center; /* Anchor to the top so cropping happens at the bottom */
   z-index: 1; /* Below the text content */
   filter: brightness(75%);
+  /* Feather the bottom edge into the black background so the scroll-fade isn't a hard line */
+  -webkit-mask-image: linear-gradient(to bottom, #000 65%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to bottom, #000 65%, rgba(0, 0, 0, 0) 100%);
 }
 
 @media (max-width: 600px) {
@@ -49,7 +90,7 @@
     z-index: 1; /* Ensure image is behind the content */
   }
 
-  .content {
+  .introPage .content {
     max-width: 600px; /* Maximum width of the content */
     z-index: 2; /* Ensure the text is above the image */
   }

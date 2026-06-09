@@ -10,6 +10,8 @@
     background-color: black; /* Consistent black background */
     padding: 20px;
     box-sizing: border-box;
+    position: relative; /* lift above the fixed hero image */
+    z-index: 2;
   }
   
   .contactContent {

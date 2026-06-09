@@ -3,7 +3,12 @@ import React from 'react';
 import './ContactPage.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLinkedin, faGithub } from '@fortawesome/free-brands-svg-icons';
-import { faEnvelope, faPhone } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faPhone, faFileLines } from '@fortawesome/free-solid-svg-icons';
+import TypingText from '../TypingText/TypingText';
+
+const RESUME_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/David_Ledbetter_Resume.pdf';
+
+const label = { display: 'inline-block' };
 
 const ContactPage = () => {
   return (
@@ -12,19 +17,33 @@ const ContactPage = () => {
         <ul>
           <li>
             <FontAwesomeIcon icon={faLinkedin} className="icon" />
-            <a href="https://linkedin.com" className="contactLink">LinkedIn</a>
+            <a href="https://www.linkedin.com/in/david-ledbetter-umbc" className="contactLink" target="_blank" rel="noopener noreferrer">
+              <TypingText as="span" speed={40} text="LinkedIn" style={label} />
+            </a>
           </li>
           <li>
             <FontAwesomeIcon icon={faGithub} className="icon" />
-            <a href="https://github.com/dledbetter123" className="contactLink">GitHub</a>
+            <a href="https://github.com/dledbetter123" className="contactLink">
+              <TypingText as="span" speed={40} text="GitHub" style={label} />
+            </a>
+          </li>
+          <li>
+            <FontAwesomeIcon icon={faFileLines} className="icon" />
+            <a href={RESUME_URL} className="contactLink" target="_blank" rel="noopener noreferrer">
+              <TypingText as="span" speed={40} text="Resume" style={label} />
+            </a>
           </li>
           <li>
             <FontAwesomeIcon icon={faEnvelope} className="icon" />
-            <span className="contactInfo">dledbetter456@gmail.com</span>
+            <a href="mailto:dledbetter456@gmail.com" className="contactLink">
+              <TypingText as="span" speed={20} text="dledbetter456@gmail.com" style={label} />
+            </a>
           </li>
           <li>
             <FontAwesomeIcon icon={faPhone} className="icon" />
-            <span className="contactInfo">(240)-305-5339</span>
+            <a href="tel:+12403055339" className="contactLink">
+              <TypingText as="span" speed={40} text="(240)-305-5339" style={label} />
+            </a>
           </li>
         </ul>
       </div>

@@ -1,0 +1,81 @@
+name: Deploy (serverless)
+
+# Build + deploy the React frontend (S3 + CloudFront) and the Go Lambda backend
+# whenever main is pushed. Auth to AWS uses GitHub OIDC (no stored keys) — it
+# assumes the least-privilege role `ledbetter-github-deploy`.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write   # required for OIDC
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ROLE: arn:aws:iam::288994457841:role/ledbetter-github-deploy
+  SITE_BUCKET: davidamosledbetter-site
+  DISTRIBUTION_ID: E3H0TFNVGHOTIP
+  LAMBDA_NAME: ledbettergpt
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    # only run when frontend files changed (or manual dispatch)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build React app
+        working-directory: frontend
+        env:
+          CI: 'false'   # don't treat lint warnings as build errors
+        run: |
+          npm ci
+          npm run build
+          # same-origin API (served from /api/* via CloudFront)
+          printf "window.env = {\n    REACT_APP_BACKEND_URI: ''\n  };\n" > build/config.js
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Sync to S3 + invalidate CloudFront
+        working-directory: frontend
+        run: |
+          aws s3 sync build "s3://$SITE_BUCKET" --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --exclude index.html --exclude config.js --exclude asset-manifest.json
+          aws s3 cp build/index.html "s3://$SITE_BUCKET/index.html" \
+            --cache-control no-cache --content-type "text/html"
+          aws s3 cp build/config.js "s3://$SITE_BUCKET/config.js" \
+            --cache-control no-cache --content-type "application/javascript"
+          aws s3 cp build/asset-manifest.json "s3://$SITE_BUCKET/asset-manifest.json" \
+            --cache-control no-cache --content-type "application/json"
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Build Lambda (linux/arm64)
+        working-directory: backend-lambda
+        env:
+          GOOS: linux
+          GOARCH: arm64
+          CGO_ENABLED: '0'
+        run: |
+          go build -tags lambda.norpc -o bootstrap .
+          zip lambda.zip bootstrap
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Update Lambda function code
+        working-directory: backend-lambda
+        run: aws lambda update-function-code --function-name "$LAMBDA_NAME" --zip-file fileb://lambda.zip

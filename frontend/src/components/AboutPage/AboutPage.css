@@ -10,17 +10,19 @@
     padding: 20px;
     box-sizing: border-box;
     min-height: 100vh;
+    position: relative; /* lift above the fixed hero image */
+    z-index: 2;
   }
   
-  .content {
+  .aboutPage .content {
     max-width: 800px; /* Adjust based on your layout */
   }
-  
-  h1, h2 {
+
+  .aboutPage h1, .aboutPage h2 {
     color: #0F0; /* Bright green for headings, adjust as needed */
   }
-  
-  p {
+
+  .aboutPage p {
     margin-bottom: 20px;
   }
   
