@@ -50,7 +50,7 @@
   .menuIcon {
     position: fixed;
     z-index: 1999;
-    top: 10px;
+    top: calc(10px + env(safe-area-inset-top));
     left: 30px;
     display: inline-flex;
     flex-direction: column;
@@ -110,7 +110,7 @@
   .menuIcon {
     position: fixed;
     z-index: 1999;
-    top: 10px;
+    top: calc(10px + env(safe-area-inset-top));
     left: 30px;
     display: inline-flex;
     flex-direction: column;
