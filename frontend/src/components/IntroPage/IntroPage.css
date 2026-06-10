@@ -76,9 +76,10 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%; /* Image fills the entire screen */
-  height: 100%;
-  object-fit: cover; /* Always fully occupy the screen, no gaps */
+  width: 100vw; /* fill the full viewport width */
+  height: 100vh; /* fallback */
+  height: 100lvh; /* fill the LARGEST viewport height so there's never a gap (iOS bar) */
+  object-fit: cover; /* zoom to fill both axes, cropping the overflow — no letterboxing */
   object-position: top center; /* Anchor to the top so cropping happens at the bottom */
   z-index: 0; /* fixed background layer, behind ALL content; black body shows as it fades */
   filter: brightness(75%);
@@ -92,10 +93,13 @@
 
   .profilePic {
     position: fixed; /* viewport-filling background — no finite bottom edge / line */
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh; /* fallback */
+    height: 100lvh; /* always fill the largest viewport — no gap when the iOS bar hides */
     top: 0;
     left: 0;
+    object-fit: cover;
+    object-position: top center;
     z-index: 0; /* behind all content */
   }
 
