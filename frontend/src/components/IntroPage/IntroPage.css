@@ -24,6 +24,18 @@
 }
 .introPage .content p {
   margin-top: 30vh; /* paragraph sits in the lower two-thirds */
+  position: relative; /* anchor for the typed-text overlay */
+}
+/* Reserve the paragraph's final size (hidden) so typing never reflows the block; the
+   visible text overlays it from the top, so it always fills in top-down. */
+.introPara-sizer {
+  visibility: hidden;
+}
+.introPara-typed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
 .accent-green {

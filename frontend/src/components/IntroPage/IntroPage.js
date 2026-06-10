@@ -149,9 +149,16 @@ const IntroPage = () => {
           {welcomeCursorVisible && <span>|</span>} {/* Cursor */}
         </h1>
         <p style={{ fontSize: '23px' }} title={hoverTitle}>
-          {paragraphText}
-          {paragraphCursorVisible && <span>|</span>}
-          {paragraphDone && <span className="cursorBlock" />}
+          {/* Invisible full-text sizer reserves the final height so the block never
+              reflows as it types — the visible text then fills strictly top-down. */}
+          <span className="introPara-sizer" aria-hidden="true">
+            {introParagraph || ''}
+          </span>
+          <span className="introPara-typed">
+            {paragraphText}
+            {paragraphCursorVisible && <span>|</span>}
+            {paragraphDone && <span className="cursorBlock" />}
+          </span>
         </p>
       </div>
       <img src={profilePic} alt="Profile" className="profilePic" />
