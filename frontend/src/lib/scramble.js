@@ -8,6 +8,30 @@ const SCRAMBLE_CHARS =
 
 const rand = () => SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
 
+// A fully-scrambled version of `text` (keeps spaces/structure) — used as a
+// non-empty placeholder so an element is never blank before the decode runs.
+export function scrambleOf(text) {
+  return Array.from(text)
+    .map((c) => (c === ' ' || c === '\n' || c === '\t' ? c : rand()))
+    .join('');
+}
+
+// A random run of glyphs with occasional spaces, for placeholders when the real
+// text length isn't known yet (e.g. a description still loading).
+export function randomGlyphs(n) {
+  let s = '';
+  let gap = 4 + Math.floor(Math.random() * 5);
+  for (let i = 0; i < n; i += 1) {
+    if (i > 0 && i % gap === 0) {
+      s += ' ';
+      gap = 4 + Math.floor(Math.random() * 5);
+    } else {
+      s += rand();
+    }
+  }
+  return s;
+}
+
 // Runs the scramble for `text`, calling onUpdate(str) each frame and onDone() at
 // the end. Returns a cancel function (clears the animation frame).
 export function runScramble(text, duration, onUpdate, onDone) {
