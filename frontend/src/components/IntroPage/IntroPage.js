@@ -94,23 +94,21 @@ const IntroPage = () => {
       const scale = Math.max(W / natW, H / natH);
       const overflowY = Math.max(0, natH * scale - H);
 
-      // Parallax pan: scroll through the entire image (top -> bottom) over a distance
-      // equal to its overflow, bounded to ~1.5 viewport heights. `through` is always
-      // positive so there's guaranteed scroll-through even if the image doesn't overflow.
+      // Gentle parallax pan while the hero is visible.
       const panDistance = Math.min(overflowY, H * 1.5);
-      const through = panDistance > 0 ? panDistance : H;
       const s = window.scrollY;
-
       const panPct = panDistance > 0 ? Math.min(100, (s / panDistance) * 100) : 100;
 
-      // Once we've swiped through 4/5 of the image, fade to black over the final 1/5,
-      // and stay fully black past it. No chances — guaranteed 0 by the end of the pan.
-      const fadeStart = 0.8 * through;
+      // Show the hero only through the top 5% of the page's total scroll range, then
+      // fade it to black over the next 5%. Fully black past 10%. No chances.
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      const showUntil = 0.05 * maxScroll;
+      const blackBy = 0.10 * maxScroll;
       let opacity = 1;
-      if (s >= through) {
+      if (s >= blackBy) {
         opacity = 0;
-      } else if (s > fadeStart) {
-        opacity = 1 - (s - fadeStart) / (through - fadeStart);
+      } else if (s > showUntil) {
+        opacity = 1 - (s - showUntil) / (blackBy - showUntil);
       }
 
       profilePic.style.objectPosition = `50% ${panPct}%`;
