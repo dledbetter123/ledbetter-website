@@ -85,7 +85,7 @@
   height: calc(100lvh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 8vh);
   object-fit: cover; /* zoom to fill both axes, cropping the overflow — no letterboxing */
   object-position: top center; /* keep the top of the frame; crop spills to the bottom */
-  z-index: 0; /* fixed background layer, behind ALL content; black body shows as it fades */
+  z-index: -1; /* the very back — a true background; ALL content sits in front of it */
   filter: brightness(75%);
 }
 
