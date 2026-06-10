@@ -84,7 +84,33 @@ const MainPage = () => {
     githubUrl: "https://github.com/dledbetter123/ledbetter-website",
   };
 
+  const SgstProjectDetails = {
+    title: "Sparse Geometric Signal Transport",
+    githubUrl: "https://github.com/dledbetter123/SparseGeometricSignalTransport",
+  };
+
+  const FinslerProjectDetails = {
+    title: "The Finsler Transformer",
+    githubUrl: "https://github.com/dledbetter123/LedbetterFinslerTransformer",
+  };
+
   const carouselItems = [
+    {
+      content: (
+        <ProjectCard
+          title={SgstProjectDetails.title}
+          githubUrl={SgstProjectDetails.githubUrl}
+        />
+      )
+    },
+    {
+      content: (
+        <ProjectCard
+          title={FinslerProjectDetails.title}
+          githubUrl={FinslerProjectDetails.githubUrl}
+        />
+      )
+    },
     {
       content: (
         <ProjectCard
