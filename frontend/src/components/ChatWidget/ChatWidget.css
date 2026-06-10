@@ -182,14 +182,22 @@
   }
 }
 
-/* Roomier chat on desktop */
+/* Roomier chat on desktop — a large, screen-centered panel (the toggle button
+   stays pinned bottom-right via .chatBar). */
 @media (min-width: 768px) {
   .chatPanel {
-    width: 560px;
-    height: 640px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(920px, 92vw);
+    height: min(82vh, 820px);
+    max-height: 82vh;
+    margin: 0;
   }
   .chatMsg {
     font-size: 14px;
+    max-width: 80%;
   }
   .chatInput,
   .chatSend {
