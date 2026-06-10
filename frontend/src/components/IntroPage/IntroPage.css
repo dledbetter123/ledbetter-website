@@ -16,14 +16,14 @@
   z-index: 2; /* Ensure the text is above the image */
   display: flex;
   flex-direction: column;
-  padding-top: 7vh;
+  justify-content: center; /* center the Welcome + paragraph as a group */
   font-weight: bold; /* bold heading + paragraph */
 }
 .introPage .content h1 {
-  margin: 0; /* Welcome. anchored at the top */
+  margin: 0;
 }
 .introPage .content p {
-  margin-top: 30vh; /* paragraph sits in the lower two-thirds */
+  margin-top: 20px; /* keep the paragraph close under "Welcome." as one centered block */
   position: relative; /* anchor for the typed-text overlay */
 }
 /* Reserve the paragraph's final size (hidden) so typing never reflows the block; the
