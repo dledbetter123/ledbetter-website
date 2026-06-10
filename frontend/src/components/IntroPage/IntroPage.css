@@ -7,7 +7,9 @@
     height: 100vh; /* Full viewport height */
     color: white; /* White text */
     background-color: transparent; /* the fixed hero + black body are the backdrop */
-    padding: 20px;
+    /* image fills to the bezels (viewport-fit=cover); keep the TEXT out of the safe areas */
+    padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+             max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
     box-sizing: border-box;
   }
 .introPage .content {
@@ -82,7 +84,6 @@
                      fills with no gap when the iOS toolbar shows/hides (best practice) */
   object-fit: cover; /* zoom to fill both axes, cropping the overflow — no letterboxing */
   object-position: top center; /* keep the top of the frame; crop spills to the bottom */
-  transform: scale(1.06); /* slight overscan so it bleeds past the bezel / under chrome */
   z-index: 0; /* backmost background (content is z>=2); NOT -1 (iOS punches it through) */
   filter: brightness(75%); /* resting brightness; JS dims this to 0 (black) on scroll */
 }

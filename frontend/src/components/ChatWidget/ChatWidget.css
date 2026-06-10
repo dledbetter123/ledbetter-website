@@ -2,8 +2,9 @@
 
 .chatWidget {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
+  /* keep the toggle clear of the home indicator / bottom toolbar and side bezel */
+  right: calc(20px + env(safe-area-inset-right, 0px));
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   z-index: 3000;
   font-family: 'Courier New', monospace;
 }
