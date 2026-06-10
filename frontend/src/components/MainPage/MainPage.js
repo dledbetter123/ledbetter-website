@@ -107,9 +107,9 @@ const MainPage = () => {
   const DronePublication = {
     title: "Autonomous Drone Navigation (URCAD 2022)",
     citation:
-      "Ledbetter, D. (2022). Energy-Efficient Onboard Autonomous Drone Navigation: Wall Following and Obstacle Detection. URCAD 2022 poster — wall-following implemented as a C/C++ state machine (TU Delft bug algorithm).",
-    url: "https://github.com/dledbetter123/Bug_Algorithm_TUDelft",
-    footer: "View the code →",
+      "Ledbetter, D. (2022). Energy-Efficient Onboard Autonomous Drone Navigation (URCAD 2022 poster). We wrote a flight state-machine computer working in conjunction with an onboard camera and sensor data to give AI agentic decision-making at the edge.",
+    url: "",
+    footer: "URCAD 2022 · poster",
   };
 
   const carouselItems = [

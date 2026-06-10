@@ -7,6 +7,7 @@ import useScrambleOnVisible from '../../hooks/useScrambleOnVisible';
 // (DOI/IEEE/PDF) or the related code rather than a repo's README.
 const PublicationCard = ({ title, citation, url, footer = 'Read the paper →' }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const clickable = Boolean(url); // some entries (e.g. an unlinked poster) don't open anything
 
   // Both shimmer (decode) in when the card scrolls into view; title settles first,
   // then the citation — same treatment as ProjectCard.
@@ -19,7 +20,8 @@ const PublicationCard = ({ title, citation, url, footer = 'Read the paper →' }
       className={`project-card ${isHovered ? 'hovered' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => window.open(url, '_blank')}
+      onClick={clickable ? () => window.open(url, '_blank') : undefined}
+      style={clickable ? undefined : { cursor: 'default' }}
     >
       <h2 ref={titleRef} style={bidi}>{titleText}</h2>
       <p ref={descRef} style={bidi}>{citationText}</p>
