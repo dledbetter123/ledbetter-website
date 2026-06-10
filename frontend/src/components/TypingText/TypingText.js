@@ -8,7 +8,7 @@ import useScrambleOnVisible from '../../hooks/useScrambleOnVisible';
 // Layout is reserved up front so surrounding content doesn't jump.
 const TypingText = ({ text, as: Tag = 'p', speed, effect = 'type', className, style }) => {
   const [typeRef, typed] = useTypeOnVisible(text, speed);
-  const [scrambleRef, scrambled] = useScrambleOnVisible(text, 3000);
+  const [scrambleRef, scrambled] = useScrambleOnVisible(text, 1500);
 
   const scramble = effect === 'scramble';
   const ref = scramble ? scrambleRef : typeRef;
