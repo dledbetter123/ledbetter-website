@@ -207,6 +207,12 @@ const MainPage = () => {
           z-index lifts, no seams for a heading to fall through. IntroPage drives this
           image's brightness/pan on scroll via document.querySelector('.profilePic'). */}
       <img src={heroImg} alt="" aria-hidden="true" className="profilePic" />
+      {/* Vertical black vignette over the hero: fades the photo's top and bottom
+          edges to black so they blend into the iOS status bar / Safari toolbar
+          instead of meeting them at a hard line (matters most on Liquid Glass,
+          where the translucent bars show the seam). Sits above the image, below
+          the content layer; purely decorative. */}
+      <div className="hero-vignette" aria-hidden="true" />
       <NavBar
         ref={navBarRef}
         isOpen={isNavbarOpen}
