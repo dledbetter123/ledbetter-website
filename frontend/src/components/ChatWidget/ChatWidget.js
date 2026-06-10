@@ -1,6 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './ChatWidget.css';
 
+// Pool of lowercase Greek-letter names for the "thinking" indicator. Each
+// loading cycle draws a freshly shuffled ordering from this pool.
+const GREEK_NAMES = [
+  'phi', 'chi', 'nu', 'psi', 'rho', 'xi', 'tau', 'mu', 'eta',
+  'beta', 'zeta', 'theta', 'sigma', 'omega', 'lambda', 'gamma', 'delta', 'kappa',
+];
+
+// Stable per-tab session id shared with the backend. Generated once with
+// crypto.randomUUID() and persisted in sessionStorage so it survives reloads
+// within the same tab but differs across tabs.
+const getSessionId = () => {
+  let id = sessionStorage.getItem('ledbettergpt_session');
+  if (!id) {
+    id = crypto.randomUUID();
+    sessionStorage.setItem('ledbettergpt_session', id);
+  }
+  return id;
+};
+
+// Fisher–Yates shuffle returning a new array (leaves the pool untouched).
+const shuffled = (arr) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
 // LedbetterGPT — a small chat assistant that streams answers about David from the
 // backend's /api/chat endpoint (Gemini-backed). The backend URL is injected at
 // runtime via window.env.REACT_APP_BACKEND_URI (see config.js / IntroPage).
@@ -12,7 +41,12 @@ const ChatWidget = () => {
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [arrow, setArrow] = useState(1);
+  const [loadingGlyph, setLoadingGlyph] = useState('');
   const scrollRef = useRef(null);
+  const sessionIdRef = useRef(null);
+
+  // Lazily initialise (and persist) the per-tab session id on first render.
+  if (sessionIdRef.current === null) sessionIdRef.current = getSessionId();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -37,7 +71,7 @@ const ChatWidget = () => {
       const res = await fetch(`${backendUri}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history }),
+        body: JSON.stringify({ message, history, sessionId: sessionIdRef.current }),
       });
 
       if (!res.ok) {
@@ -93,6 +127,28 @@ const ChatWidget = () => {
     return () => clearInterval(id);
   }, [isOpen]);
 
+  // "Thinking" indicator: while the response is still in flight (the trailing
+  // assistant bubble is empty), accumulate a freshly-shuffled run of Greek-letter
+  // names ("phi" → "phi chi" → …, ~6 long) and then restart with a new shuffle.
+  const last = messages[messages.length - 1];
+  const showLoading = streaming && last && last.role === 'assistant' && !last.text;
+  useEffect(() => {
+    if (!showLoading) {
+      setLoadingGlyph('');
+      return undefined;
+    }
+    let order = shuffled(GREEK_NAMES);
+    let n = 0;
+    const tick = () => {
+      n += 1;
+      if (n > 6) { order = shuffled(GREEK_NAMES); n = 1; } // reset + reshuffle
+      setLoadingGlyph(order.slice(0, n).join(' '));
+    };
+    tick();
+    const id = setInterval(tick, 280);
+    return () => clearInterval(id);
+  }, [showLoading]);
+
   return (
     <div className="chatWidget">
       {isOpen && (
@@ -102,11 +158,20 @@ const ChatWidget = () => {
             <button className="chatClose" onClick={() => setIsOpen(false)} aria-label="Close chat">×</button>
           </div>
           <div className="chatMessages" ref={scrollRef}>
-            {messages.map((m, i) => (
-              <div key={i} className={`chatMsg ${m.role}`}>
-                {m.text || (streaming && i === messages.length - 1 ? '…' : '')}
-              </div>
-            ))}
+            {messages.map((m, i) => {
+              const isLast = i === messages.length - 1;
+              // The trailing assistant bubble is "typing" while streaming and it
+              // still has text being revealed; show the loading run before that.
+              const typing = streaming && isLast && m.role === 'assistant';
+              return (
+                <div key={i} className={`chatMsg ${m.role}`}>
+                  {m.text
+                    ? m.text
+                    : (typing ? <span className="chatLoading">{loadingGlyph}</span> : '')}
+                  {typing && m.text && <span className="chatCursor">|</span>}
+                </div>
+              );
+            })}
           </div>
           <div className="chatInputRow">
             <input

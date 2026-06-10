@@ -115,6 +115,26 @@
   border: 1px solid #073;
 }
 
+/* "Thinking" indicator: accumulating Greek-letter names in the green mono style */
+.chatLoading {
+  color: #6f6;
+  opacity: 0.85;
+  letter-spacing: 1px;
+}
+
+/* Blinking "|" cursor on the currently-typing assistant answer (mirrors the
+   IntroPage cursor aesthetic). */
+.chatCursor {
+  color: #39FF14;
+  font-weight: bold;
+  margin-left: 1px;
+  animation: chatCursorBlink 1s step-end infinite;
+}
+@keyframes chatCursorBlink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
 .chatInputRow {
   display: flex;
   border-top: 1px solid #0f0;
