@@ -7,7 +7,7 @@ import './ChatWidget.css';
 const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: "Hi! I'm LedbetterGPT. Ask me anything about David's experience, projects, or skills." },
+    { role: 'assistant', text: "Hey — I'm David Ledbetter (well, my digital likeness). Ask me anything about my experience, projects, or skills." },
   ]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);

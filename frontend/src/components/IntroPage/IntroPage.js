@@ -63,19 +63,18 @@ const IntroPage = () => {
     setParagraphCursorVisible(true);
     setParagraphText('');
     const len = introParagraph.length;
-    // Cap total typing at 1.5s regardless of length (advance multiple chars/tick).
-    const TICK = 20;
-    const step = Math.max(1, Math.ceil(len / (1500 / TICK)));
+    // Deliberate, slower ~3s typewriter for the hero paragraph.
+    const delay = Math.max(8, Math.min(60, Math.round(3000 / Math.max(len, 1))));
     let index = 0;
     const intervalId = setInterval(() => {
-      index = Math.min(len, index + step);
+      index += 1;
       setParagraphText(introParagraph.slice(0, index));
       if (index >= len) {
         clearInterval(intervalId);
         setParagraphCursorVisible(false);
         setParagraphDone(true);
       }
-    }, TICK);
+    }, delay);
     return () => clearInterval(intervalId);
   }, [welcomeDone, introParagraph]);
 
