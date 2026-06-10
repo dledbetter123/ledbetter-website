@@ -94,21 +94,23 @@ const IntroPage = () => {
       const scale = Math.max(W / natW, H / natH);
       const overflowY = Math.max(0, natH * scale - H);
 
-      // Parallax pan: scroll through the entire image (top -> bottom) over a
-      // distance equal to its overflow, bounded to ~1.5 viewport heights so the
-      // pan always scales with the viewport. Then fade out over 0.6 vh.
+      // Parallax pan: scroll through the entire image (top -> bottom) over a distance
+      // equal to its overflow, bounded to ~1.5 viewport heights. `through` is always
+      // positive so there's guaranteed scroll-through even if the image doesn't overflow.
       const panDistance = Math.min(overflowY, H * 1.5);
-      const fadeLength = H * 0.6;
+      const through = panDistance > 0 ? panDistance : H;
       const s = window.scrollY;
 
-      let panPct = 0;
+      const panPct = panDistance > 0 ? Math.min(100, (s / panDistance) * 100) : 100;
+
+      // Once we've swiped through 4/5 of the image, fade to black over the final 1/5,
+      // and stay fully black past it. No chances — guaranteed 0 by the end of the pan.
+      const fadeStart = 0.8 * through;
       let opacity = 1;
-      if (panDistance > 0 && s < panDistance) {
-        panPct = (s / panDistance) * 100; // 0% (top) -> 100% (bottom)
-      } else {
-        panPct = 100;
-        const f = (s - panDistance) / fadeLength;
-        opacity = f <= 0 ? 1 : f >= 1 ? 0 : 1 - f;
+      if (s >= through) {
+        opacity = 0;
+      } else if (s > fadeStart) {
+        opacity = 1 - (s - fadeStart) / (through - fadeStart);
       }
 
       profilePic.style.objectPosition = `50% ${panPct}%`;
