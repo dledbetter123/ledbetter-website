@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import './IntroPage.css';
+import { runScramble } from '../../lib/scramble';
 
 import profilePic from './images/hero.jpg';
 
@@ -60,22 +61,10 @@ const IntroPage = () => {
   // Type out the paragraph once the heading is done and the text has loaded.
   useEffect(() => {
     if (!welcomeDone || introParagraph === null) return;
-    setParagraphCursorVisible(true);
-    setParagraphText('');
-    let index = 0;
-    // Typing speed scales with paragraph length (consistent total duration).
-    const paraDelay = Math.max(4, Math.min(40, Math.round(2200 / Math.max(introParagraph.length, 1))));
-    const intervalId = setInterval(() => {
-      index++;
-      setParagraphText(introParagraph.slice(0, index));
-      if (index >= introParagraph.length) {
-        clearInterval(intervalId);
-        setParagraphCursorVisible(false);
-        setParagraphDone(true);
-      }
-    }, paraDelay);
-
-    return () => clearInterval(intervalId);
+    setParagraphCursorVisible(false);
+    // Decode shimmer: characters flicker through Greek/Arabic glyphs and settle
+    // onto the real text within ~3s.
+    return runScramble(introParagraph, 3000, setParagraphText, () => setParagraphDone(true));
   }, [welcomeDone, introParagraph]);
 
   useEffect(() => {
@@ -148,7 +137,7 @@ const IntroPage = () => {
           {welcomeText}
           {welcomeCursorVisible && <span>|</span>} {/* Cursor */}
         </h1>
-        <p style={{ fontSize: '23px' }} title={hoverTitle}>
+        <p style={{ fontSize: '23px', unicodeBidi: 'bidi-override', direction: 'ltr' }} title={hoverTitle}>
           {paragraphText}
           {paragraphCursorVisible && <span>|</span>}
           {paragraphDone && <span className="cursorBlock" />}

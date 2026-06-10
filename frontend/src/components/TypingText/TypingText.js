@@ -1,17 +1,32 @@
 import React from 'react';
 import useTypeOnVisible from '../../hooks/useTypeOnVisible';
+import useScrambleOnVisible from '../../hooks/useScrambleOnVisible';
 
-// Renders `text` with the live-typing-on-visibility effect inside the given element
-// (`as`, default <p>). The already-typed text renders normally and the remaining
-// text renders hidden (but still occupying space) right after it — so the full
-// layout is reserved up front and the typed text stays in natural flow (no absolute
-// positioning, no misalignment).
-const TypingText = ({ text, as: Tag = 'p', speed, className, style }) => {
-  const [ref, typed] = useTypeOnVisible(text, speed);
-  const rest = text ? text.slice(typed.length) : '';
+// Renders `text` with a visibility-triggered effect:
+//   effect="type"     -> typewriter (default)
+//   effect="scramble" -> decode shimmer (Greek/Arabic glyphs settling to the text)
+// Layout is reserved up front so surrounding content doesn't jump.
+const TypingText = ({ text, as: Tag = 'p', speed, effect = 'type', className, style }) => {
+  const [typeRef, typed] = useTypeOnVisible(text, speed);
+  const [scrambleRef, scrambled] = useScrambleOnVisible(text, 3000);
+
+  const scramble = effect === 'scramble';
+  const ref = scramble ? scrambleRef : typeRef;
+  const display = scramble ? scrambled : typed;
+
+  if (scramble) {
+    // bidi-override keeps the RTL Arabic glyphs in place while shimmering.
+    return (
+      <Tag ref={ref} className={className} style={{ unicodeBidi: 'bidi-override', direction: 'ltr', ...style }}>
+        {display !== '' ? display : <span aria-hidden="true" style={{ visibility: 'hidden' }}>{text}</span>}
+      </Tag>
+    );
+  }
+
+  const rest = text ? text.slice(display.length) : '';
   return (
     <Tag ref={ref} className={className} style={style}>
-      {typed}
+      {display}
       <span aria-hidden="true" style={{ visibility: 'hidden' }}>{rest}</span>
     </Tag>
   );
