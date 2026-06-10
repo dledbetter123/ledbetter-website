@@ -181,49 +181,12 @@
   pointer-events: none; /* purely decorative — never intercept clicks/scroll */
 }
 
-/* Vertical vignette that fades the hero's top & bottom to black so they blend
-   into the iOS status bar / Safari toolbar (no hard line, especially under the
-   translucent Liquid Glass bars). Anchored to the SMALL viewport (100svh): Liquid
-   Glass keeps the search field docked, so the real visible bottom edge is at svh,
-   NOT lvh — anchoring to svh lands the bottom black exactly at the search field
-   instead of behind it. The bottom fade is a touch longer than the top since that
-   bar is taller. */
-.hero-vignette {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;   /* fallback */
-  height: 100svh;  /* small viewport = the content area above the docked toolbar */
-  z-index: 0;      /* above the image (also z-0, earlier in DOM); below content */
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    #000 0,
-    rgba(0, 0, 0, 0) 12%,
-    rgba(0, 0, 0, 0) 80%,
-    #000 100%
-  );
-}
-
-/* iOS 26 Liquid Glass tint anchors — full-width opaque black strips pinned to the
-   top & bottom edges. Safari 26 derives the chrome tint by sampling a solid
-   background-color from a fixed/sticky element near a viewport edge (else <body>);
-   a full-width solid strip is the strongest, least ambiguous source, so it tints
-   the floating bars black and overrides any small corner fixed element (menu/chat).
-   Non-trivial height (NOT a magic 1px — exact geometry thresholds are unverified
-   folklore). Sit under the content + chrome, so they're not visible. */
-.tint-anchor {
-  position: fixed;
-  left: 0;
-  right: 0;
-  height: 28px;
-  background-color: #000; /* SOLID color is what Safari 26 samples (not images/gradients) */
-  z-index: 0;
-  pointer-events: none;
-}
-.tint-anchor--top { top: 0; }
-.tint-anchor--bottom { bottom: 0; }
+/* No hero vignette / tint strips: this is the full-bleed-photo design. The photo
+   fills the screen edge-to-edge under iOS 26's translucent Liquid Glass bars, and
+   the floating search pill tints dark on its own from <body>'s black background-color
+   (Safari 26 samples only solid background-color, never the hero <img>). See the
+   .profilePic overscan above for the edge-to-edge fill, and the reference memory
+   reference_ios26_safari_theme_color for the tinting mechanism. */
 
 .content-layer {
   position: relative;

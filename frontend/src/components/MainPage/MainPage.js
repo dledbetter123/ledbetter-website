@@ -206,25 +206,14 @@ const MainPage = () => {
           so the whole content tree is one solid layer above this image — no per-section
           z-index lifts, no seams for a heading to fall through. IntroPage drives this
           image's brightness/pan on scroll via document.querySelector('.profilePic'). */}
+      {/* Full-bleed hero: the photo lays out edge-to-edge under iOS 26's translucent
+          Liquid Glass bars (via viewport-fit=cover + the overscan in .profilePic), so
+          it fills the whole screen and shows through the floating search pill / behind
+          the status bar — no black bars, no seam. We deliberately do NOT add a vignette
+          or solid-color tint strips here: <body> is black, and since Safari 26 samples
+          only a solid background-color (never the hero <img>), the floating pill tints
+          to a dark translucent glass over the photo on its own. */}
       <img src={heroImg} alt="" aria-hidden="true" className="profilePic" />
-      {/* Vertical black vignette over the hero: fades the photo's top and bottom
-          edges to black so they blend into the iOS status bar / Safari toolbar
-          instead of meeting them at a hard line (matters most on Liquid Glass,
-          where the translucent bars show the seam). Sits above the image, below
-          the content layer; purely decorative. */}
-      <div className="hero-vignette" aria-hidden="true" />
-      {/* iOS 26 "Liquid Glass" tint anchors. Safari 26 ignores <meta theme-color>
-          and instead samples a SOLID background-color from a full-width fixed/sticky
-          element near a viewport edge (falling back to <body>, already #000). These
-          opaque black edge strips give the sampler an unambiguous full-width black
-          source top & bottom, so the floating search bar / status area tint to black
-          even though small corner fixed elements (menu button, chat toggle) sit near
-          those edges. They live under the chrome + vignette's black edges, so they're
-          not visible. iOS <=25 still uses the theme-color meta. (Verified behavior:
-          gradients/images are NOT sampled — only background-color — so neither the
-          hero <img> nor the gradient vignette competes here.) */}
-      <div className="tint-anchor tint-anchor--top" aria-hidden="true" />
-      <div className="tint-anchor tint-anchor--bottom" aria-hidden="true" />
       <NavBar
         ref={navBarRef}
         isOpen={isNavbarOpen}
