@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './ChatWidget.css';
 
-// Pool of lowercase Greek-letter names for the "thinking" indicator. Each
-// loading cycle draws a freshly shuffled ordering from this pool.
+// Pool of Greek-letter glyphs for the "thinking" indicator. Each loading cycle
+// draws a freshly shuffled ordering from this pool (matches the site's scramble
+// aesthetic — actual characters, e.g. "φ χ ν", not their spelled-out names).
 const GREEK_NAMES = [
-  'phi', 'chi', 'nu', 'psi', 'rho', 'xi', 'tau', 'mu', 'eta',
-  'beta', 'zeta', 'theta', 'sigma', 'omega', 'lambda', 'gamma', 'delta', 'kappa',
+  'φ', 'χ', 'ν', 'ψ', 'ρ', 'ξ', 'τ', 'μ', 'η',
+  'β', 'ζ', 'θ', 'σ', 'ω', 'λ', 'γ', 'δ', 'κ',
 ];
 
 // Stable per-tab session id shared with the backend. Generated once with
