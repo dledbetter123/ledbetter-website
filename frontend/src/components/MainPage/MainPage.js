@@ -18,6 +18,7 @@ const MainPage = () => {
   const contactRef = useRef(null);
   const portfolioRef = useRef(null);
   const carouselRef = useRef(null);
+  const pubCarouselRef = useRef(null);
 
   const navBarRef = useRef(null);
 
@@ -38,23 +39,21 @@ const MainPage = () => {
   }, []);
 
   useEffect(() => {
-    const handleWheel = (e) => {
-      // Check if carouselRef.current is available and invoke handleWheel
-      if (carouselRef.current) {
-        carouselRef.current.handleWheel(e);
-      }
-    };
-
-    const carouselContainer = document.querySelector('.carousel-style');
-    if (carouselContainer) {
-      carouselContainer.addEventListener('wheel', handleWheel, { passive: false });
-    }
-
-    return () => {
-      if (carouselContainer) {
-        carouselContainer.removeEventListener('wheel', handleWheel);
-      }
-    };
+    // Wire horizontal-wheel scrolling to each carousel's own container/ref.
+    const pairs = [
+      { el: document.querySelector('.carousel-style'), ref: carouselRef },
+      { el: document.querySelector('.pub-carousel-style'), ref: pubCarouselRef },
+    ];
+    const cleanups = [];
+    pairs.forEach(({ el, ref }) => {
+      if (!el) return;
+      const handleWheel = (e) => {
+        if (ref.current) ref.current.handleWheel(e);
+      };
+      el.addEventListener('wheel', handleWheel, { passive: false });
+      cleanups.push(() => el.removeEventListener('wheel', handleWheel));
+    });
+    return () => cleanups.forEach((c) => c());
   }, []);
   // Other scroll functions...
 
@@ -131,26 +130,6 @@ const MainPage = () => {
     },
     {
       content: (
-        <PublicationCard
-          title={ImpostorsPublication.title}
-          citation={ImpostorsPublication.citation}
-          url={ImpostorsPublication.url}
-          footer={ImpostorsPublication.footer}
-        />
-      )
-    },
-    {
-      content: (
-        <PublicationCard
-          title={DronePublication.title}
-          citation={DronePublication.citation}
-          url={DronePublication.url}
-          footer={DronePublication.footer}
-        />
-      )
-    },
-    {
-      content: (
         <ProjectCard
           title={CharProjectDetails.title}
           githubUrl={CharProjectDetails.githubUrl}
@@ -191,6 +170,30 @@ const MainPage = () => {
     },
   ];
 
+  // Publications get their own carousel, directly under the project (GitHub) cards.
+  const publicationItems = [
+    {
+      content: (
+        <PublicationCard
+          title={ImpostorsPublication.title}
+          citation={ImpostorsPublication.citation}
+          url={ImpostorsPublication.url}
+          footer={ImpostorsPublication.footer}
+        />
+      )
+    },
+    {
+      content: (
+        <PublicationCard
+          title={DronePublication.title}
+          citation={DronePublication.citation}
+          url={DronePublication.url}
+          footer={DronePublication.footer}
+        />
+      )
+    },
+  ];
+
   const scrollToSection = (ref) => {
     ref.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -214,6 +217,10 @@ const MainPage = () => {
       <div ref={homeRef}><IntroPage /></div>
       <div ref={portfolioRef} className='carousel-style'>
         <Carousel ref={carouselRef} items={carouselItems} />
+      </div>
+      <div className='pub-carousel-style'>
+        <h3 className='pub-carousel-heading'>Publications &amp; Presentations</h3>
+        <Carousel ref={pubCarouselRef} items={publicationItems} />
       </div>
       <div ref={aboutRef}><AboutPage /></div>
       <div ref={contactRef}><ContactPage /></div>

@@ -132,3 +132,20 @@
     transform: scale(1.5);
   }
   
+/* Publications carousel — sits directly under the project (GitHub) cards. */
+.pub-carousel-style {
+  z-index: 50;
+  position: relative;
+  margin-top: 8px;
+}
+
+.pub-carousel-heading {
+  text-align: center;
+  color: #00FF00;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-size: 15px;
+  margin: 0 0 10px;
+  text-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
+}

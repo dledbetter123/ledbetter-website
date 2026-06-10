@@ -1,0 +1,25 @@
+/* Transient "no online link" hint shown when a link-less publication card is clicked. */
+.pub-hint {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  background: rgba(0, 0, 0, 0.85);
+  color: #39FF14;
+  border: 1px solid #0f0;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.35);
+  animation: pubHintFade 1.6s ease forwards;
+}
+
+@keyframes pubHintFade {
+  0% { opacity: 0; transform: translate(-50%, 6px); }
+  15% { opacity: 1; transform: translate(-50%, 0); }
+  80% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, 0); }
+}
