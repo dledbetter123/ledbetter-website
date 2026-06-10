@@ -114,7 +114,7 @@ const ChatWidget = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Ask about David…"
+              placeholder="Ask David…"
               disabled={streaming}
             />
             <button className="chatSend" onClick={send} disabled={streaming || !input.trim()}>
