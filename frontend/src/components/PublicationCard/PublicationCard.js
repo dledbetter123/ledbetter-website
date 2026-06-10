@@ -18,8 +18,8 @@ const PublicationCard = ({ title, citation, url, footer = 'Read the paper →' }
   return (
     <div
       className={`project-card ${isHovered ? 'hovered' : ''}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => clickable && setIsHovered(true)}
+      onMouseLeave={() => clickable && setIsHovered(false)}
       onClick={clickable ? () => window.open(url, '_blank') : undefined}
       style={clickable ? undefined : { cursor: 'default' }}
     >
