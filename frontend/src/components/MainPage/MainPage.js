@@ -213,6 +213,18 @@ const MainPage = () => {
           where the translucent bars show the seam). Sits above the image, below
           the content layer; purely decorative. */}
       <div className="hero-vignette" aria-hidden="true" />
+      {/* iOS 26 "Liquid Glass" tint anchors. Safari 26 ignores <meta theme-color>
+          and instead samples a SOLID background-color from a full-width fixed/sticky
+          element near a viewport edge (falling back to <body>, already #000). These
+          opaque black edge strips give the sampler an unambiguous full-width black
+          source top & bottom, so the floating search bar / status area tint to black
+          even though small corner fixed elements (menu button, chat toggle) sit near
+          those edges. They live under the chrome + vignette's black edges, so they're
+          not visible. iOS <=25 still uses the theme-color meta. (Verified behavior:
+          gradients/images are NOT sampled — only background-color — so neither the
+          hero <img> nor the gradient vignette competes here.) */}
+      <div className="tint-anchor tint-anchor--top" aria-hidden="true" />
+      <div className="tint-anchor tint-anchor--bottom" aria-hidden="true" />
       <NavBar
         ref={navBarRef}
         isOpen={isNavbarOpen}

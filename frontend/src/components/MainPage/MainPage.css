@@ -206,6 +206,25 @@
   );
 }
 
+/* iOS 26 Liquid Glass tint anchors — full-width opaque black strips pinned to the
+   top & bottom edges. Safari 26 derives the chrome tint by sampling a solid
+   background-color from a fixed/sticky element near a viewport edge (else <body>);
+   a full-width solid strip is the strongest, least ambiguous source, so it tints
+   the floating bars black and overrides any small corner fixed element (menu/chat).
+   Non-trivial height (NOT a magic 1px — exact geometry thresholds are unverified
+   folklore). Sit under the content + chrome, so they're not visible. */
+.tint-anchor {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background-color: #000; /* SOLID color is what Safari 26 samples (not images/gradients) */
+  z-index: 0;
+  pointer-events: none;
+}
+.tint-anchor--top { top: 0; }
+.tint-anchor--bottom { bottom: 0; }
+
 .content-layer {
   position: relative;
   z-index: 1;          /* whole content tree paints above the z-0 background image */
