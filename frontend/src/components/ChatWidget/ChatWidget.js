@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './ChatWidget.css';
+import { runScramble } from '../../lib/scramble';
 
 // Pool of Greek-letter glyphs for the "thinking" indicator. Each loading cycle
 // draws a freshly shuffled ordering from this pool (matches the site's scramble
@@ -86,22 +87,22 @@ const ChatWidget = () => {
       }
 
       const fullText = (await res.text()).trim() || '(no response)';
-      // Type the answer out client-side (the API returns it buffered).
+      // Decode the answer in with the shimmer effect (same as the project cards):
+      // the whole reply flickers through Greek/Arabic glyphs and settles into place.
+      const duration = Math.min(2200, 1100 + fullText.length * 1.2);
       await new Promise((resolve) => {
-        let i = 0;
-        const id = setInterval(() => {
-          i += 1;
-          const partial = fullText.slice(0, i);
-          setMessages((prev) => {
-            const next = [...prev];
-            next[next.length - 1] = { role: 'assistant', text: partial };
-            return next;
-          });
-          if (i >= fullText.length) {
-            clearInterval(id);
-            resolve();
-          }
-        }, 8);
+        runScramble(
+          fullText,
+          duration,
+          (s) => {
+            setMessages((prev) => {
+              const next = [...prev];
+              next[next.length - 1] = { role: 'assistant', text: s };
+              return next;
+            });
+          },
+          resolve,
+        );
       });
     } catch (e) {
       setMessages((prev) => {
@@ -169,7 +170,6 @@ const ChatWidget = () => {
                   {m.text
                     ? m.text
                     : (typing ? <span className="chatLoading">{loadingGlyph}</span> : '')}
-                  {typing && m.text && <span className="chatCursor">|</span>}
                 </div>
               );
             })}
