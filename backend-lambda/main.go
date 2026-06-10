@@ -285,6 +285,19 @@ func main() {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "LedbetterGPT backend (lambda)")
 	})
+
+	// Origin lock: when ORIGIN_VERIFY is set, only requests carrying the matching
+	// X-Origin-Verify header (injected by CloudFront) are served — blocking direct
+	// hits to the public API Gateway URL. Env-gated so it's a no-op until enabled.
+	verify := os.Getenv("ORIGIN_VERIFY")
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if verify != "" && r.Header.Get("X-Origin-Verify") != verify {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		mux.ServeHTTP(w, r)
+	})
+
 	// API Gateway HTTP API (payload v2) proxy — buffered response.
-	lambda.Start(httpadapter.NewV2(mux).ProxyWithContext)
+	lambda.Start(httpadapter.NewV2(handler).ProxyWithContext)
 }
