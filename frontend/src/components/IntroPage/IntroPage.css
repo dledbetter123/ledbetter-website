@@ -74,21 +74,9 @@
 }
 
 
-.profilePic {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh; /* fallback for browsers without lvh */
-  height: 100lvh; /* LARGE viewport: a STATIC size (toolbar-hidden height). It doesn't
-                     change when the toolbar shows/hides, so the image never re-scales
-                     ("zooms") on scroll; when the toolbar is shown it simply overflows
-                     behind it — always full, never a gap. (dvh would resize and zoom.) */
-  object-fit: cover; /* zoom to fill both axes, cropping the overflow — no letterboxing */
-  object-position: top center; /* keep the top of the frame; crop spills to the bottom */
-  z-index: 0; /* backmost background (content is z>=2); NOT -1 (iOS punches it through) */
-  filter: brightness(75%); /* resting brightness; JS dims this to 0 (black) on scroll */
-}
+/* .profilePic (the fixed full-screen hero) now lives in MainPage.css, since the
+   image is rendered by MainPage as the SPA-wide background layer rather than by
+   this section. */
 
 @media (max-width: 600px) {
   .introPage {

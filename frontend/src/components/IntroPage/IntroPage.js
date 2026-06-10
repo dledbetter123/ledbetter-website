@@ -3,7 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import './IntroPage.css';
 
-import profilePic from './images/hero.jpg';
+// The fixed hero image now lives in MainPage as a single full-screen background
+// layer behind the whole SPA (see MainPage's .profilePic / .content-layer). This
+// component still drives the image's brightness/pan on scroll via
+// document.querySelector('.profilePic').
 
 // The intro paragraph is hosted in S3 so it can be edited without redeploying the
 // site. Update s3://davidamosledbetter-portfolio/intro.txt and the change shows on
@@ -169,7 +172,6 @@ const IntroPage = () => {
           </span>
         </p>
       </div>
-      <img src={profilePic} alt="Profile" className="profilePic" />
     </section>
   );
 };

@@ -149,3 +149,37 @@
   margin: 0 0 10px;
   text-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
 }
+
+/* ── Background / content layering ──────────────────────────────────────────
+   The hero image is a single fixed full-screen layer at the BACK of the SPA
+   (z-index 0). Everything you scroll through lives inside .content-layer, which
+   is its own isolated stacking context one level above it (z-index 1). Because
+   the whole content tree is a single layer over the image, no individual section
+   needs to "lift" itself above the image and there are no seams a heading can
+   slip behind. The fixed-position overlays (menuIcon z-1999, NavBar z-2000,
+   ChatWidget z-3000) are siblings of .content-layer at the root, so they still
+   sit above everything. */
+.profilePic {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh; /* fallback for browsers without lvh */
+  height: 100lvh; /* LARGE viewport: a STATIC size (toolbar-hidden height). It doesn't
+                     change when the toolbar shows/hides, so the image never re-scales
+                     ("zooms") on scroll; when the toolbar is shown it simply overflows
+                     behind it — always full, never a gap. (dvh would resize and zoom.) */
+  object-fit: cover; /* zoom to fill both axes, cropping the overflow — no letterboxing */
+  object-position: top center; /* keep the top of the frame; crop spills to the bottom */
+  z-index: 0; /* backmost background; content sits above via .content-layer (z-index 1) */
+  filter: brightness(75%); /* resting brightness; JS dims this to 0 (black) on scroll */
+  pointer-events: none; /* purely decorative — never intercept clicks/scroll */
+}
+
+.content-layer {
+  position: relative;
+  z-index: 1;          /* whole content tree paints above the z-0 background image */
+  isolation: isolate;  /* one self-contained stacking context — kills the iOS
+                          fixed+filter punch-through that let the image paint over
+                          content regardless of per-section z-index */
+}

@@ -9,6 +9,7 @@ import ProjectCard from '../ProjectCard/ProjectCard';
 import PublicationCard from '../PublicationCard/PublicationCard';
 import NavBar from '../NavBar/NavBar'; // Adjust the import path as necessary
 import ChatWidget from '../ChatWidget/ChatWidget';
+import heroImg from '../IntroPage/images/hero.jpg';
 import "../MainPage/MainPage.css"
 
 const MainPage = () => {
@@ -200,6 +201,12 @@ const MainPage = () => {
 
   return (
     <div className='main-container'>
+      {/* Single full-screen background layer behind the entire SPA (z-index 0). All
+          content lives in .content-layer (an isolated stacking context at z-index 1)
+          so the whole content tree is one solid layer above this image — no per-section
+          z-index lifts, no seams for a heading to fall through. IntroPage drives this
+          image's brightness/pan on scroll via document.querySelector('.profilePic'). */}
+      <img src={heroImg} alt="" aria-hidden="true" className="profilePic" />
       <NavBar
         ref={navBarRef}
         isOpen={isNavbarOpen}
@@ -214,17 +221,19 @@ const MainPage = () => {
         <div className="bar"></div>
         <div className="bar"></div>
       </button>
-      <div ref={homeRef}><IntroPage /></div>
-      <div ref={portfolioRef} className='carousel-style'>
-        <h3 className='carousel-heading'>Personal Projects &amp; Research</h3>
-        <Carousel ref={carouselRef} items={carouselItems} />
+      <div className="content-layer">
+        <div ref={homeRef}><IntroPage /></div>
+        <div ref={portfolioRef} className='carousel-style'>
+          <h3 className='carousel-heading'>Personal Projects &amp; Research</h3>
+          <Carousel ref={carouselRef} items={carouselItems} />
+        </div>
+        <div className='pub-carousel-style'>
+          <h3 className='carousel-heading'>Publications &amp; Presentations</h3>
+          <Carousel ref={pubCarouselRef} items={publicationItems} />
+        </div>
+        <div ref={aboutRef}><AboutPage /></div>
+        <div ref={contactRef}><ContactPage /></div>
       </div>
-      <div className='pub-carousel-style'>
-        <h3 className='carousel-heading'>Publications &amp; Presentations</h3>
-        <Carousel ref={pubCarouselRef} items={publicationItems} />
-      </div>
-      <div ref={aboutRef}><AboutPage /></div>
-      <div ref={contactRef}><ContactPage /></div>
       <ChatWidget />
     </div>
   );
