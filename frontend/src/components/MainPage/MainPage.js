@@ -115,6 +115,14 @@ const MainPage = () => {
     {
       content: (
         <ProjectCard
+          title={LedbetterProjectDetails.title}
+          githubUrl={LedbetterProjectDetails.githubUrl}
+        />
+      )
+    },
+    {
+      content: (
+        <ProjectCard
           title={SgstProjectDetails.title}
           githubUrl={SgstProjectDetails.githubUrl}
         />
@@ -157,14 +165,6 @@ const MainPage = () => {
         <ProjectCard
           title={NSBEProjectDetails.title}
           githubUrl={NSBEProjectDetails.githubUrl}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={LedbetterProjectDetails.title}
-          githubUrl={LedbetterProjectDetails.githubUrl}
         />
       )
     },
