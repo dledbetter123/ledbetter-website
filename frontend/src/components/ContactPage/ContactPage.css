@@ -7,7 +7,7 @@
     align-items: center;
     height: 100vh; /* Full viewport height */
     color: white; /* White text for readability */
-    background-color: black; /* Consistent black background */
+    background-color: transparent; /* fixed hero (faded to black) + black body show through; no edge */
     padding: 20px;
     box-sizing: border-box;
     position: relative; /* lift above the fixed hero image */

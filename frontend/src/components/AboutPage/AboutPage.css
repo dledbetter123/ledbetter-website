@@ -6,7 +6,7 @@
     flex-direction: column;
     text-align: left;
     color: white;
-    background-color: #000; /* Adjust based on your site's theme */
+    background-color: transparent; /* fixed hero (faded to black) + black body show through; no edge */
     padding: 20px;
     box-sizing: border-box;
     min-height: 100vh;

@@ -6,7 +6,7 @@
     align-items: stretch; /* let .content span the full height */
     height: 100vh; /* Full viewport height */
     color: white; /* White text */
-    background-color: black; /* Black background */
+    background-color: transparent; /* the fixed hero + black body are the backdrop */
     padding: 20px;
     box-sizing: border-box;
   }
@@ -80,31 +80,8 @@
   height: 100%;
   object-fit: cover; /* Always fully occupy the screen, no gaps */
   object-position: top center; /* Anchor to the top so cropping happens at the bottom */
-  z-index: 1; /* Below the text content */
+  z-index: 0; /* fixed background layer, behind ALL content; black body shows as it fades */
   filter: brightness(75%);
-}
-
-/* Bottom fade-to-black, done as a gradient overlay rather than a mask on the image:
-   WebKit (desktop Safari + iPad) drops `mask-image` when combined with `filter` on a
-   `position: fixed` element, leaving a hard rectangular edge. An overlay always renders.
-   Fixed to the viewport bottom (matching the fixed hero); the scroll handler fades its
-   opacity in lockstep with the hero so it never bleeds over the section below. */
-.heroFade {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 45vh;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.15) 35%,
-    rgba(0, 0, 0, 0.55) 65%,
-    rgba(0, 0, 0, 0.85) 84%,
-    #000 100%
-  );
 }
 
 @media (max-width: 600px) {
@@ -119,7 +96,7 @@
     height: 100vh; /* Full viewport height */
     top: 0;
     left: 0;
-    z-index: 1; /* Ensure image is behind the content */
+    z-index: 0; /* behind all content */
   }
 
   .introPage .content {
