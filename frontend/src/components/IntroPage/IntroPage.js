@@ -113,6 +113,12 @@ const IntroPage = () => {
 
       profilePic.style.objectPosition = `50% ${panPct}%`;
       profilePic.style.opacity = String(opacity);
+
+      // The bottom fade-to-black is a gradient overlay (a WebKit mask-image +
+      // filter + position:fixed combo renders a hard edge on Safari/iPad), so fade
+      // it out together with the hero as you scroll past it.
+      const heroFade = document.querySelector('.heroFade');
+      if (heroFade) heroFade.style.opacity = String(opacity);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -162,6 +168,7 @@ const IntroPage = () => {
         </p>
       </div>
       <img src={profilePic} alt="Profile" className="profilePic" />
+      <div className="heroFade" aria-hidden="true" />
     </section>
   );
 };
