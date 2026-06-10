@@ -1,25 +1,32 @@
 {
-  "short_name": "Portfolio",
+  "short_name": "Ledbetter",
   "name": "David Ledbetter's Portfolio",
   "icons": [
     {
-      "src": "L2_fav.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
+      "src": "favicon.ico",
+      "sizes": "16x16 32x32 48x48 64x64",
       "type": "image/x-icon"
     },
     {
-      "src": "icon192.png",
+      "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
-      "src": "icon512.png",
+      "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180"
     }
   ],
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "background_color": "#000000"
 }
