@@ -10,7 +10,7 @@ import profilePic from './images/hero.jpg';
 // the next page load. The constant below is the offline fallback if the fetch fails.
 const INTRO_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/intro.txt';
 const DEFAULT_INTRO =
-  "I'm David Ledbetter, I'm a machine learning and full-stack software engineer at Apple, building agentic AI systems. I hold BS and MS degrees in Computer Science from UMBC. Scroll the cards below to see my projects — or ask LedbetterGPT in the corner anything about my work.";
+  "I'm David Ledbetter, I'm a machine learning and full-stack software engineer at Apple, building agentic AI systems. I hold BS and MS degrees in Computer Science from UMBC. Scroll the cards below to see my projects… or ask LedbetterGPT in the corner anything about my work.";
 
 const IntroPage = () => {
   const [backendStatus, setBackendStatus] = useState('loading');
@@ -63,8 +63,8 @@ const IntroPage = () => {
     setParagraphCursorVisible(true);
     setParagraphText('');
     const len = introParagraph.length;
-    // Deliberate, slower ~3s typewriter for the hero paragraph.
-    const delay = Math.max(8, Math.min(60, Math.round(3000 / Math.max(len, 1))));
+    // Deliberate ~2.2s typewriter for the hero paragraph.
+    const delay = Math.max(8, Math.min(60, Math.round(2200 / Math.max(len, 1))));
     let index = 0;
     const intervalId = setInterval(() => {
       index += 1;
