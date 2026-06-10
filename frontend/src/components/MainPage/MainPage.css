@@ -177,6 +177,7 @@
   object-position: top center; /* keep the top of the frame; crop spills to the bottom */
   z-index: 0; /* backmost background; content sits above via .content-layer (z-index 1) */
   filter: brightness(75%); /* resting brightness; JS dims this to 0 (black) on scroll */
+  will-change: filter; /* keep this big layer GPU-promoted so the scroll fade is cheap */
   pointer-events: none; /* purely decorative — never intercept clicks/scroll */
 }
 

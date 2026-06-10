@@ -82,9 +82,19 @@ const IntroPage = () => {
   }, [welcomeDone, introParagraph]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const profilePic = document.querySelector('.profilePic');
-      if (!profilePic) return;
+    const profilePic = document.querySelector('.profilePic');
+    if (!profilePic) return;
+
+    // Coalesce scroll work to one update per animation frame. The hero is a large
+    // fixed, overscanned layer with a brightness filter; writing that filter on
+    // every raw scroll event repaints the whole layer and drops frames on mobile
+    // Safari. rAF-throttling + skipping redundant writes keeps the fade smooth.
+    let ticking = false;
+    let lastBrightness = -1;
+    let lastPan = -1;
+
+    const update = () => {
+      ticking = false;
 
       const W = window.innerWidth;
       const H = window.innerHeight;
@@ -119,13 +129,29 @@ const IntroPage = () => {
         brightness = base * (1 - (s - showUntil) / (blackBy - showUntil));
       }
 
-      profilePic.style.objectPosition = `50% ${panPct}%`;
-      profilePic.style.filter = `brightness(${brightness})`;
+      // Only touch the DOM when a value actually changed — avoids redundant repaints
+      // of the large fixed hero layer on frames where nothing moved.
+      if (panPct !== lastPan) {
+        profilePic.style.objectPosition = `50% ${panPct}%`;
+        lastPan = panPct;
+      }
+      if (brightness !== lastBrightness) {
+        profilePic.style.filter = `brightness(${brightness})`;
+        lastBrightness = brightness;
+      }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(update);
+      }
+    };
 
-    return () => window.removeEventListener('scroll', handleScroll);
+    update(); // set the initial resting state
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
