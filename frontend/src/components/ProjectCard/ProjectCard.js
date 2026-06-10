@@ -32,8 +32,9 @@ const ProjectCard = ({ title, githubUrl }) => {
   }, [githubUrl]);
 
   // Both shimmer (decode) in when the card scrolls into view.
+  // Title decodes first; the description starts once the title has settled.
   const [titleRef, titleText] = useScrambleOnVisible(title, 1100);
-  const [descRef, descriptionText] = useScrambleOnVisible(fullDescription, 1100);
+  const [descRef, descriptionText] = useScrambleOnVisible(fullDescription, 1100, 1100);
   const bidi = { unicodeBidi: 'bidi-override', direction: 'ltr' };
 
   return (
