@@ -182,22 +182,25 @@
 
 /* Vertical vignette that fades the hero's top & bottom to black so they blend
    into the iOS status bar / Safari toolbar (no hard line, especially under the
-   translucent Liquid Glass bars). Anchored to the visible viewport (not the
-   overscanned image), so the black lands right at the screen edges. */
+   translucent Liquid Glass bars). Anchored to the SMALL viewport (100svh): Liquid
+   Glass keeps the search field docked, so the real visible bottom edge is at svh,
+   NOT lvh — anchoring to svh lands the bottom black exactly at the search field
+   instead of behind it. The bottom fade is a touch longer than the top since that
+   bar is taller. */
 .hero-vignette {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;   /* fallback */
-  height: 100lvh;  /* match the visible large-viewport edges (static, no zoom) */
+  height: 100svh;  /* small viewport = the content area above the docked toolbar */
   z-index: 0;      /* above the image (also z-0, earlier in DOM); below content */
   pointer-events: none;
   background: linear-gradient(
     to bottom,
     #000 0,
-    rgba(0, 0, 0, 0) 13%,
-    rgba(0, 0, 0, 0) 87%,
+    rgba(0, 0, 0, 0) 12%,
+    rgba(0, 0, 0, 0) 80%,
     #000 100%
   );
 }
