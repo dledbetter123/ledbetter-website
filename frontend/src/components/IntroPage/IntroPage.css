@@ -74,13 +74,17 @@
 
 .profilePic {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw; /* fill the full viewport width */
-  height: 100vh; /* fallback */
-  height: 100lvh; /* fill the LARGEST viewport height so there's never a gap (iOS bar) */
+  /* Overscan PAST the viewport — into the device bezel / safe areas (notch, home
+     indicator) and behind the browser nav/search bar — so the background bleeds to
+     every physical edge, with extra room vertically. Explicit dimensions are required
+     because <img> is a replaced element (auto would snap to intrinsic size). */
+  top: calc(-1 * env(safe-area-inset-top, 0px) - 4vh);
+  left: calc(-1 * env(safe-area-inset-left, 0px));
+  width: calc(100vw + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px));
+  height: calc(100vh + 8vh); /* fallback */
+  height: calc(100lvh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 8vh);
   object-fit: cover; /* zoom to fill both axes, cropping the overflow — no letterboxing */
-  object-position: top center; /* Anchor to the top so cropping happens at the bottom */
+  object-position: top center; /* keep the top of the frame; crop spills to the bottom */
   z-index: 0; /* fixed background layer, behind ALL content; black body shows as it fades */
   filter: brightness(75%);
 }
@@ -91,17 +95,7 @@
     align-items: center;
   }
 
-  .profilePic {
-    position: fixed; /* viewport-filling background — no finite bottom edge / line */
-    width: 100vw;
-    height: 100vh; /* fallback */
-    height: 100lvh; /* always fill the largest viewport — no gap when the iOS bar hides */
-    top: 0;
-    left: 0;
-    object-fit: cover;
-    object-position: top center;
-    z-index: 0; /* behind all content */
-  }
+  /* .profilePic inherits the overscan base rule (fixed, bleeds past every edge). */
 
   .introPage .content {
     max-width: 600px; /* Maximum width of the content */
