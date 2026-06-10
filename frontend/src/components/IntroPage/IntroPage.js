@@ -157,8 +157,11 @@ const IntroPage = () => {
         <p style={{ fontSize: '23px' }} title={hoverTitle}>
           {/* Invisible full-text sizer reserves the final height so the block never
               reflows as it types — the visible text then fills strictly top-down. */}
+          {/* Reserve the paragraph's height from the first paint (using the always-
+              available fallback until the S3 text loads), so the vertically-centered
+              block — and the "Welcome." heading — never jumps when the text arrives. */}
           <span className="introPara-sizer" aria-hidden="true">
-            {introParagraph || ''}
+            {introParagraph || DEFAULT_INTRO}
           </span>
           <span className="introPara-typed">
             {paragraphText}
