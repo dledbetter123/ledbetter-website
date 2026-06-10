@@ -74,16 +74,15 @@
 
 .profilePic {
   position: fixed;
-  /* Overscan PAST the viewport — generous, plain units so it ALWAYS fills + bleeds into
-     the bezel / under the browser chrome (top:-15vh + 130vh height covers ~15vh past the
-     top and bottom; width:110vw / left:-5vw past the sides). Explicit dimensions because
-     <img> is a replaced element (auto would snap to its intrinsic size and not fill). */
-  top: -15vh;
-  left: -5vw;
-  width: 110vw;
-  height: 130vh;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh; /* fallback for browsers without dvh */
+  height: 100dvh; /* dynamic viewport: exactly tracks the visible area, so it always
+                     fills with no gap when the iOS toolbar shows/hides (best practice) */
   object-fit: cover; /* zoom to fill both axes, cropping the overflow — no letterboxing */
   object-position: top center; /* keep the top of the frame; crop spills to the bottom */
+  transform: scale(1.06); /* slight overscan so it bleeds past the bezel / under chrome */
   z-index: 0; /* backmost background (content is z>=2); NOT -1 (iOS punches it through) */
   filter: brightness(75%); /* resting brightness; JS dims this to 0 (black) on scroll */
 }

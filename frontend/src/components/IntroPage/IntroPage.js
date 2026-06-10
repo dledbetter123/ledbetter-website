@@ -102,8 +102,8 @@ const IntroPage = () => {
       // Show the hero only through the top 5% of the page's total scroll range, then
       // fade it to black over the next 5%. Fully black past 10%. No chances.
       const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-      const showUntil = 0.25 * maxScroll;
-      const blackBy = 0.50 * maxScroll;
+      const showUntil = 0.08 * maxScroll;
+      const blackBy = 0.13 * maxScroll;
       // Darken the IMAGE ITSELF to black instead of fading its opacity to reveal a
       // separate black layer. The image stays fully opaque and is the background the
       // whole time; it just dims to brightness(0) = pure black. Nothing depends on a
