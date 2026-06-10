@@ -216,10 +216,11 @@ const MainPage = () => {
       </button>
       <div ref={homeRef}><IntroPage /></div>
       <div ref={portfolioRef} className='carousel-style'>
+        <h3 className='carousel-heading'>Personal Projects &amp; Research</h3>
         <Carousel ref={carouselRef} items={carouselItems} />
       </div>
       <div className='pub-carousel-style'>
-        <h3 className='pub-carousel-heading'>Publications &amp; Presentations</h3>
+        <h3 className='carousel-heading'>Publications &amp; Presentations</h3>
         <Carousel ref={pubCarouselRef} items={publicationItems} />
       </div>
       <div ref={aboutRef}><AboutPage /></div>
