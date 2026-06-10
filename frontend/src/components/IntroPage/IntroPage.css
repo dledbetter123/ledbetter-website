@@ -84,8 +84,8 @@
   height: 130vh;
   object-fit: cover; /* zoom to fill both axes, cropping the overflow — no letterboxing */
   object-position: top center; /* keep the top of the frame; crop spills to the bottom */
-  z-index: -1; /* the very back — a true background; ALL content sits in front of it */
-  filter: brightness(75%);
+  z-index: 0; /* backmost background (content is z>=2); NOT -1 (iOS punches it through) */
+  filter: brightness(75%); /* resting brightness; JS dims this to 0 (black) on scroll */
 }
 
 @media (max-width: 600px) {

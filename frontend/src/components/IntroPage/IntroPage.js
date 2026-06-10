@@ -104,15 +104,20 @@ const IntroPage = () => {
       const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
       const showUntil = 0.25 * maxScroll;
       const blackBy = 0.50 * maxScroll;
-      let opacity = 1;
+      // Darken the IMAGE ITSELF to black instead of fading its opacity to reveal a
+      // separate black layer. The image stays fully opaque and is the background the
+      // whole time; it just dims to brightness(0) = pure black. Nothing depends on a
+      // cooperating black background, so there's no stacking/line inconsistency.
+      const base = 0.75; // resting brightness
+      let brightness = base;
       if (s >= blackBy) {
-        opacity = 0;
+        brightness = 0;
       } else if (s > showUntil) {
-        opacity = 1 - (s - showUntil) / (blackBy - showUntil);
+        brightness = base * (1 - (s - showUntil) / (blackBy - showUntil));
       }
 
       profilePic.style.objectPosition = `50% ${panPct}%`;
-      profilePic.style.opacity = String(opacity);
+      profilePic.style.filter = `brightness(${brightness})`;
     };
 
     window.addEventListener('scroll', handleScroll);
