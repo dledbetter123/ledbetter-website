@@ -89,31 +89,20 @@ const IntroPage = () => {
     // fixed, overscanned layer with a brightness filter; writing that filter on
     // every raw scroll event repaints the whole layer and drops frames on mobile
     // Safari. rAF-throttling + skipping redundant writes keeps the fade smooth.
+    // NB: we no longer touch object-position here — the crop framing is owned by CSS
+    // (.profilePic object-position). The old per-frame parallax was a no-op for this
+    // portrait-image/portrait-viewport aspect (no vertical overflow → it just pinned
+    // 50% 100%, fighting the CSS framing), so it's gone.
     let ticking = false;
     let lastBrightness = -1;
-    let lastPan = -1;
 
     const update = () => {
       ticking = false;
 
-      const W = window.innerWidth;
-      const H = window.innerHeight;
-      // Natural dimensions of the hero image (fallback to known size before load).
-      const natW = profilePic.naturalWidth || 2001;
-      const natH = profilePic.naturalHeight || 3000;
-
-      // With object-fit: cover, the image is scaled to cover the viewport; this is
-      // how much of it overflows vertically and can be panned through.
-      const scale = Math.max(W / natW, H / natH);
-      const overflowY = Math.max(0, natH * scale - H);
-
-      // Gentle parallax pan while the hero is visible.
-      const panDistance = Math.min(overflowY, H * 1.5);
       const s = window.scrollY;
-      const panPct = panDistance > 0 ? Math.min(100, (s / panDistance) * 100) : 100;
 
-      // Show the hero only through the top 5% of the page's total scroll range, then
-      // fade it to black over the next 5%. Fully black past 10%. No chances.
+      // Show the hero only through the top 8% of the page's total scroll range, then
+      // fade it to black over the next 5%. Fully black past 13%.
       const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
       const showUntil = 0.08 * maxScroll;
       const blackBy = 0.13 * maxScroll;
@@ -129,12 +118,8 @@ const IntroPage = () => {
         brightness = base * (1 - (s - showUntil) / (blackBy - showUntil));
       }
 
-      // Only touch the DOM when a value actually changed — avoids redundant repaints
+      // Only touch the DOM when the value actually changed — avoids redundant repaints
       // of the large fixed hero layer on frames where nothing moved.
-      if (panPct !== lastPan) {
-        profilePic.style.objectPosition = `50% ${panPct}%`;
-        lastPan = panPct;
-      }
       if (brightness !== lastBrightness) {
         profilePic.style.filter = `brightness(${brightness})`;
         lastBrightness = brightness;

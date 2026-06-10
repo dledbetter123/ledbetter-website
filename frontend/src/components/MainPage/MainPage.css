@@ -161,20 +161,20 @@
    sit above everything. */
 .profilePic {
   position: fixed;
-  /* Pull up past the top safe-area inset so the photo bleeds under the iOS status
-     bar instead of starting below it. */
-  top: calc(-1 * env(safe-area-inset-top, 0px));
+  /* PLAIN-UNIT overscan (no env(), no dvh): a position:fixed layer on iOS Safari is
+     held inside the top safe-area inset and short of the bottom, so it would NOT
+     bleed under the status bar / floating pill the way in-flow content on the root
+     canvas does. env(safe-area-inset-*) reads 0 in browser (non-PWA) tabs, so it
+     can't drive the pull-up — but a generous plain-vh overscan reliably pushes the
+     fixed box past every physical edge regardless of how iOS sizes it (this is the
+     approach that worked before the env() rewrite). Static units → no zoom on scroll. */
+  top: -12vh;            /* bleed ~12vh above the physical top (clears the status bar) */
   left: 0;
   width: 100vw;
-  height: 100vh; /* fallback for browsers without lvh */
-  /* STATIC overscan (no dvh → no zoom-on-scroll): size the image TALLER than the
-     large viewport so it bleeds past BOTH the top status bar and the bottom Safari
-     toolbar / home indicator in every toolbar state, with no black gap. lvh is the
-     toolbar-hidden height (static), so it never re-scales when the toolbar shows or
-     hides — the extra 22vh + insets just spill behind the chrome. */
-  height: calc(100lvh + env(safe-area-inset-top, 0px) + 22vh);
-  object-fit: cover; /* zoom to fill both axes, cropping the overflow — no letterboxing */
-  object-position: top center; /* keep the top of the frame; crop spills to the bottom */
+  height: 100vh;         /* fallback for browsers without lvh */
+  height: calc(100lvh + 34vh); /* 12vh above + 22vh below the large viewport */
+  object-fit: cover;     /* zoom to fill both axes, cropping the overflow — no letterboxing */
+  object-position: 50% 42%; /* framing of the crop; JS no longer overrides this */
   z-index: 0; /* backmost background; content sits above via .content-layer (z-index 1) */
   filter: brightness(75%); /* resting brightness; JS dims this to 0 (black) on scroll */
   will-change: filter; /* keep this big layer GPU-promoted so the scroll fade is cheap */
