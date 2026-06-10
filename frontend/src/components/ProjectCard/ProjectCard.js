@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './ProjectCard.css';
-import useTypeOnVisible from '../../hooks/useTypeOnVisible';
+import useScrambleOnVisible from '../../hooks/useScrambleOnVisible';
 
 const DEFAULT_DESCRIPTION = 'missing portfolio readme.';
 
@@ -31,9 +31,10 @@ const ProjectCard = ({ title, githubUrl }) => {
     };
   }, [githubUrl]);
 
-  // Both type in when the card scrolls into view.
-  const [titleRef, titleText] = useTypeOnVisible(title, 40);
-  const [descRef, descriptionText] = useTypeOnVisible(fullDescription, 6);
+  // Both shimmer (decode) in when the card scrolls into view.
+  const [titleRef, titleText] = useScrambleOnVisible(title, 1500);
+  const [descRef, descriptionText] = useScrambleOnVisible(fullDescription, 1500);
+  const bidi = { unicodeBidi: 'bidi-override', direction: 'ltr' };
 
   return (
     <div
@@ -42,8 +43,8 @@ const ProjectCard = ({ title, githubUrl }) => {
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => window.open(githubUrl, '_blank')} // Keeping the click to redirect
     >
-      <h2 ref={titleRef}>{titleText}</h2>
-      <p ref={descRef}>{descriptionText}</p>
+      <h2 ref={titleRef} style={bidi}>{titleText}</h2>
+      <p ref={descRef} style={bidi}>{descriptionText}</p>
       <div className="project-card-footer">Click me</div>
     </div>
   );
