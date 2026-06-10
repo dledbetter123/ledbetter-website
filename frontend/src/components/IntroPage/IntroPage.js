@@ -102,8 +102,8 @@ const IntroPage = () => {
       // Show the hero only through the top 5% of the page's total scroll range, then
       // fade it to black over the next 5%. Fully black past 10%. No chances.
       const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-      const showUntil = 0.05 * maxScroll;
-      const blackBy = 0.10 * maxScroll;
+      const showUntil = 0.025 * maxScroll;
+      const blackBy = 0.05 * maxScroll;
       let opacity = 1;
       if (s >= blackBy) {
         opacity = 0;
