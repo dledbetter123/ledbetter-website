@@ -1,1 +1,1 @@
-Delve into the code and processes powering this website, including go backend, api integration, containerization, bash scripting etc. etc.
+A fully serverless personal site (davidamosledbetter.com): a React single-page app served from S3 behind CloudFront, with a Go AWS Lambda backend that powers LedbetterGPT — an agentic Gemini chatbot that reads my GitHub repos live to answer questions about my work. Built with API Gateway, DynamoDB, Secrets Manager, and GitHub Actions CI/CD. See the README for the full architecture.
