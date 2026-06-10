@@ -62,17 +62,20 @@ const IntroPage = () => {
     if (!welcomeDone || introParagraph === null) return;
     setParagraphCursorVisible(true);
     setParagraphText('');
+    const len = introParagraph.length;
+    // Cap total typing at 1.5s regardless of length (advance multiple chars/tick).
+    const TICK = 20;
+    const step = Math.max(1, Math.ceil(len / (1500 / TICK)));
     let index = 0;
-    const paraDelay = Math.max(4, Math.min(40, Math.round(2200 / Math.max(introParagraph.length, 1))));
     const intervalId = setInterval(() => {
-      index++;
+      index = Math.min(len, index + step);
       setParagraphText(introParagraph.slice(0, index));
-      if (index >= introParagraph.length) {
+      if (index >= len) {
         clearInterval(intervalId);
         setParagraphCursorVisible(false);
         setParagraphDone(true);
       }
-    }, paraDelay);
+    }, TICK);
     return () => clearInterval(intervalId);
   }, [welcomeDone, introParagraph]);
 

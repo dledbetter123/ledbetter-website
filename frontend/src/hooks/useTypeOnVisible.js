@@ -31,15 +31,17 @@ export default function useTypeOnVisible(text, speed = 6) {
   useEffect(() => {
     if (!started || text == null) return;
     setTyped('');
+    const len = text.length;
+    // Cap total typing time at 1.5s regardless of length: advance `step` chars per
+    // tick so long paragraphs finish on time instead of crawling.
+    const TICK = 20;
+    const step = Math.max(1, Math.ceil(len / (1500 / TICK)));
     let i = 0;
-    // Per-character delay scales with length so total typing time stays consistent
-    // (long text types faster per char, short text slower) — clamped for sanity.
-    const delay = Math.max(4, Math.min(40, Math.round(2200 / Math.max(text.length, 1))));
     const id = setInterval(() => {
-      i++;
+      i = Math.min(len, i + step);
       setTyped(text.slice(0, i));
-      if (i >= text.length) clearInterval(id);
-    }, delay);
+      if (i >= len) clearInterval(id);
+    }, TICK);
     return () => clearInterval(id);
   }, [started, text, speed]);
 
