@@ -6,6 +6,7 @@ import Carousel from '../SwipeableGridPage/Carousel';
 import AboutPage from '../AboutPage/AboutPage';
 import ContactPage from '../ContactPage/ContactPage';
 import ProjectCard from '../ProjectCard/ProjectCard';
+import PublicationCard from '../PublicationCard/PublicationCard';
 import NavBar from '../NavBar/NavBar'; // Adjust the import path as necessary
 import ChatWidget from '../ChatWidget/ChatWidget';
 import "../MainPage/MainPage.css"
@@ -94,6 +95,23 @@ const MainPage = () => {
     githubUrl: "https://github.com/dledbetter123/LedbetterFinslerTransformer",
   };
 
+  // Publications & presentations — not repo-backed, so these use PublicationCard.
+  const ImpostorsPublication = {
+    title: "Impostors Among Us (IEEE 2025)",
+    citation:
+      "Chukkapalli, S. S. L., Ledbetter, D., Joshi, A., Finin, T., & Freeman, J. (2025). Impostors Among Us: An Agentic Approach to Identifying and Resolving Conflicts in Collaborative Network Environments. IEEE.",
+    url: "https://ieeexplore.ieee.org/abstract/document/11309858",
+    footer: "Read on IEEE →",
+  };
+
+  const DronePublication = {
+    title: "Autonomous Drone Navigation (URCAD 2022)",
+    citation:
+      "Ledbetter, D. (2022). Energy-Efficient Onboard Autonomous Drone Navigation: Wall Following and Obstacle Detection. URCAD 2022 poster — wall-following implemented as a C/C++ state machine (TU Delft bug algorithm).",
+    url: "https://github.com/dledbetter123/Bug_Algorithm_TUDelft",
+    footer: "View the code →",
+  };
+
   const carouselItems = [
     {
       content: (
@@ -108,6 +126,26 @@ const MainPage = () => {
         <ProjectCard
           title={FinslerProjectDetails.title}
           githubUrl={FinslerProjectDetails.githubUrl}
+        />
+      )
+    },
+    {
+      content: (
+        <PublicationCard
+          title={ImpostorsPublication.title}
+          citation={ImpostorsPublication.citation}
+          url={ImpostorsPublication.url}
+          footer={ImpostorsPublication.footer}
+        />
+      )
+    },
+    {
+      content: (
+        <PublicationCard
+          title={DronePublication.title}
+          citation={DronePublication.citation}
+          url={DronePublication.url}
+          footer={DronePublication.footer}
         />
       )
     },
