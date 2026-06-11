@@ -6,13 +6,30 @@ const SCRAMBLE_CHARS =
   'ΑΒΓΔΘΛΞΠΣΦΨΩ' +
   'ابتثجحخدذرزسشصضطظعغفقكلمنهوي';
 
-const rand = () => SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+// Pick a random glyph. When `prev` is given, the result is guaranteed to differ from
+// it, so two identical random glyphs never land next to each other.
+const rand = (prev) => {
+  if (prev == null) return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+  let c;
+  do {
+    c = SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+  } while (c === prev);
+  return c;
+};
 
 // A fully-scrambled version of `text` (keeps spaces/structure) — used as a
 // non-empty placeholder so an element is never blank before the decode runs.
 export function scrambleOf(text) {
+  let prev = null; // last emitted glyph, so no two random glyphs repeat back-to-back
   return Array.from(text)
-    .map((c) => (c === ' ' || c === '\n' || c === '\t' ? c : rand()))
+    .map((c) => {
+      if (c === ' ' || c === '\n' || c === '\t') {
+        prev = null;
+        return c;
+      }
+      prev = rand(prev);
+      return prev;
+    })
     .join('');
 }
 
@@ -20,13 +37,16 @@ export function scrambleOf(text) {
 // text length isn't known yet (e.g. a description still loading).
 export function randomGlyphs(n) {
   let s = '';
+  let prev = null; // last emitted glyph, so adjacent glyphs never repeat
   let gap = 4 + Math.floor(Math.random() * 5);
   for (let i = 0; i < n; i += 1) {
     if (i > 0 && i % gap === 0) {
       s += ' ';
+      prev = null;
       gap = 4 + Math.floor(Math.random() * 5);
     } else {
-      s += rand();
+      prev = rand(prev);
+      s += prev;
     }
   }
   return s;
@@ -53,21 +73,26 @@ export function runScramble(text, duration, onUpdate, onDone) {
     const elapsed = t - startTime;
     let out = '';
     let done = true;
+    let prev = null; // last emitted char, so no two glyphs repeat side by side
     for (let i = 0; i < n; i++) {
       const c = chars[i];
       if (c === ' ' || c === '\n' || c === '\t') {
         out += c;
+        prev = null;
         continue;
       }
       const { start, end } = settle[i];
       if (elapsed >= end) {
         out += c; // settled
+        prev = c;
       } else {
-        // shimmer: only swap the glyph occasionally so it doesn't strobe
-        if (elapsed >= start || true) {
-          if (!cur[i] || Math.random() < 0.3) cur[i] = rand();
+        // shimmer: swap occasionally so it doesn't strobe, but always re-roll if this
+        // glyph would repeat the one just before it (its neighbor may have changed).
+        if (!cur[i] || Math.random() < 0.3 || cur[i] === prev) {
+          cur[i] = rand(prev);
         }
         out += cur[i];
+        prev = cur[i];
         done = false;
       }
     }
