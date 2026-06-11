@@ -2,6 +2,8 @@
 // and settles (left-to-right, staggered) onto the real text within ~`duration` ms.
 
 const SCRAMBLE_CHARS =
+  'abcdefghijklmnopqrstuvwxyz' +
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
   'αβγδεζηθικλμνξοπρστυφχψω' +
   'ΑΒΓΔΘΛΞΠΣΦΨΩ' +
   'ابتثجحخدذرزسشصضطظعغفقكلمنهوي';
