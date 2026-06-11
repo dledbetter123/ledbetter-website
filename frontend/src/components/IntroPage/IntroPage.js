@@ -88,40 +88,71 @@ const IntroPage = () => {
     if (!profilePic) return;
 
     // Coalesce scroll work to one update per animation frame. The hero is a large
-    // fixed, overscanned layer with a brightness filter; writing that filter on
-    // every raw scroll event repaints the whole layer and drops frames on mobile
-    // Safari. rAF-throttling + skipping redundant writes keeps the fade smooth.
-    // NB: we no longer touch object-position here — the crop framing is owned by CSS
-    // (.profilePic object-position). The old per-frame parallax was a no-op for this
-    // portrait-image/portrait-viewport aspect (no vertical overflow → it just pinned
-    // 50% 100%, fighting the CSS framing), so it's gone.
+    // fixed layer with a brightness filter (and, on widescreen, a panning
+    // object-position); writing those on every raw scroll event repaints the whole
+    // layer and drops frames on mobile Safari. rAF-throttling + skipping redundant
+    // writes keeps it smooth.
     let ticking = false;
     let lastBrightness = -1;
+    let lastPan = -1;
+
+    // How far through the image you scroll before it's fully gone, as a fraction of
+    // the image's pannable length (the part that overflows the viewport on widescreen).
+    const VISIBLE_FRACTION = 0.75; // "scroll up ~75% of its length before disappearing"
 
     const update = () => {
       ticking = false;
 
       const s = window.scrollY;
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      // Natural dimensions of the hero image (fallback to known size before load).
+      const natW = profilePic.naturalWidth || 2001;
+      const natH = profilePic.naturalHeight || 3000;
 
-      // Show the hero only through the top 8% of the page's total scroll range, then
-      // fade it to black over the next 5%. Fully black past 13%.
-      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-      const showUntil = 0.08 * maxScroll;
-      const blackBy = 0.13 * maxScroll;
-      // Darken the IMAGE ITSELF to black instead of fading its opacity to reveal a
-      // separate black layer. The image stays fully opaque and is the background the
-      // whole time; it just dims to brightness(0) = pure black. Nothing depends on a
-      // cooperating black background, so there's no stacking/line inconsistency.
+      // With object-fit: cover, how much taller than the viewport the scaled image is
+      // — i.e. the vertical length we can pan through. ~0 on a portrait phone (the
+      // image is only cropped on width); large on a landscape/desktop viewport.
+      const scale = Math.max(W / natW, H / natH);
+      const overflowY = Math.max(0, natH * scale - H);
+
       const base = 0.75; // resting brightness
       let brightness = base;
-      if (s >= blackBy) {
-        brightness = 0;
-      } else if (s > showUntil) {
-        brightness = base * (1 - (s - showUntil) / (blackBy - showUntil));
+      let panPct = -1; // -1 = don't touch object-position (let CSS own it, mobile)
+
+      if (overflowY > 1) {
+        // Widescreen / desktop: scroll THROUGH the photo. Start at the top (face/head
+        // visible) and pan object-position downward as you scroll; stay visible until
+        // you've panned ~VISIBLE_FRACTION of the image, then fade to black over the
+        // remainder. This is the desktop "scroll up ~75% before it disappears" feel.
+        panPct = Math.min(100, (s / overflowY) * 100);
+        const fadeStart = VISIBLE_FRACTION * overflowY;
+        const fadeEnd = overflowY;
+        if (s >= fadeEnd) {
+          brightness = 0;
+        } else if (s > fadeStart) {
+          brightness = base * (1 - (s - fadeStart) / (fadeEnd - fadeStart));
+        }
+      } else {
+        // Mobile portrait: no vertical overflow to pan (object-position owned by CSS).
+        // Fade relative to total page scroll, as before — show through the top 8% of
+        // the scroll range, fade over the next 5%, fully black past 13%.
+        const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+        const showUntil = 0.08 * maxScroll;
+        const blackBy = 0.13 * maxScroll;
+        if (s >= blackBy) {
+          brightness = 0;
+        } else if (s > showUntil) {
+          brightness = base * (1 - (s - showUntil) / (blackBy - showUntil));
+        }
       }
 
-      // Only touch the DOM when the value actually changed — avoids redundant repaints
+      // Only touch the DOM when a value actually changed — avoids redundant repaints
       // of the large fixed hero layer on frames where nothing moved.
+      if (panPct !== -1 && panPct !== lastPan) {
+        profilePic.style.objectPosition = `50% ${panPct}%`;
+        lastPan = panPct;
+      }
       if (brightness !== lastBrightness) {
         profilePic.style.filter = `brightness(${brightness})`;
         lastBrightness = brightness;
@@ -137,8 +168,12 @@ const IntroPage = () => {
 
     update(); // set the initial resting state
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll); // re-evaluate on rotate / window resize
 
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
   }, []);
 
   useEffect(() => {
