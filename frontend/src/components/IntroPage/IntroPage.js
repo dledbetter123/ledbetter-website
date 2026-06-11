@@ -42,45 +42,54 @@ const IntroPage = () => {
     };
   }, []);
 
-  // Type out the "Welcome." heading on mount.
+  // Type out the "Welcome." heading on mount. Time-based (rAF) rather than one char
+  // per setInterval tick, so it finishes in the same wall-clock duration on every
+  // device instead of being throttled by per-frame render cost on slower phones.
   useEffect(() => {
     const welcomeString = 'Welcome. ';
-    let index = 0;
-
-    const intervalId = setInterval(() => {
-      setWelcomeText((prevText) => prevText + welcomeString[index]);
-      index++;
-      if (index === welcomeString.length) {
-        clearInterval(intervalId);
+    const duration = 225; // ms, total
+    let raf;
+    let start = null;
+    const tick = (now) => {
+      if (start === null) start = now;
+      const progress = Math.min(1, (now - start) / duration);
+      setWelcomeText(welcomeString.slice(0, Math.ceil(progress * welcomeString.length)));
+      if (progress < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
         setWelcomeCursorVisible(false);
         setWelcomeDone(true);
       }
-    }, 25); // Adjust typing speed here (milliseconds per character)
-
-    return () => clearInterval(intervalId);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Type out the paragraph once the heading is done and the text has loaded.
+  // Type out the paragraph once the heading is done and the text has loaded. Also
+  // time-based: show however many characters SHOULD be visible for the elapsed time,
+  // so the ~0.73s duration holds whether the device renders 1 char/frame (desktop) or
+  // several chars/frame (a slower phone) — no more "slower on mobile".
   useEffect(() => {
     if (!welcomeDone || introParagraph === null) return;
     setParagraphCursorVisible(true);
     setParagraphText('');
     const len = introParagraph.length;
-    // ~0.73s typewriter for the hero paragraph (2x faster than the prior ~1.5s). The
-    // per-char floor is lowered to 3ms too, so the long paragraph actually reaches the
-    // faster pace instead of being capped by the floor.
-    const delay = Math.max(3, Math.min(20, Math.round(733 / Math.max(len, 1))));
-    let index = 0;
-    const intervalId = setInterval(() => {
-      index += 1;
-      setParagraphText(introParagraph.slice(0, index));
-      if (index >= len) {
-        clearInterval(intervalId);
+    const duration = 733; // ms, total (~2x faster than the old 1.5s)
+    let raf;
+    let start = null;
+    const tick = (now) => {
+      if (start === null) start = now;
+      const progress = Math.min(1, (now - start) / duration);
+      setParagraphText(introParagraph.slice(0, Math.ceil(progress * len)));
+      if (progress < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
         setParagraphCursorVisible(false);
         setParagraphDone(true);
       }
-    }, delay);
-    return () => clearInterval(intervalId);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [welcomeDone, introParagraph]);
 
   useEffect(() => {
