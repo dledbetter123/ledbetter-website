@@ -2,13 +2,9 @@
 // and settles (left-to-right, staggered) onto the real text within ~`duration` ms.
 
 const SCRAMBLE_CHARS =
-  'abcdefghijklmnopqrstuvwxyz' +
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
   'αβγδεζηθικλμνξοπρστυφχψως' +        // full lowercase Greek (+ final sigma)
   'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ' +        // full uppercase Greek
-  'ابتثجحخدذرزسشصضطظعغفقكلمنهوي' +     // Arabic
-  '日月山水火木金土天地人大中小文字龍鳳愛和平學道德風光時空雨雪雲星' + // Chinese
-  'अआइईउऊएऐओऔकखगघचछजझटठडढणतथदधनपफबभमयरलवशषसह';      // Hindi (Devanagari)
+  'ابتثجحخدذرزسشصضطظعغفقكلمنهوي';      // Arabic
 
 // Pick a random glyph. When `prev` is given, the result is guaranteed to differ from
 // it, so two identical random glyphs never land next to each other.
