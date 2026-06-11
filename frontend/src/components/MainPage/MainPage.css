@@ -174,11 +174,21 @@
                       status bar / floating pill (a fixed layer is held inside the
                       safe-area inset regardless). */
   object-fit: cover;
-  object-position: center; /* vertical crop is ~none here, so this just centers width */
+  object-position: center; /* mobile portrait: vertical crop is ~none, so this just centers width */
   z-index: 0; /* backmost background; content sits above via .content-layer (z-index 1) */
   filter: brightness(75%); /* resting brightness; JS dims this to 0 (black) on scroll */
   will-change: filter; /* keep this big layer GPU-promoted so the scroll fade is cheap */
   pointer-events: none; /* purely decorative — never intercept clicks/scroll */
+}
+
+/* Desktop / widescreen: the viewport is landscape, so cover crops the portrait photo
+   top-and-bottom. Anchor that crop to the TOP so the face/head stay visible instead of
+   being cut off at the vertical center. Triggers once the viewport is wide enough that
+   vertical cropping actually happens (aspect ratio >= the photo's ~2:3). */
+@media (min-aspect-ratio: 3/4) {
+  .profilePic {
+    object-position: 50% top;
+  }
 }
 
 /* No hero vignette / tint strips: this is the full-bleed-photo design. The photo
