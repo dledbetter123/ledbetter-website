@@ -55,7 +55,7 @@ const IntroPage = () => {
         setWelcomeCursorVisible(false);
         setWelcomeDone(true);
       }
-    }, 50); // Adjust typing speed here (milliseconds per character)
+    }, 25); // Adjust typing speed here (milliseconds per character)
 
     return () => clearInterval(intervalId);
   }, []);
@@ -66,10 +66,10 @@ const IntroPage = () => {
     setParagraphCursorVisible(true);
     setParagraphText('');
     const len = introParagraph.length;
-    // ~1.5s typewriter for the hero paragraph (~1/3 faster than the old 2.2s). The
-    // per-char floor is lowered to 5ms too, so the long paragraph actually reaches the
+    // ~0.73s typewriter for the hero paragraph (2x faster than the prior ~1.5s). The
+    // per-char floor is lowered to 3ms too, so the long paragraph actually reaches the
     // faster pace instead of being capped by the floor.
-    const delay = Math.max(5, Math.min(40, Math.round(1467 / Math.max(len, 1))));
+    const delay = Math.max(3, Math.min(20, Math.round(733 / Math.max(len, 1))));
     let index = 0;
     const intervalId = setInterval(() => {
       index += 1;
