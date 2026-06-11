@@ -91,7 +91,7 @@ const MainPage = () => {
     title: "LinkedInOrLeftOut (LILO)",
     url: "https://learnwleo.com",
     description:
-      "A browser-native platform that teaches students to code and crush tech interviews — every runtime executes on-device in WebAssembly at zero marginal cost. As co-founder and Chief AI Officer I built the AI layer: a quantized LLM tutor running entirely in the browser over WebNN/WebGPU (real-time hints, no server inference, no code ever leaving the device), plus the data-instrumentation pipeline that traces how every student moves through every problem. Where compute must leave the device, I tier it onto Cloudflare Workers AI at the edge instead of a centralized GPU box — keeping AI tutoring as close to free-to-serve as the code execution it sits on.",
+      "A browser-native platform that teaches students to code and crush tech interviews — every runtime executes on-device in WebAssembly at zero marginal cost. As a co-founder, founding engineer, and CTO I built the AI layer: a quantized LLM tutor running entirely in the browser over WebNN/WebGPU (real-time hints, no server inference, no code ever leaving the device), plus the data-instrumentation pipeline that traces how every student moves through every problem. Where compute must leave the device, I tier it onto Cloudflare Workers AI at the edge instead of a centralized GPU box — keeping AI tutoring as close to free-to-serve as the code execution it sits on.",
   };
 
   const SgstProjectDetails = {
