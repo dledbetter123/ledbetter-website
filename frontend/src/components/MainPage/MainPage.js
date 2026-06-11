@@ -85,6 +85,15 @@ const MainPage = () => {
     githubUrl: "https://github.com/dledbetter123/ledbetter-website",
   };
 
+  // LILO is an active startup with private repos, so this card carries its own
+  // description (no public README to fetch) and links to the live product.
+  const LiloProjectDetails = {
+    title: "LinkedInOrLeftOut (LILO)",
+    url: "https://learnwleo.com",
+    description:
+      "A browser-native platform that teaches students to code and crush tech interviews — every runtime executes on-device in WebAssembly at zero marginal cost. As co-founder and Chief AI Officer I built the AI layer: a quantized LLM tutor running entirely in the browser over WebNN/WebGPU (real-time hints, no server inference, no code ever leaving the device), plus the data-instrumentation pipeline that traces how every student moves through every problem. Where compute must leave the device, I tier it onto Cloudflare Workers AI at the edge instead of a centralized GPU box — keeping AI tutoring as close to free-to-serve as the code execution it sits on.",
+  };
+
   const SgstProjectDetails = {
     title: "Sparse Geometric Signal Transport",
     githubUrl: "https://github.com/dledbetter123/SparseGeometricSignalTransport",
@@ -113,6 +122,15 @@ const MainPage = () => {
   };
 
   const carouselItems = [
+    {
+      content: (
+        <ProjectCard
+          title={LiloProjectDetails.title}
+          linkUrl={LiloProjectDetails.url}
+          description={LiloProjectDetails.description}
+        />
+      )
+    },
     {
       content: (
         <ProjectCard
