@@ -161,20 +161,18 @@
    sit above everything. */
 .profilePic {
   position: fixed;
-  /* PLAIN-UNIT overscan (no env(), no dvh): a position:fixed layer on iOS Safari is
-     held inside the top safe-area inset and short of the bottom, so it would NOT
-     bleed under the status bar / floating pill the way in-flow content on the root
-     canvas does. env(safe-area-inset-*) reads 0 in browser (non-PWA) tabs, so it
-     can't drive the pull-up — but a generous plain-vh overscan reliably pushes the
-     fixed box past every physical edge regardless of how iOS sizes it (this is the
-     approach that worked before the env() rewrite). Static units → no zoom on scroll. */
-  top: -12vh;            /* bleed ~12vh above the physical top (clears the status bar) */
+  top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;         /* fallback for browsers without lvh */
-  height: calc(100lvh + 34vh); /* 12vh above + 22vh below the large viewport */
-  object-fit: cover;     /* zoom to fill both axes, cropping the overflow — no letterboxing */
-  object-position: 50% 42%; /* framing of the crop; JS no longer overrides this */
+  height: 100vh;   /* fallback for browsers without lvh */
+  height: 100lvh;  /* fill the large viewport with NO overscan: the photo (portrait,
+                      taller-aspect than the viewport) is shown at full height and only
+                      cropped on width — so it's NOT zoomed in. Overscan was removed
+                      because it zoomed the image without reliably covering the iOS
+                      status bar / floating pill (a fixed layer is held inside the
+                      safe-area inset regardless). */
+  object-fit: cover;
+  object-position: center; /* vertical crop is ~none here, so this just centers width */
   z-index: 0; /* backmost background; content sits above via .content-layer (z-index 1) */
   filter: brightness(75%); /* resting brightness; JS dims this to 0 (black) on scroll */
   will-change: filter; /* keep this big layer GPU-promoted so the scroll fade is cheap */

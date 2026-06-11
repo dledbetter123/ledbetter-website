@@ -66,8 +66,10 @@ const IntroPage = () => {
     setParagraphCursorVisible(true);
     setParagraphText('');
     const len = introParagraph.length;
-    // Deliberate ~2.2s typewriter for the hero paragraph.
-    const delay = Math.max(8, Math.min(60, Math.round(2200 / Math.max(len, 1))));
+    // ~1.5s typewriter for the hero paragraph (~1/3 faster than the old 2.2s). The
+    // per-char floor is lowered to 5ms too, so the long paragraph actually reaches the
+    // faster pace instead of being capped by the floor.
+    const delay = Math.max(5, Math.min(40, Math.round(1467 / Math.max(len, 1))));
     let index = 0;
     const intervalId = setInterval(() => {
       index += 1;

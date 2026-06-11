@@ -26,18 +26,18 @@
 }
 .introPage .content p {
   margin-top: 20px; /* keep the paragraph close under "Welcome." as one centered block */
-  position: relative; /* anchor for the typed-text overlay */
+  /* Stack the hidden sizer and the visible typed text in ONE grid cell. The sizer
+     reserves the final height (so the centered block never reflows as it types),
+     while the typed text renders in NORMAL vertical flow within that cell — filling
+     top-down, in reading order — instead of being absolutely positioned on top. */
+  display: grid;
 }
-/* Reserve the paragraph's final size (hidden) so typing never reflows the block; the
-   visible text overlays it from the top, so it always fills in top-down. */
-.introPara-sizer {
-  visibility: hidden;
-}
+.introPara-sizer,
 .introPara-typed {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  grid-area: 1 / 1; /* both occupy the same cell, overlaid */
+}
+.introPara-sizer {
+  visibility: hidden; /* reserves height only */
 }
 
 .accent-green {
