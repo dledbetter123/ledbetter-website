@@ -91,7 +91,7 @@ const MainPage = () => {
     title: "LinkedInOrLeftOut (LILO)",
     url: "https://learnwleo.com",
     description:
-      "A browser-native platform teaching students to code and crush tech interviews — code runs on-device in WebAssembly at zero marginal cost. As co-founder & CTO I built the AI layer: an in-browser LLM tutor (WebNN/WebGPU) and the learning-data instrumentation behind it. Ask LedbetterGPT below to go deeper →",
+      "A browser-native platform teaching students to code and crush tech interviews, with all code running on-device in WebAssembly at zero marginal cost. As co-founder & CTO I built the AI layer: an in-browser LLM tutor (WebNN/WebGPU) and the learning-data instrumentation behind it. Ask LedbetterGPT below to go deeper →",
   };
 
   const SgstProjectDetails = {
