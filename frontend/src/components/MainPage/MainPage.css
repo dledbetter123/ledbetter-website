@@ -132,11 +132,13 @@
     transform: scale(1.5);
   }
   
-/* Publications carousel — sits directly under the project (GitHub) cards. */
+/* Publications carousel — sits under the project (GitHub) cards. The margin-top is
+   the gap between the bottom of the project cards and the "Publications &
+   Presentations" heading. */
 .pub-carousel-style {
   z-index: 50;
   position: relative;
-  margin-top: 8px;
+  margin-top: 48px;
 }
 
 .carousel-heading {
