@@ -51,9 +51,13 @@ const Carousel = forwardRef(({ items }, ref) => {
 
   useImperativeHandle(ref, () => ({
     handleWheel: (e) => {
+      // Only hijack predominantly-HORIZONTAL wheel gestures for slide navigation.
+      // Vertical-dominant scrolling must pass through to the page — don't
+      // preventDefault it — so the cursor isn't "captured" over the carousel.
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
       e.preventDefault();
       accumulatedDeltaX += e.deltaX;
-  
+
       if (Math.abs(accumulatedDeltaX) > deltaXThreshold) {
         if (accumulatedDeltaX > 0) {
           goToNext();

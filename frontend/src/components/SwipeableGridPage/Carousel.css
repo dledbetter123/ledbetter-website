@@ -40,6 +40,10 @@
   will-change: transform;
   max-width: 500px;
   z-index: 49;
+  /* Let the browser own vertical panning (page scroll) on touch; only horizontal
+     gestures are handed to the swipe handlers, so a finger never gets captured when
+     scrolling the page vertically through the carousel. */
+  touch-action: pan-y;
   /* margin: 0 -15%; must match container */
 }
 
