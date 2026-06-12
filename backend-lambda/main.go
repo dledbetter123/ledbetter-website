@@ -90,11 +90,18 @@ const (
 	maxToolRounds     = 4
 	maxFileBytes      = 60 * 1024 // cap a single fetched file so it fits the token budget
 
+	// Workers AI warm/cold rotation (only used when LLM_PROVIDER=workersai). A turn
+	// prefers Cloudflare; if CF is cold it falls back to Gemini (the "session starter")
+	// and the very attempt triggers CF's model load, so a later turn finds it warm.
+	warmWindowSec      = 180 // CF presumed warm if it served within this many seconds
+	cfColdProbeTimeout = 6   // seconds to wait on a cold-suspected CF call before Gemini
+	cfWarmTimeout      = 20  // seconds to wait on a CF call when CF is presumed warm
+
 	// Cost caps, in micro-USD (1 USD = 1_000_000). gemini-pro-latest pricing below.
 	sessionCostCapMicro = 5_000_000  // $5.00 per browser session
 	globalCostCapMicro  = 25_000_000 // $25.00 per day across everyone (absolute backstop)
-	usdInputPerMTok     = 1.25      // $ / 1M input tokens
-	usdOutputPerMTok    = 10.0      // $ / 1M output tokens (includes thinking tokens)
+	usdInputPerMTok     = 1.25       // $ / 1M input tokens
+	usdOutputPerMTok    = 10.0       // $ / 1M output tokens (includes thinking tokens)
 )
 
 type chatTurn struct {
@@ -220,9 +227,9 @@ var (
 	// chat-completions endpoint instead of Gemini; everything else (tool loop, rate
 	// limits, logging, privacy gating) is identical. Model + per-token cost rates are
 	// env-driven so switching models is config, not code.
-	llmProvider    = "gemini"
-	cfAccountID    string
-	cfToken        string
+	llmProvider = "gemini"
+	cfAccountID string
+	cfToken     string
 	// Default to a non-reasoning instruct model: reasoning models (gpt-oss, etc.) spend
 	// the output budget on hidden reasoning and can return null content under the short
 	// max_tokens this bot uses — wrong fit for terse persona replies. Override via env.
@@ -633,6 +640,38 @@ func getN(ctx context.Context, id string) int64 {
 	return 0
 }
 
+// setN overwrites a counter to an exact value (vs addN's increment). Used for the
+// Workers AI warm marker, which stores the epoch of the last successful CF call.
+func setN(ctx context.Context, id string, n int64) {
+	ttl := time.Now().Add(48 * time.Hour).Unix()
+	_, err := ddb.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName:                aws.String(rateTable),
+		Key:                      map[string]ddbtypes.AttributeValue{"id": &ddbtypes.AttributeValueMemberS{Value: id}},
+		UpdateExpression:         aws.String("SET #c = :n, #t = :ttl"),
+		ExpressionAttributeNames: map[string]string{"#c": "count", "#t": "ttl"},
+		ExpressionAttributeValues: map[string]ddbtypes.AttributeValue{
+			":n":   &ddbtypes.AttributeValueMemberN{Value: strconv.FormatInt(n, 10)},
+			":ttl": &ddbtypes.AttributeValueMemberN{Value: strconv.FormatInt(ttl, 10)},
+		},
+	})
+	if err != nil {
+		fmt.Printf("setN error: %v\n", err)
+	}
+}
+
+// warmKey scopes the warm marker to the current model (switching models resets warmth).
+func warmKey() string { return "wai#warm#" + workersAIModel }
+
+// warmFresh reports whether Workers AI served a request recently enough to be presumed
+// loaded (warm). Fails open to false (cold) on any error → prefer the Gemini starter.
+func warmFresh(ctx context.Context) bool {
+	last := getN(ctx, warmKey())
+	return last > 0 && time.Now().Unix()-last < warmWindowSec
+}
+
+func setWarm(ctx context.Context)  { setN(ctx, warmKey(), time.Now().Unix()) }
+func markCold(ctx context.Context) { setN(ctx, warmKey(), 0) }
+
 func costMicro(u geminiUsage) int64 {
 	in := float64(u.PromptTokenCount) * usdInputPerMTok
 	out := float64(u.CandidatesTokenCount+u.ThoughtsTokenCount) * usdOutputPerMTok
@@ -737,8 +776,11 @@ type oaiToolCall struct {
 	Function oaiFnCall `json:"function"`
 }
 type oaiMessage struct {
-	Role       string        `json:"role"`
-	Content    string        `json:"content,omitempty"`
+	Role string `json:"role"`
+	// content is ALWAYS emitted (no omitempty): some Workers AI models (e.g.
+	// llama-3.3-70b) validate against a native schema that requires a string `content`
+	// on every message, so an assistant tool-call turn with content omitted 400s.
+	Content    string        `json:"content"`
 	ToolCalls  []oaiToolCall `json:"tool_calls,omitempty"`
 	ToolCallID string        `json:"tool_call_id,omitempty"`
 	Name       string        `json:"name,omitempty"`
@@ -883,18 +925,54 @@ func callWorkersAI(ctx context.Context, contents []geminiContent, withTools bool
 	return out, usage, nil
 }
 
-// callModel dispatches a single inference round to the configured provider.
-func callModel(ctx context.Context, contents []geminiContent, withTools bool, extra string) (geminiContent, geminiUsage, error) {
-	if llmProvider == "workersai" {
-		return callWorkersAI(ctx, contents, withTools, extra)
+// turnLLM decides, per chat turn, which provider serves — and locks it after the first
+// round so a single turn never mixes providers (their tool-call formats differ).
+//
+// In workersai mode it prefers Cloudflare but gates on warm state: Gemini is the
+// "session starter" while CF is cold, and traffic rotates to CF as it warms. The cold
+// CF attempt itself triggers Cloudflare's model load, so a subsequent turn finds CF warm
+// and uses it. In plain gemini mode it's just Gemini.
+type turnLLM struct {
+	locked string // "", "workersai", or "gemini" — set after the first round
+	used   string // provider that served the most recent round (for cost + logging)
+}
+
+func (t *turnLLM) call(ctx context.Context, contents []geminiContent, withTools bool, extra string) (geminiContent, geminiUsage, error) {
+	// Plain Gemini, or a turn already locked to Gemini (CF was cold/failed this turn).
+	if llmProvider != "workersai" || t.locked == "gemini" {
+		t.used = "gemini"
+		return callGemini(ctx, contents, withTools, extra)
 	}
+
+	// Pick the CF timeout: a generous one when CF is presumed warm, a short probe when
+	// cold (so we fall through to Gemini quickly while still kicking CF's load).
+	timeout := time.Duration(cfColdProbeTimeout) * time.Second
+	if t.locked == "workersai" || warmFresh(ctx) {
+		timeout = cfWarmTimeout * time.Second
+	}
+	cctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	c, u, err := callWorkersAI(cctx, contents, withTools, extra)
+	if err == nil {
+		setWarm(ctx)
+		t.locked = "workersai"
+		t.used = "workersai"
+		return c, u, nil
+	}
+
+	// CF cold or errored → Gemini serves (this round and the rest of the turn). markCold
+	// so the next turn uses the short probe until CF warms back up.
+	fmt.Printf("workersai unavailable (%v) — serving via gemini\n", err)
+	markCold(ctx)
+	t.locked = "gemini"
+	t.used = "gemini"
 	return callGemini(ctx, contents, withTools, extra)
 }
 
-// costOf prices one round's usage under the active provider, in micro-USD. Same
-// convention as costMicro: a $/1M-token rate equals micro-USD per token.
-func costOf(u geminiUsage) int64 {
-	if llmProvider == "workersai" {
+// costForProvider prices one round's usage under the provider that actually served it,
+// in micro-USD. Same convention as costMicro: a $/1M-token rate equals µ-USD per token.
+func costForProvider(u geminiUsage, provider string) int64 {
+	if provider == "workersai" {
 		in := float64(u.PromptTokenCount) * waiInPerMTok
 		out := float64(u.CandidatesTokenCount+u.ThoughtsTokenCount) * waiOutPerMTok
 		return int64(math.Ceil(in + out))
@@ -902,13 +980,16 @@ func costOf(u geminiUsage) int64 {
 	return costMicro(u)
 }
 
-// activeModel is the model id currently serving traffic, for logging.
-func activeModel() string {
-	if llmProvider == "workersai" {
+// modelFor maps a served-provider label to the model id, for logging.
+func modelFor(provider string) string {
+	if provider == "workersai" {
 		return workersAIModel
 	}
 	return geminiModel
 }
+
+// activeModel is the configured default model, for the static-greeting log line.
+func activeModel() string { return modelFor(llmProvider) }
 
 func chatHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodOptions {
@@ -918,12 +999,15 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	geminiReady := geminiKey != "" && geminiKey != "REPLACE_ME"
+	cfReady := cfToken != "" && cfAccountID != ""
 	if llmProvider == "workersai" {
-		if cfToken == "" || cfAccountID == "" {
+		// CF preferred, Gemini is the fallback — need at least one to serve.
+		if !cfReady && !geminiReady {
 			http.Error(w, "chat is not configured yet", http.StatusServiceUnavailable)
 			return
 		}
-	} else if geminiKey == "" || geminiKey == "REPLACE_ME" {
+	} else if !geminiReady {
 		http.Error(w, "chat is not configured yet", http.StatusServiceUnavailable)
 		return
 	}
@@ -1033,6 +1117,9 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Function-calling loop: let the model read repos until it produces a text answer.
+	// tl picks (and locks) the provider for this turn — Cloudflare when warm, Gemini as
+	// the cold-start session starter — falling back round by round if CF errors.
+	var tl turnLLM
 	var answer string
 	var totalCost int64
 	var inTok, outTok int
@@ -1040,12 +1127,12 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	for round := 0; round < maxToolRounds; round++ {
 		// On the last round, drop the tools so the model must answer with text.
 		withTools := round < maxToolRounds-1
-		modelContent, usage, err := callModel(ctx, contents, withTools, extra)
-		totalCost += costOf(usage)
+		modelContent, usage, err := tl.call(ctx, contents, withTools, extra)
+		totalCost += costForProvider(usage, tl.used)
 		inTok += usage.PromptTokenCount
 		outTok += usage.CandidatesTokenCount + usage.ThoughtsTokenCount
 		if err != nil {
-			fmt.Printf("%s error: %v\n", llmProvider, err)
+			fmt.Printf("model error: %v\n", err)
 			http.Error(w, "upstream error", http.StatusBadGateway)
 			return
 		}
@@ -1100,7 +1187,11 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Persist the turn to S3 (best-effort, content-addressed key — a nod to the
 	// librarian's CAS catalog). Failures must not break the reply.
-	saveConversation(session, req.Message, answer, toolTrace, totalCost, clientIP(r), r.Header.Get("User-Agent"), llmProvider, activeModel(), inTok, outTok)
+	servedProvider := tl.used
+	if servedProvider == "" {
+		servedProvider = llmProvider
+	}
+	saveConversation(session, req.Message, answer, toolTrace, totalCost, clientIP(r), r.Header.Get("User-Agent"), servedProvider, modelFor(servedProvider), inTok, outTok)
 	emailTurn(session, req.Message, answer, clientIP(r), r.Header.Get("User-Agent"), totalCost)
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
