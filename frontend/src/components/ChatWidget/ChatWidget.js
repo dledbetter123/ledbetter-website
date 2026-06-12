@@ -168,7 +168,9 @@ const ChatWidget = () => {
               return (
                 <div key={i} className={`chatMsg ${m.role}`}>
                   {m.text
-                    ? m.text
+                    ? (i === 0
+                        ? <span className="chatShimmer">{m.text}</span>
+                        : m.text)
                     : (typing ? <span className="chatLoading">{loadingGlyph}</span> : '')}
                 </div>
               );
