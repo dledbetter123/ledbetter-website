@@ -697,11 +697,13 @@ func costMicro(u geminiUsage) int64 {
 }
 
 func clientIP(r *http.Request) string {
-	// CloudFront-Viewer-Address is set by CloudFront from the real TCP connection and
-	// OVERWRITES any client-supplied value of the same name; since all traffic is
-	// origin-locked to CloudFront, it can't be spoofed. Format is "ip:port" (IPv6 keeps
-	// its colons, so split on the LAST colon). Falls back to XFF/RemoteAddr if the header
-	// isn't forwarded yet — note XFF's first hop IS client-supplied and spoofable.
+	// X-Real-IP is stamped by the CloudFront Function (ledbetter-api-clientip) on every
+	// /api/* viewer request from event.viewer.ip — the real TCP peer, set/overwritten by
+	// CloudFront, so a client can't forge it (and all origin traffic is locked to
+	// CloudFront). Trust it first; the rest are fallbacks (XFF's first hop is spoofable).
+	if ip := strings.TrimSpace(r.Header.Get("X-Real-IP")); ip != "" {
+		return ip
+	}
 	if va := r.Header.Get("CloudFront-Viewer-Address"); va != "" {
 		if i := strings.LastIndex(va, ":"); i > 0 {
 			return strings.Trim(va[:i], "[]")
