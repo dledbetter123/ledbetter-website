@@ -67,14 +67,14 @@ const IntroPage = () => {
 
   // Type out the paragraph once the heading is done and the text has loaded. Also
   // time-based: show however many characters SHOULD be visible for the elapsed time,
-  // so the ~0.73s duration holds whether the device renders 1 char/frame (desktop) or
+  // so the ~0.95s duration holds whether the device renders 1 char/frame (desktop) or
   // several chars/frame (a slower phone) — no more "slower on mobile".
   useEffect(() => {
     if (!welcomeDone || introParagraph === null) return;
     setParagraphCursorVisible(true);
     setParagraphText('');
     const len = introParagraph.length;
-    const duration = 733; // ms, total (~2x faster than the old 1.5s)
+    const duration = 953; // ms, total (~30% slower than the prior 733ms)
     let raf;
     let start = null;
     const tick = (now) => {
