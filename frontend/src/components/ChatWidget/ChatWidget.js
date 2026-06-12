@@ -62,9 +62,14 @@ const shuffled = (arr) => {
 // runtime via window.env.REACT_APP_BACKEND_URI (see config.js / IntroPage).
 const ChatWidget = () => {
   // Restore a recent conversation (and its open/closed state) on refresh, else greet.
-  const [isOpen, setIsOpen] = useState(() => !!loadSavedChat()?.isOpen);
+  // Read once; loadSavedChat already enforces the idle flush window.
+  const savedRef = useRef(undefined);
+  if (savedRef.current === undefined) savedRef.current = loadSavedChat();
+  const saved = savedRef.current;
+
+  const [isOpen, setIsOpen] = useState(() => !!saved?.isOpen);
   const [messages, setMessages] = useState(
-    () => loadSavedChat()?.messages || [{ role: 'assistant', text: GREETING }],
+    () => saved?.messages || [{ role: 'assistant', text: GREETING }],
   );
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
@@ -74,6 +79,10 @@ const ChatWidget = () => {
   const [loadingGlyph, setLoadingGlyph] = useState('');
   const scrollRef = useRef(null);
   const sessionIdRef = useRef(null);
+  // Time of the last message activity, for the IDLE flush window. Seeded from the
+  // restored chat so a bare page load/refresh does NOT reset the clock — only sending
+  // or receiving a message does. Restore is allowed only while idle < FLUSH_WINDOW_MS.
+  const lastActivityRef = useRef(saved?.savedAt ?? Date.now());
 
   // Lazily initialise (and persist) the per-tab session id on first render.
   if (sessionIdRef.current === null) sessionIdRef.current = getSessionId();
@@ -85,14 +94,15 @@ const ChatWidget = () => {
   }, [messages, isOpen]);
 
   // Persist the conversation (and open state) so a refresh repopulates it. Only when
-  // settled — never mid-stream — so we never restore a half-typed answer. Stamps the
-  // flush-window clock on every settled update.
+  // settled — never mid-stream — so we never restore a half-typed answer. savedAt is
+  // the last MESSAGE-activity time (not now), so opening/closing or refreshing the page
+  // doesn't reset the idle window — only an actual exchange does.
   useEffect(() => {
     if (streaming) return;
     try {
       sessionStorage.setItem(
         CHAT_STORE_KEY,
-        JSON.stringify({ savedAt: Date.now(), isOpen, messages }),
+        JSON.stringify({ savedAt: lastActivityRef.current, isOpen, messages }),
       );
     } catch (e) {
       /* storage disabled/full — restoration just won't happen, non-fatal */
@@ -116,6 +126,8 @@ const ChatWidget = () => {
   const send = async () => {
     const message = input.trim();
     if (!message || streaming) return;
+
+    lastActivityRef.current = Date.now(); // reset the idle flush window on each exchange
 
     const history = messages
       .filter((m) => m.text)
