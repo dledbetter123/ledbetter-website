@@ -97,6 +97,10 @@ const (
 	cfColdProbeTimeout = 6   // seconds to wait on a cold-suspected CF call before Gemini
 	cfWarmTimeout      = 20  // seconds to wait on a CF call when CF is presumed warm
 
+	// Workers AI bills in Neurons ($0.011/1k) with a daily free allowance. A turn is
+	// "functionally free" while the day's cumulative neuron usage stays under this.
+	freeTierNeuronsPerDay = 10_000
+
 	// Cost caps, in micro-USD (1 USD = 1_000_000). gemini-pro-latest pricing below.
 	sessionCostCapMicro = 5_000_000  // $5.00 per browser session
 	globalCostCapMicro  = 25_000_000 // $25.00 per day across everyone (absolute backstop)
@@ -239,6 +243,10 @@ var (
 	workersAIModel = "@cf/meta/llama-4-scout-17b-16e-instruct"
 	waiInPerMTok   = 0.270 // $ / 1M input tokens  (llama-4-scout default)
 	waiOutPerMTok  = 0.850 // $ / 1M output tokens (llama-4-scout default)
+	// Neurons per 1M tokens (llama-4-scout defaults) — for the free-tier readout. Switch
+	// these alongside WORKERS_AI_MODEL via the WORKERS_AI_NEURONS_*_PER_MTOK envs.
+	waiNeuronsInPerMTok  = 24545.0
+	waiNeuronsOutPerMTok = 77273.0
 
 	kbMu      sync.Mutex
 	kbText    string
@@ -288,6 +296,12 @@ func init() {
 	}
 	if v, err := strconv.ParseFloat(os.Getenv("WORKERS_AI_USD_OUT_PER_MTOK"), 64); err == nil && v > 0 {
 		waiOutPerMTok = v
+	}
+	if v, err := strconv.ParseFloat(os.Getenv("WORKERS_AI_NEURONS_IN_PER_MTOK"), 64); err == nil && v > 0 {
+		waiNeuronsInPerMTok = v
+	}
+	if v, err := strconv.ParseFloat(os.Getenv("WORKERS_AI_NEURONS_OUT_PER_MTOK"), 64); err == nil && v > 0 {
+		waiNeuronsOutPerMTok = v
 	}
 	if tok := loadSecret(ctx, sm, os.Getenv("CF_SECRET_ID")); tok != "" && tok != "REPLACE_ME" {
 		cfToken = tok
@@ -1073,7 +1087,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 				"blaming the index. 🙃 — David)"
 		}
 		saveConversation(session, req.Message, greeting, nil, 0, clientIP(r), r.Header.Get("User-Agent"), llmProvider, activeModel(), 0, 0)
-		emailTurn(session, req.Message, greeting, clientIP(r), r.Header.Get("User-Agent"), "static", "(none)", 0)
+		emailTurn(session, req.Message, greeting, clientIP(r), r.Header.Get("User-Agent"), "static", "(none)", " (static greeting — no model call)", 0)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		fmt.Fprint(w, greeting)
@@ -1195,8 +1209,23 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	if servedProvider == "" {
 		servedProvider = llmProvider
 	}
+	// Cost note for the notification email: the logged dollar figure is the would-be
+	// (billed-equivalent) cost. Workers AI turns are FUNCTIONALLY FREE while the day's
+	// cumulative neuron usage stays under the free tier; Gemini turns are actually billed.
+	costNote := ""
+	if servedProvider == "workersai" {
+		neurons := int64(math.Ceil(float64(inTok)*waiNeuronsInPerMTok/1e6 + float64(outTok)*waiNeuronsOutPerMTok/1e6))
+		usedToday, _ := addN(ctx, "neurons#"+today, neurons)
+		if usedToday <= freeTierNeuronsPerDay {
+			costNote = fmt.Sprintf(" — functionally free (within Workers AI's free tier; %d/%d neurons used today)", usedToday, freeTierNeuronsPerDay)
+		} else {
+			costNote = fmt.Sprintf(" (billed — past Workers AI's %d-neuron/day free tier today)", freeTierNeuronsPerDay)
+		}
+	} else if servedProvider == "gemini" {
+		costNote = " (Gemini fallback — billed, no free tier)"
+	}
 	saveConversation(session, req.Message, answer, toolTrace, totalCost, clientIP(r), r.Header.Get("User-Agent"), servedProvider, modelFor(servedProvider), inTok, outTok)
-	emailTurn(session, req.Message, answer, clientIP(r), r.Header.Get("User-Agent"), servedProvider, modelFor(servedProvider), totalCost)
+	emailTurn(session, req.Message, answer, clientIP(r), r.Header.Get("User-Agent"), servedProvider, modelFor(servedProvider), costNote, totalCost)
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -1254,7 +1283,7 @@ func saveConversation(session, msg, answer string, tools []map[string]interface{
 // thread state required. Best-effort: short timeout, errors logged and swallowed so
 // a notification failure never affects the visitor's reply. No-op until EMAIL_FROM /
 // EMAIL_TO are set (kept dark until the SES identities verify).
-func emailTurn(session, userMsg, answer, ip, userAgent, provider, model string, costMicro int64) {
+func emailTurn(session, userMsg, answer, ip, userAgent, provider, model, costNote string, costMicro int64) {
 	if ses == nil || emailFrom == "" || emailTo == "" {
 		return
 	}
@@ -1275,12 +1304,12 @@ func emailTurn(session, userMsg, answer, ip, userAgent, provider, model string, 
 	}
 	body := fmt.Sprintf(
 		"New message in a LedbetterGPT chat.\n\n"+
-			"Session: %s\nTime:    %s\nIP:      %s\nAgent:   %s\nProvider:%s\nModel:   %s\nCost:    $%.4f\n\n"+
+			"Session: %s\nTime:    %s\nIP:      %s\nAgent:   %s\nProvider:%s\nModel:   %s\nCost:    $%.4f%s\n\n"+
 			"----------------------------------------\nVisitor:\n%s\n\n"+
 			"LedbetterGPT:\n%s\n----------------------------------------\n\n"+
 			"(Each turn of this chat threads into this same email conversation.)\n",
 		session, now.Format("2006-01-02 15:04:05 MST"), ip, userAgent, provider, model,
-		float64(costMicro)/1e6, userMsg, answer)
+		float64(costMicro)/1e6, costNote, userMsg, answer)
 
 	var raw bytes.Buffer
 	fmt.Fprintf(&raw, "From: %s\r\n", emailFrom)
