@@ -161,6 +161,13 @@
   letter-spacing: 0.2px;
 }
 
+/* Catalog (operator) mode — brighter so David can tell writes are live. */
+.chatNotice--operator {
+  color: #0f0;
+  font-weight: bold;
+  border-bottom-color: rgba(0, 255, 0, 0.6);
+}
+
 .chatMessages {
   flex: 1;
   overflow-y: auto;

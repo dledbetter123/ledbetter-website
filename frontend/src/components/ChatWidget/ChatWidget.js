@@ -78,6 +78,8 @@ const ChatWidget = () => {
   // the plain greeting; set to a glyph-twinkled copy each interval tick).
   const [greetingShimmer, setGreetingShimmer] = useState(null);
   const [loadingGlyph, setLoadingGlyph] = useState('');
+  // Set after a passkey login → chat talks to the catalog (KB-writing) endpoint.
+  const [operatorToken, setOperatorToken] = useState(null);
   const scrollRef = useRef(null);
   const sessionIdRef = useRef(null);
   // Time of the last message activity, for the IDLE flush window. Seeded from the
@@ -139,11 +141,16 @@ const ChatWidget = () => {
     setStreaming(true);
 
     const backendUri = (window.env && window.env.REACT_APP_BACKEND_URI) || '';
+    // In catalog (operator) mode, talk to the KB-writing endpoint with the token.
+    const path = operatorToken ? '/api/operator/chat' : '/api/chat';
+    const payload = operatorToken
+      ? { message, history, token: operatorToken }
+      : { message, history, sessionId: sessionIdRef.current };
     try {
-      const res = await fetch(`${backendUri}/api/chat`, {
+      const res = await fetch(`${backendUri}${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history, sessionId: sessionIdRef.current }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -221,11 +228,15 @@ const ChatWidget = () => {
           <div className="chatHeader">
             <span>LedbetterGPT</span>
             <span className="chatHeaderRight">
-              <OperatorMode />
+              <OperatorMode onAuthed={setOperatorToken} />
               <button className="chatClose" onClick={() => setIsOpen(false)} aria-label="Close chat">×</button>
             </span>
           </div>
-          <div className="chatNotice">Heads up — these chats are logged.</div>
+          <div className={`chatNotice${operatorToken ? ' chatNotice--operator' : ''}`}>
+            {operatorToken
+              ? 'Catalog mode — tell me what to remember and I’ll save it to the KB.'
+              : 'Heads up — these chats are logged.'}
+          </div>
           <div className="chatMessages" ref={scrollRef}>
             {messages.map((m, i) => {
               const isLast = i === messages.length - 1;
