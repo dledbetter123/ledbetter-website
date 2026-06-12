@@ -134,6 +134,12 @@
   font-size: 15px;
 }
 
+.chatHeaderRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .chatClose {
   background: none;
   border: none;

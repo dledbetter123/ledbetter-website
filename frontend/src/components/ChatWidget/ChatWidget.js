@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './ChatWidget.css';
 import { runScramble } from '../../lib/scramble';
+import OperatorMode from '../OperatorMode/OperatorMode';
 
 // LedbetterGPT's opening line — kept as a constant so the character-shimmer effect
 // (below) can twinkle it without diverging from the seeded first message.
@@ -219,7 +220,10 @@ const ChatWidget = () => {
         <div className="chatPanel">
           <div className="chatHeader">
             <span>LedbetterGPT</span>
-            <button className="chatClose" onClick={() => setIsOpen(false)} aria-label="Close chat">×</button>
+            <span className="chatHeaderRight">
+              <OperatorMode />
+              <button className="chatClose" onClick={() => setIsOpen(false)} aria-label="Close chat">×</button>
+            </span>
           </div>
           <div className="chatNotice">Heads up — these chats are logged.</div>
           <div className="chatMessages" ref={scrollRef}>
