@@ -60,7 +60,22 @@ const ContactPage = () => {
           </li>
           <li>
             <FontAwesomeIcon icon={faFileLines} className="icon" />
-            <a href={RESUME_URL} className="contactLink" target="_blank" rel="noopener noreferrer">
+            <a
+              href={RESUME_URL}
+              className="contactLink"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                // Notify the backend that the résumé was opened (fire-and-forget;
+                // keepalive lets it finish even as the new tab opens).
+                try {
+                  const base = (window.env && window.env.REACT_APP_BACKEND_URI) || '';
+                  fetch(`${base}/api/resume-click`, { method: 'POST', keepalive: true });
+                } catch (e) {
+                  /* non-fatal — the résumé still opens */
+                }
+              }}
+            >
               <TypingText as="span" speed={40} text="Resume" style={label} />
             </a>
           </li>
