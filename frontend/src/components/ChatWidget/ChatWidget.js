@@ -38,7 +38,7 @@ const shuffled = (arr) => {
 const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: "Hey — I'm David Ledbetter (well, my digital likeness). Ask me anything about my experience, projects, or skills." },
+    { role: 'assistant', text: "Hi, I'm David Ledbetter, what do you want to talk about?" },
   ]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);

@@ -47,13 +47,15 @@ jobs:
         run: |
           aws s3 sync build "s3://$SITE_BUCKET" --delete \
             --cache-control "public,max-age=31536000,immutable" \
-            --exclude index.html --exclude config.js --exclude asset-manifest.json
+            --exclude index.html --exclude config.js --exclude asset-manifest.json --exclude llms.txt
           aws s3 cp build/index.html "s3://$SITE_BUCKET/index.html" \
             --cache-control no-cache --content-type "text/html"
           aws s3 cp build/config.js "s3://$SITE_BUCKET/config.js" \
             --cache-control no-cache --content-type "application/javascript"
           aws s3 cp build/asset-manifest.json "s3://$SITE_BUCKET/asset-manifest.json" \
             --cache-control no-cache --content-type "application/json"
+          aws s3 cp build/llms.txt "s3://$SITE_BUCKET/llms.txt" \
+            --cache-control no-cache --content-type "text/plain; charset=utf-8"
           aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
 
   backend:

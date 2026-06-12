@@ -674,6 +674,21 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 		session = "anon"
 	}
 
+	// Fresh contact (no prior turns): an agent/bot that just reached the site via
+	// /llms.txt, or the web widget's very first turn. Reply with David's greeting and
+	// stop here — it's static text (no model call, no spend, nothing to prompt-inject),
+	// but it's still logged to S3 like any other turn. This runs AFTER the per-IP and
+	// global request caps above, so it can't be spammed for free. The web widget always
+	// sends its opener in `history`, so its real questions fall through to the model.
+	if len(req.History) == 0 {
+		greeting := "Hi, I'm David Ledbetter, what do you want to talk about?"
+		saveConversation(session, req.Message, greeting, nil, 0, clientIP(r), r.Header.Get("User-Agent"))
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		fmt.Fprint(w, greeting)
+		return
+	}
+
 	// Cost caps: per-session ($1) and global daily ($5). Checked before spending.
 	if getN(ctx, "cost#global#"+today) >= globalCostCapMicro {
 		http.Error(w, "LedbetterGPT has hit today's budget. Please try again tomorrow.", http.StatusTooManyRequests)
@@ -767,7 +782,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Persist the turn to S3 (best-effort, content-addressed key — a nod to the
 	// librarian's CAS catalog). Failures must not break the reply.
-	saveConversation(session, req.Message, answer, toolTrace, totalCost)
+	saveConversation(session, req.Message, answer, toolTrace, totalCost, clientIP(r), r.Header.Get("User-Agent"))
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -775,8 +790,9 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // saveConversation writes the turn to the conversations bucket under a content-hash
-// key. Best-effort: a short timeout, errors logged but swallowed.
-func saveConversation(session, msg, answer string, tools []map[string]interface{}, costMicro int64) {
+// key. Best-effort: a short timeout, errors logged but swallowed. ip/userAgent are
+// captured for abuse triage; empty values are omitted.
+func saveConversation(session, msg, answer string, tools []map[string]interface{}, costMicro int64, ip, userAgent string) {
 	if s3c == nil || convBucket == "" {
 		return
 	}
@@ -789,6 +805,12 @@ func saveConversation(session, msg, answer string, tools []map[string]interface{
 		"answer":      answer,
 		"toolCalls":   tools,
 		"costMicroUSD": costMicro,
+	}
+	if ip != "" {
+		rec["ip"] = ip
+	}
+	if userAgent != "" {
+		rec["userAgent"] = userAgent
 	}
 	body, err := json.MarshalIndent(rec, "", "  ")
 	if err != nil {
