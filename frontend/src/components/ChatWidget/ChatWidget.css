@@ -8,7 +8,7 @@
      against this box instead of the viewport, breaking its screen-centering. */
   left: 0;
   right: 0;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(40px + env(safe-area-inset-bottom, 0px));
   z-index: 3000;
   font-family: 'Courier New', monospace;
   /* The bar spans the viewport but must not swallow clicks on the page behind it;
