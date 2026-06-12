@@ -221,6 +221,7 @@ const ChatWidget = () => {
             <span>LedbetterGPT</span>
             <button className="chatClose" onClick={() => setIsOpen(false)} aria-label="Close chat">×</button>
           </div>
+          <div className="chatNotice">Heads up — these chats are logged.</div>
           <div className="chatMessages" ref={scrollRef}>
             {messages.map((m, i) => {
               const isLast = i === messages.length - 1;
