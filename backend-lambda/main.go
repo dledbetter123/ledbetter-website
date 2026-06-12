@@ -756,6 +756,14 @@ func isInstagram(r *http.Request) bool {
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
+	// TEMP DIAG (remove): echo the IP-bearing headers to determine the trusted XFF hop.
+	if r.URL.Query().Get("diag") == "ipchain" {
+		w.Header().Set("Content-Type", "text/plain")
+		fmt.Fprintf(w, "XFF=%q\nX-Real-IP=%q\nCloudFront-Viewer-Address=%q\nRemoteAddr=%q\n",
+			r.Header.Get("X-Forwarded-For"), r.Header.Get("X-Real-IP"),
+			r.Header.Get("CloudFront-Viewer-Address"), r.RemoteAddr)
+		return
+	}
 	w.Header().Set("Content-Type", "text/plain")
 	fmt.Fprint(w, "backend stable")
 }
