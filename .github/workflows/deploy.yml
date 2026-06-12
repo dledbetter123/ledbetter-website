@@ -57,6 +57,14 @@ jobs:
           aws s3 cp build/llms.txt "s3://$SITE_BUCKET/llms.txt" \
             --cache-control no-cache --content-type "text/plain; charset=utf-8"
           aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+      - name: IndexNow — ask Bing/others to re-crawl
+        # Key file (36ddd20a...txt) is deployed to the site root above; the key is not
+        # secret (it lives publicly on the domain). Best-effort: never fail the deploy.
+        run: |
+          curl -s -X POST https://api.indexnow.org/indexnow \
+            -H "Content-Type: application/json" \
+            -d '{"host":"www.davidamosledbetter.com","key":"36ddd20a54a7f091b876c7f7451b0919","keyLocation":"https://www.davidamosledbetter.com/36ddd20a54a7f091b876c7f7451b0919.txt","urlList":["https://www.davidamosledbetter.com/","https://www.davidamosledbetter.com/llms.txt","https://www.davidamosledbetter.com/sitemap.xml","https://www.davidamosledbetter.com/robots.txt"]}' \
+            -o /dev/null -w "IndexNow: HTTP %{http_code}\n" || true
 
   backend:
     runs-on: ubuntu-latest
