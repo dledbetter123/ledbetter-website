@@ -6,6 +6,27 @@ import { runScramble } from '../../lib/scramble';
 // (below) can twinkle it without diverging from the seeded first message.
 const GREETING = "Hi, I'm David Ledbetter, what do you want to talk about?";
 
+// Persist the open chat to sessionStorage so a page refresh repopulates it in-place.
+// This is Web Storage, NOT a cookie: it's never sent to a server and is exempt as
+// strictly-necessary, so it needs no consent banner. Scoped to the tab and to a "flush
+// window" — if the last activity is older than this, we start fresh rather than
+// resurrecting a stale conversation. (Keyed on the per-tab session, not IP, so people
+// behind a shared IP never see each other's chats.)
+const CHAT_STORE_KEY = 'ledbettergpt_chat';
+const FLUSH_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+const loadSavedChat = () => {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(CHAT_STORE_KEY) || 'null');
+    if (!saved || !Array.isArray(saved.messages)) return null;
+    if (Date.now() - saved.savedAt > FLUSH_WINDOW_MS) return null;
+    if (saved.messages.length <= 1) return null; // nothing beyond the greeting to restore
+    return saved; // { savedAt, isOpen, messages }
+  } catch (e) {
+    return null;
+  }
+};
+
 // Pool of Greek-letter glyphs for the "thinking" indicator. Each loading cycle
 // draws a freshly shuffled ordering from this pool (matches the site's scramble
 // aesthetic — actual characters, e.g. "φ χ ν", not their spelled-out names).
@@ -40,10 +61,11 @@ const shuffled = (arr) => {
 // backend's /api/chat endpoint (Gemini-backed). The backend URL is injected at
 // runtime via window.env.REACT_APP_BACKEND_URI (see config.js / IntroPage).
 const ChatWidget = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { role: 'assistant', text: GREETING },
-  ]);
+  // Restore a recent conversation (and its open/closed state) on refresh, else greet.
+  const [isOpen, setIsOpen] = useState(() => !!loadSavedChat()?.isOpen);
+  const [messages, setMessages] = useState(
+    () => loadSavedChat()?.messages || [{ role: 'assistant', text: GREETING }],
+  );
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   // Ongoing character-shimmer of the greeting while the panel is open (null = show
@@ -61,6 +83,21 @@ const ChatWidget = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isOpen]);
+
+  // Persist the conversation (and open state) so a refresh repopulates it. Only when
+  // settled — never mid-stream — so we never restore a half-typed answer. Stamps the
+  // flush-window clock on every settled update.
+  useEffect(() => {
+    if (streaming) return;
+    try {
+      sessionStorage.setItem(
+        CHAT_STORE_KEY,
+        JSON.stringify({ savedAt: Date.now(), isOpen, messages }),
+      );
+    } catch (e) {
+      /* storage disabled/full — restoration just won't happen, non-fatal */
+    }
+  }, [messages, isOpen, streaming]);
 
   // Character shimmer on the greeting: a one-shot glyph decode each time the panel
   // opens, settling onto the real text and then stopping. Skipped under reduced-motion.
