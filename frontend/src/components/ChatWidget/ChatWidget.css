@@ -50,9 +50,12 @@
   inset: 0;
   background: linear-gradient(115deg, transparent 35%, rgba(190, 255, 205, 0.55) 50%, transparent 65%);
   background-size: 250% 100%;
-  background-position: 150% 0;
+  background-repeat: no-repeat;
+  background-position: 110% 0;
   mix-blend-mode: plus-lighter;
-  animation: chatToggleSheen 3.2s ease-in-out infinite;
+  /* linear so the band crosses at an even speed (ease-in-out crawled while the band
+     was off-screen, making the sheen look like it flashed once then stopped). */
+  animation: chatToggleSheen 3.2s linear infinite;
   pointer-events: none;
 }
 
@@ -88,7 +91,9 @@
   }
 }
 @keyframes chatToggleSheen {
-  to { background-position: -150% 0; }
+  0%   { background-position: 110% 0; }   /* band just off the left */
+  85%  { background-position: -30% 0; }   /* swept fully across to off the right */
+  100% { background-position: -30% 0; }   /* brief rest, then repeat */
 }
 @media (prefers-reduced-motion: reduce) {
   .chatToggle { animation: none; }
