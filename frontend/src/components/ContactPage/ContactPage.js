@@ -42,6 +42,56 @@ const ContactPage = () => {
     }
   };
 
+  const RESUME_ASKED_KEY = 'ledbettergpt_resume_asked';
+  const [resumePrompt, setResumePrompt] = useState(false);
+  const [recruiterNote, setRecruiterNote] = useState('');
+
+  const pingResume = (recruiter) => {
+    try {
+      const base = (window.env && window.env.REACT_APP_BACKEND_URI) || '';
+      fetch(`${base}/api/resume-click`, {
+        method: 'POST',
+        keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recruiter === null ? {} : { recruiter }),
+      });
+    } catch (e) {
+      /* non-fatal */
+    }
+  };
+  const openResume = () => window.open(RESUME_URL, '_blank', 'noopener,noreferrer');
+
+  // First résumé open in this session asks whether they're a recruiter; after that, opens directly.
+  const onResumeClick = (e) => {
+    let asked = false;
+    try {
+      asked = !!sessionStorage.getItem(RESUME_ASKED_KEY);
+    } catch (err) {
+      /* storage disabled */
+    }
+    if (asked) {
+      pingResume(null); // subsequent open — log it, let the link open normally
+      return;
+    }
+    e.preventDefault();
+    setResumePrompt(true);
+  };
+  const answerRecruiter = (isRecruiter) => {
+    try {
+      sessionStorage.setItem(RESUME_ASKED_KEY, '1');
+    } catch (err) {
+      /* storage disabled */
+    }
+    pingResume(isRecruiter);
+    setResumePrompt(false);
+    setRecruiterNote(
+      isRecruiter
+        ? "Great — after you've looked it over, please reach out through the form below so David can follow up."
+        : '',
+    );
+    openResume();
+  };
+
   return (
     <div className="contactPage">
       <div className="contactContent">
@@ -60,22 +110,7 @@ const ContactPage = () => {
           </li>
           <li>
             <FontAwesomeIcon icon={faFileLines} className="icon" />
-            <a
-              href={RESUME_URL}
-              className="contactLink"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => {
-                // Notify the backend that the résumé was opened (fire-and-forget;
-                // keepalive lets it finish even as the new tab opens).
-                try {
-                  const base = (window.env && window.env.REACT_APP_BACKEND_URI) || '';
-                  fetch(`${base}/api/resume-click`, { method: 'POST', keepalive: true });
-                } catch (e) {
-                  /* non-fatal — the résumé still opens */
-                }
-              }}
-            >
+            <a href={RESUME_URL} className="contactLink" target="_blank" rel="noopener noreferrer" onClick={onResumeClick}>
               <TypingText as="span" speed={40} text="Resume" style={label} />
             </a>
           </li>
@@ -86,6 +121,17 @@ const ContactPage = () => {
             </a>
           </li>
         </ul>
+
+        {resumePrompt && (
+          <div className="resumePrompt">
+            <p>Quick one before you view it — are you a recruiter?</p>
+            <div className="resumePromptBtns">
+              <button type="button" onClick={() => answerRecruiter(true)}>Yes</button>
+              <button type="button" onClick={() => answerRecruiter(false)}>No</button>
+            </div>
+          </div>
+        )}
+        {recruiterNote && <p className="resumeNote">{recruiterNote}</p>}
 
         <form className="contactForm" onSubmit={onSubmit}>
           <p className="contactPrompt">Leave your info and I'll reach out.</p>

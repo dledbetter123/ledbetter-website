@@ -1484,21 +1484,34 @@ func resumeClickHandler(w http.ResponseWriter, r *http.Request) {
 	today := time.Now().UTC().Format("2006-01-02")
 	ip := clientIP(r)
 	ua := r.Header.Get("User-Agent")
-	logResumeClick(ip, ua)
+	// Optional body {"recruiter": true|false}; empty body is fine.
+	var rq struct {
+		Recruiter *bool `json:"recruiter"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&rq)
+	recruiter := "(not asked)"
+	if rq.Recruiter != nil {
+		if *rq.Recruiter {
+			recruiter = "YES — recruiter"
+		} else {
+			recruiter = "no"
+		}
+	}
+	logResumeClick(ip, ua, recruiter)
 	if n, err := addN(ctx, "resumeclick#ip#"+today+"#"+ip, 1); err == nil && n == 1 {
 		if g, err := addN(ctx, "resumeclick#global#"+today, 1); err == nil && g <= 100 {
-			emailResumeClick(ip, ua)
+			emailResumeClick(ip, ua, recruiter)
 		}
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func logResumeClick(ip, ua string) {
+func logResumeClick(ip, ua, recruiter string) {
 	if s3c == nil || convBucket == "" {
 		return
 	}
 	now := time.Now().UTC()
-	rec := map[string]interface{}{"ts": now.Format(time.RFC3339), "event": "resume_open", "ip": ip, "userAgent": ua}
+	rec := map[string]interface{}{"ts": now.Format(time.RFC3339), "event": "resume_open", "ip": ip, "userAgent": ua, "recruiter": recruiter}
 	body, _ := json.Marshal(rec)
 	sum := sha256.Sum256(append(body, []byte(now.Format(time.RFC3339Nano))...))
 	key := fmt.Sprintf("resume-clicks/%s/%s.json", now.Format("2006-01-02"), hex.EncodeToString(sum[:])[:16])
@@ -1512,7 +1525,7 @@ func logResumeClick(ip, ua string) {
 	}
 }
 
-func emailResumeClick(ip, userAgent string) {
+func emailResumeClick(ip, userAgent, recruiter string) {
 	if ses == nil || emailFrom == "" || emailTo == "" {
 		return
 	}
@@ -1523,12 +1536,16 @@ func emailResumeClick(ip, userAgent string) {
 	if userAgent == "" {
 		userAgent = "(none)"
 	}
-	body := fmt.Sprintf("Someone opened your resume on davidamosledbetter.com.\n\nTime:  %s\nIP:    %s\nAgent: %s\n",
-		now.Format("2006-01-02 15:04:05 MST"), ip, userAgent)
+	body := fmt.Sprintf("Someone opened your resume on davidamosledbetter.com.\n\nRecruiter: %s\nTime:  %s\nIP:    %s\nAgent: %s\n",
+		recruiter, now.Format("2006-01-02 15:04:05 MST"), ip, userAgent)
+	subj := "Resume opened"
+	if recruiter == "YES — recruiter" {
+		subj = "Resume opened by a RECRUITER"
+	}
 	var raw bytes.Buffer
 	fmt.Fprintf(&raw, "From: %s\r\n", emailFrom)
 	fmt.Fprintf(&raw, "To: %s\r\n", emailTo)
-	fmt.Fprintf(&raw, "Subject: Resume opened — %s\r\n", stripHeader(ip))
+	fmt.Fprintf(&raw, "Subject: %s — %s\r\n", subj, stripHeader(ip))
 	fmt.Fprintf(&raw, "Date: %s\r\n", now.Format(time.RFC1123Z))
 	raw.WriteString("MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n")
 	raw.WriteString(body)

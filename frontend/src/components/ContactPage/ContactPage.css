@@ -149,3 +149,34 @@
     margin: 4px 0 0;
   }
   
+/* First-open "are you a recruiter?" prompt on the Resume link */
+.resumePrompt {
+  margin: 14px auto 0;
+  max-width: 420px;
+  text-align: center;
+  border: 1px solid #0f0;
+  border-radius: 6px;
+  padding: 12px 14px;
+  background-color: rgba(0, 0, 0, 0.45);
+}
+.resumePrompt p { margin: 0 0 10px; color: #0f0; }
+.resumePromptBtns { display: flex; gap: 10px; justify-content: center; }
+.resumePromptBtns button {
+  background: transparent;
+  border: 1px solid #0f0;
+  border-radius: 6px;
+  color: #0f0;
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 6px 22px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.resumePromptBtns button:hover { background-color: #0f0; color: #000; }
+.resumeNote {
+  margin: 12px auto 0;
+  max-width: 420px;
+  text-align: center;
+  color: #0f0;
+  font-size: 0.95rem;
+}
