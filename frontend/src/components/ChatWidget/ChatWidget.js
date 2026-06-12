@@ -46,7 +46,6 @@ const ChatWidget = () => {
   ]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
-  const [arrow, setArrow] = useState(1);
   // Ongoing character-shimmer of the greeting while the panel is open (null = show
   // the plain greeting; set to a glyph-twinkled copy each interval tick).
   const [greetingShimmer, setGreetingShimmer] = useState(null);
@@ -143,13 +142,6 @@ const ChatWidget = () => {
     }
   };
 
-  // Cycle the ❯ ❯❯ ❯❯❯ arrow drawing attention to the (closed) chat button.
-  useEffect(() => {
-    if (isOpen) return undefined;
-    const id = setInterval(() => setArrow((a) => (a % 3) + 1), 450);
-    return () => clearInterval(id);
-  }, [isOpen]);
-
   // "Thinking" indicator: while the response is still in flight (the trailing
   // assistant bubble is empty), accumulate a freshly-shuffled run of Greek-letter
   // names ("phi" → "phi chi" → …, ~6 long) and then restart with a new shuffle.
@@ -211,14 +203,12 @@ const ChatWidget = () => {
         </div>
       )}
       <div className="chatBar">
-        {!isOpen && <span className="chatArrow chatArrowLeft">{'❯'.repeat(arrow)}</span>}
         <button
           className={`chatToggle${isOpen ? ' open' : ''}`}
           onClick={() => setIsOpen((o) => !o)}
         >
           {isOpen ? 'Close' : 'Ask LedbetterGPT'}
         </button>
-        {!isOpen && <span className="chatArrow chatArrowRight">{'❮'.repeat(arrow)}</span>}
       </div>
     </div>
   );
