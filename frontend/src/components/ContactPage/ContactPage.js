@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLinkedin, faGithub } from '@fortawesome/free-brands-svg-icons';
 import { faEnvelope, faPhone, faFileLines } from '@fortawesome/free-solid-svg-icons';
 import TypingText from '../TypingText/TypingText';
-import ShimmerText from '../ShimmerText/ShimmerText';
 
 const RESUME_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/David_Ledbetter_Resume.pdf';
 
@@ -37,13 +36,13 @@ const ContactPage = () => {
           <li>
             <FontAwesomeIcon icon={faEnvelope} className="icon" />
             <a href="mailto:dledbetter456@gmail.com" className="contactLink">
-              <ShimmerText as="span" text="dledbetter456@gmail.com" style={label} />
+              <TypingText as="span" speed={20} text="dledbetter456@gmail.com" style={label} />
             </a>
           </li>
           <li>
             <FontAwesomeIcon icon={faPhone} className="icon" />
             <a href="tel:+12403055339" className="contactLink">
-              <ShimmerText as="span" text="(240)-305-5339" style={label} />
+              <TypingText as="span" speed={40} text="(240)-305-5339" style={label} />
             </a>
           </li>
         </ul>
