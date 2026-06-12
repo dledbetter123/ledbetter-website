@@ -246,6 +246,24 @@ func init() {
 	if tok := loadSecret(ctx, sm, os.Getenv("GITHUB_SECRET_ID")); tok != "" && tok != "REPLACE_ME" {
 		githubToken = tok
 	}
+	// Notification email from/to: prefer Secrets Manager (JSON {"from","to"}); the
+	// EMAIL_FROM / EMAIL_TO env vars read above remain a fallback during transition.
+	if cfgJSON := loadSecret(ctx, sm, os.Getenv("EMAIL_SECRET_ID")); cfgJSON != "" {
+		var ec struct {
+			From string `json:"from"`
+			To   string `json:"to"`
+		}
+		if err := json.Unmarshal([]byte(cfgJSON), &ec); err != nil {
+			fmt.Printf("email-config parse error: %v\n", err)
+		} else {
+			if ec.From != "" {
+				emailFrom = ec.From
+			}
+			if ec.To != "" {
+				emailTo = ec.To
+			}
+		}
+	}
 }
 
 func loadSecret(ctx context.Context, sm *secretsmanager.Client, id string) string {

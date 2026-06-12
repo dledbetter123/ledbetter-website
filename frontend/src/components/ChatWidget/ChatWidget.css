@@ -18,12 +18,15 @@
 
 .chatToggle {
   pointer-events: auto;
-  background-color: rgba(0, 0, 0, 0.35);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  position: relative;
+  overflow: hidden; /* clips the sweep sheen to the rounded rect (own box-shadow is unaffected) */
+  /* Stays translucent: a faint fill plus a backdrop blur+saturate pulls the colour
+     behind the button through, so the glow and sheen read off the under-colour. */
+  background-color: rgba(0, 12, 0, 0.26);
+  -webkit-backdrop-filter: blur(6px) saturate(1.7);
+  backdrop-filter: blur(6px) saturate(1.7);
   color: #0f0;
-  border: 3px solid #0f0;
-  box-shadow: 0 0 12px rgba(0, 255, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border: 2px solid rgba(0, 255, 0, 0.6);
   padding: 14px 28px;
   font-family: 'Courier New', monospace;
   font-size: 16px;
@@ -31,13 +34,53 @@
   letter-spacing: 0.5px;
   cursor: pointer;
   border-radius: 6px;
-  transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+  /* radiant border glow; the keyframes pulse it so it reads as actively radiating */
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.5), 0 0 22px rgba(57, 255, 20, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  animation: chatToggleGlow 2.8s ease-in-out infinite;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+/* The light-sweep ("literal shimmer") — a translucent highlight band travels across
+   the face. plus-lighter makes it brighten relative to the colour showing through
+   the translucent button, so the sheen takes on the under-colour, not flat white. */
+.chatToggle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 35%, rgba(190, 255, 205, 0.55) 50%, transparent 65%);
+  background-size: 250% 100%;
+  background-position: 150% 0;
+  mix-blend-mode: plus-lighter;
+  animation: chatToggleSheen 3.2s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .chatToggle:hover {
-  background-color: #0f0;
+  background-color: rgba(0, 255, 0, 0.85);
   color: #000;
-  box-shadow: 0 0 18px rgba(0, 255, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 18px rgba(57, 255, 20, 0.85), 0 0 36px rgba(57, 255, 20, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+@keyframes chatToggleGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(57, 255, 20, 0.4), 0 0 18px rgba(57, 255, 20, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    border-color: rgba(0, 255, 0, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(57, 255, 20, 0.75), 0 0 38px rgba(57, 255, 20, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    border-color: rgba(120, 255, 140, 0.95);
+  }
+}
+@keyframes chatToggleSheen {
+  to { background-position: -150% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chatToggle { animation: none; }
+  .chatToggle::before { animation: none; opacity: 0; }
 }
 
 .chatBar {
@@ -157,33 +200,6 @@
   50.01%, 100% { opacity: 0; }
 }
 
-/* Shimmer on the initial greeting text — a bright highlight band sweeps across the
-   green text to draw the eye to LedbetterGPT's opener. Clipped to the text so the
-   message bubble's background is untouched. */
-.chatShimmer {
-  background: linear-gradient(
-    100deg,
-    #6fcf6f 0%, #b6ffb6 38%, #ffffff 50%, #b6ffb6 62%, #6fcf6f 100%
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  text-shadow: 0 0 8px rgba(57, 255, 20, 0.35);
-  animation: chatShimmer 3.5s linear infinite;
-}
-@keyframes chatShimmer {
-  to { background-position: -200% 0; }
-}
-/* Respect reduced-motion: hold the readable green, no sweep. */
-@media (prefers-reduced-motion: reduce) {
-  .chatShimmer {
-    animation: none;
-    -webkit-text-fill-color: #b6ffb6;
-    color: #b6ffb6;
-  }
-}
 
 .chatInputRow {
   display: flex;

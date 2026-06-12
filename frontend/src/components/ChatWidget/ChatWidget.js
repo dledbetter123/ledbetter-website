@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './ChatWidget.css';
-import { runScramble } from '../../lib/scramble';
+import { runScramble, shimmerOf } from '../../lib/scramble';
+
+// LedbetterGPT's opening line — kept as a constant so the character-shimmer effect
+// (below) can twinkle it without diverging from the seeded first message.
+const GREETING = "Hi, I'm David Ledbetter, what do you want to talk about?";
 
 // Pool of Greek-letter glyphs for the "thinking" indicator. Each loading cycle
 // draws a freshly shuffled ordering from this pool (matches the site's scramble
@@ -38,11 +42,14 @@ const shuffled = (arr) => {
 const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: "Hi, I'm David Ledbetter, what do you want to talk about?" },
+    { role: 'assistant', text: GREETING },
   ]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [arrow, setArrow] = useState(1);
+  // Ongoing character-shimmer of the greeting while the panel is open (null = show
+  // the plain greeting; set to a glyph-twinkled copy each interval tick).
+  const [greetingShimmer, setGreetingShimmer] = useState(null);
   const [loadingGlyph, setLoadingGlyph] = useState('');
   const scrollRef = useRef(null);
   const sessionIdRef = useRef(null);
@@ -55,6 +62,20 @@ const ChatWidget = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isOpen]);
+
+  // Character shimmer on the greeting: while the panel is open, re-roll a glyph
+  // twinkle every ~90ms. Cleared when closed; skipped under reduced-motion.
+  useEffect(() => {
+    if (!isOpen) {
+      setGreetingShimmer(null);
+      return undefined;
+    }
+    const reduce = window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return undefined;
+    const id = setInterval(() => setGreetingShimmer(shimmerOf(GREETING, 0.08)), 90);
+    return () => clearInterval(id);
+  }, [isOpen]);
 
   const send = async () => {
     const message = input.trim();
@@ -168,9 +189,7 @@ const ChatWidget = () => {
               return (
                 <div key={i} className={`chatMsg ${m.role}`}>
                   {m.text
-                    ? (i === 0
-                        ? <span className="chatShimmer">{m.text}</span>
-                        : m.text)
+                    ? (i === 0 ? (greetingShimmer || m.text) : m.text)
                     : (typing ? <span className="chatLoading">{loadingGlyph}</span> : '')}
                 </div>
               );
