@@ -108,26 +108,3 @@ export function runScramble(text, duration, onUpdate, onDone) {
   raf = requestAnimationFrame(tick);
   return () => cancelAnimationFrame(raf);
 }
-
-// One frame of an ongoing "character shimmer": returns a copy of `text` where each
-// non-space character is, with probability `prob`, momentarily replaced by a random
-// glyph. Unlike runScramble (a one-shot decode that settles), this never settles —
-// call it on an interval to make the text perpetually twinkle through glyphs while
-// staying readable. Spaces/newlines are preserved so the shape holds.
-export function shimmerOf(text, prob = 0.08) {
-  let prev = null; // last emitted char, so two random glyphs never sit side by side
-  return Array.from(text)
-    .map((c) => {
-      if (c === ' ' || c === '\n' || c === '\t') {
-        prev = null;
-        return c;
-      }
-      if (Math.random() < prob) {
-        prev = rand(prev);
-        return prev;
-      }
-      prev = c;
-      return c;
-    })
-    .join('');
-}

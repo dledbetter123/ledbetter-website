@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './ChatWidget.css';
-import { runScramble, shimmerOf } from '../../lib/scramble';
+import { runScramble } from '../../lib/scramble';
 
 // LedbetterGPT's opening line — kept as a constant so the character-shimmer effect
 // (below) can twinkle it without diverging from the seeded first message.
@@ -63,8 +63,8 @@ const ChatWidget = () => {
     }
   }, [messages, isOpen]);
 
-  // Character shimmer on the greeting: while the panel is open, re-roll a glyph
-  // twinkle every ~90ms. Cleared when closed; skipped under reduced-motion.
+  // Character shimmer on the greeting: a one-shot glyph decode each time the panel
+  // opens, settling onto the real text and then stopping. Skipped under reduced-motion.
   useEffect(() => {
     if (!isOpen) {
       setGreetingShimmer(null);
@@ -73,8 +73,8 @@ const ChatWidget = () => {
     const reduce = window.matchMedia
       && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return undefined;
-    const id = setInterval(() => setGreetingShimmer(shimmerOf(GREETING, 0.08)), 90);
-    return () => clearInterval(id);
+    const cancel = runScramble(GREETING, 900, setGreetingShimmer, () => setGreetingShimmer(null));
+    return cancel;
   }, [isOpen]);
 
   const send = async () => {
