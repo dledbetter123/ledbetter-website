@@ -1477,6 +1477,7 @@ func main() {
 	mux.HandleFunc("/api/operator/register/finish", operatorRegisterFinish)
 	mux.HandleFunc("/api/operator/auth/begin", operatorAuthBegin)
 	mux.HandleFunc("/api/operator/auth/finish", operatorAuthFinish)
+	mux.HandleFunc("/api/operator/chat", operatorChatHandler)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "LedbetterGPT backend (lambda)")
 	})
