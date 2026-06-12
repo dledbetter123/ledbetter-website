@@ -212,7 +212,10 @@ const ChatWidget = () => {
       )}
       <div className="chatBar">
         {!isOpen && <span className="chatArrow chatArrowLeft">{'❯'.repeat(arrow)}</span>}
-        <button className="chatToggle" onClick={() => setIsOpen((o) => !o)}>
+        <button
+          className={`chatToggle${isOpen ? ' open' : ''}`}
+          onClick={() => setIsOpen((o) => !o)}
+        >
           {isOpen ? 'Close' : 'Ask LedbetterGPT'}
         </button>
         {!isOpen && <span className="chatArrow chatArrowRight">{'❮'.repeat(arrow)}</span>}
