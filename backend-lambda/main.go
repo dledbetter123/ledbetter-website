@@ -215,6 +215,21 @@ var (
 	emailTo     string // notification recipient
 	httpClient  = &http.Client{Timeout: 25 * time.Second}
 
+	// LLM provider selection. llmProvider ∈ {"gemini","workersai"} (default gemini).
+	// When "workersai", inference goes to Cloudflare Workers AI's OpenAI-compatible
+	// chat-completions endpoint instead of Gemini; everything else (tool loop, rate
+	// limits, logging, privacy gating) is identical. Model + per-token cost rates are
+	// env-driven so switching models is config, not code.
+	llmProvider    = "gemini"
+	cfAccountID    string
+	cfToken        string
+	// Default to a non-reasoning instruct model: reasoning models (gpt-oss, etc.) spend
+	// the output budget on hidden reasoning and can return null content under the short
+	// max_tokens this bot uses — wrong fit for terse persona replies. Override via env.
+	workersAIModel = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+	waiInPerMTok   = 0.293 // $ / 1M input tokens  (llama-3.3-70b-fp8-fast default)
+	waiOutPerMTok  = 2.253 // $ / 1M output tokens (llama-3.3-70b-fp8-fast default)
+
 	kbMu      sync.Mutex
 	kbText    string
 	kbFetched time.Time
@@ -245,6 +260,26 @@ func init() {
 	geminiKey = loadSecret(ctx, sm, os.Getenv("GEMINI_SECRET_ID"))
 	if tok := loadSecret(ctx, sm, os.Getenv("GITHUB_SECRET_ID")); tok != "" && tok != "REPLACE_ME" {
 		githubToken = tok
+	}
+
+	// Provider toggle (defaults preserve Gemini). CF_ACCOUNT_ID + the Workers AI token
+	// (CF_SECRET_ID) are only consulted when LLM_PROVIDER=workersai. WORKERS_AI_MODEL and
+	// the WAI rate envs let you switch models / keep cost accounting accurate per model.
+	if p := strings.ToLower(strings.TrimSpace(os.Getenv("LLM_PROVIDER"))); p != "" {
+		llmProvider = p
+	}
+	cfAccountID = os.Getenv("CF_ACCOUNT_ID")
+	if m := strings.TrimSpace(os.Getenv("WORKERS_AI_MODEL")); m != "" {
+		workersAIModel = m
+	}
+	if v, err := strconv.ParseFloat(os.Getenv("WORKERS_AI_USD_IN_PER_MTOK"), 64); err == nil && v > 0 {
+		waiInPerMTok = v
+	}
+	if v, err := strconv.ParseFloat(os.Getenv("WORKERS_AI_USD_OUT_PER_MTOK"), 64); err == nil && v > 0 {
+		waiOutPerMTok = v
+	}
+	if tok := loadSecret(ctx, sm, os.Getenv("CF_SECRET_ID")); tok != "" && tok != "REPLACE_ME" {
+		cfToken = tok
 	}
 	// Notification email from/to: prefer Secrets Manager (JSON {"from","to"}); the
 	// EMAIL_FROM / EMAIL_TO env vars read above remain a fallback during transition.
@@ -685,6 +720,196 @@ func callGemini(ctx context.Context, contents []geminiContent, withTools bool, e
 	return gr.Candidates[0].Content, gr.UsageMetadata, nil
 }
 
+// ---- Cloudflare Workers AI provider (OpenAI-compatible chat completions) ----
+//
+// We keep geminiContent as the internal conversation format so the tool loop, cost
+// booking, and logging are provider-agnostic. callWorkersAI translates the running
+// geminiContent slice into OpenAI-style messages, calls Workers AI, and translates the
+// response back into a geminiContent + geminiUsage — a drop-in for callGemini.
+
+type oaiFnCall struct {
+	Name      string `json:"name"`
+	Arguments string `json:"arguments"`
+}
+type oaiToolCall struct {
+	ID       string    `json:"id,omitempty"`
+	Type     string    `json:"type"`
+	Function oaiFnCall `json:"function"`
+}
+type oaiMessage struct {
+	Role       string        `json:"role"`
+	Content    string        `json:"content,omitempty"`
+	ToolCalls  []oaiToolCall `json:"tool_calls,omitempty"`
+	ToolCallID string        `json:"tool_call_id,omitempty"`
+	Name       string        `json:"name,omitempty"`
+}
+type oaiTool struct {
+	Type     string `json:"type"`
+	Function fnDecl `json:"function"`
+}
+type oaiRequest struct {
+	Model       string       `json:"model"`
+	Messages    []oaiMessage `json:"messages"`
+	Tools       []oaiTool    `json:"tools,omitempty"`
+	MaxTokens   int          `json:"max_tokens"`
+	Temperature float64      `json:"temperature"`
+}
+type oaiResponse struct {
+	Choices []struct {
+		Message oaiMessage `json:"message"`
+	} `json:"choices"`
+	Usage struct {
+		PromptTokens     int `json:"prompt_tokens"`
+		CompletionTokens int `json:"completion_tokens"`
+		TotalTokens      int `json:"total_tokens"`
+	} `json:"usage"`
+}
+
+// toOAIMessages flattens our geminiContent turns into OpenAI chat messages. A model
+// turn with FunctionCall parts becomes an assistant message carrying tool_calls; a
+// user turn carrying FunctionResponse parts becomes one "tool" message per response
+// (matched back by tool_call_id, which round-trips through fnCall.ID / fnResponse.ID).
+func toOAIMessages(sysText string, contents []geminiContent) []oaiMessage {
+	msgs := []oaiMessage{{Role: "system", Content: sysText}}
+	for _, c := range contents {
+		var text strings.Builder
+		var toolCalls []oaiToolCall
+		var toolMsgs []oaiMessage
+		for _, p := range c.Parts {
+			if p.Text != "" {
+				text.WriteString(p.Text)
+			}
+			if p.FunctionCall != nil {
+				args, _ := json.Marshal(p.FunctionCall.Args)
+				toolCalls = append(toolCalls, oaiToolCall{
+					ID: p.FunctionCall.ID, Type: "function",
+					Function: oaiFnCall{Name: p.FunctionCall.Name, Arguments: string(args)},
+				})
+			}
+			if p.FunctionResponse != nil {
+				content, _ := p.FunctionResponse.Response["content"].(string)
+				toolMsgs = append(toolMsgs, oaiMessage{
+					Role: "tool", ToolCallID: p.FunctionResponse.ID,
+					Name: p.FunctionResponse.Name, Content: content,
+				})
+			}
+		}
+		if len(toolMsgs) > 0 { // a function-response turn maps to tool messages only
+			msgs = append(msgs, toolMsgs...)
+			continue
+		}
+		if c.Role == "model" {
+			m := oaiMessage{Role: "assistant", Content: text.String()}
+			if len(toolCalls) > 0 {
+				m.ToolCalls = toolCalls
+			}
+			msgs = append(msgs, m)
+		} else {
+			msgs = append(msgs, oaiMessage{Role: "user", Content: text.String()})
+		}
+	}
+	return msgs
+}
+
+// callWorkersAI is the Workers AI analogue of callGemini: same signature, same return
+// shape, so the tool loop is unchanged. Tool calls without an id get a synthetic one so
+// the assistant tool_call and its later tool message stay matched.
+func callWorkersAI(ctx context.Context, contents []geminiContent, withTools bool, extra string) (geminiContent, geminiUsage, error) {
+	sysText := baseInstruction + "\n\n" + knowledge()
+	if extra != "" {
+		sysText += "\n\n" + extra
+	}
+	var tools []oaiTool
+	if withTools {
+		for _, t := range repoTools {
+			for _, d := range t.FunctionDeclarations {
+				tools = append(tools, oaiTool{Type: "function", Function: d})
+			}
+		}
+	}
+	reqBody, _ := json.Marshal(oaiRequest{
+		Model:       workersAIModel,
+		Messages:    toOAIMessages(sysText, contents),
+		Tools:       tools,
+		MaxTokens:   maxOutputTokens,
+		Temperature: 0.7,
+	})
+	url := "https://api.cloudflare.com/client/v4/accounts/" + cfAccountID + "/ai/v1/chat/completions"
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(reqBody))
+	if err != nil {
+		return geminiContent{}, geminiUsage{}, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+cfToken)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return geminiContent{}, geminiUsage{}, err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return geminiContent{}, geminiUsage{}, fmt.Errorf("workersai status %d: %s", resp.StatusCode, string(body))
+	}
+	var or oaiResponse
+	if err := json.Unmarshal(body, &or); err != nil {
+		return geminiContent{}, geminiUsage{}, err
+	}
+	usage := geminiUsage{
+		PromptTokenCount:     or.Usage.PromptTokens,
+		CandidatesTokenCount: or.Usage.CompletionTokens,
+		TotalTokenCount:      or.Usage.TotalTokens,
+	}
+	if len(or.Choices) == 0 {
+		return geminiContent{}, usage, fmt.Errorf("no choices")
+	}
+	msg := or.Choices[0].Message
+	out := geminiContent{Role: "model"}
+	if msg.Content != "" {
+		out.Parts = append(out.Parts, geminiPart{Text: msg.Content})
+	}
+	for i, tc := range msg.ToolCalls {
+		id := tc.ID
+		if id == "" {
+			id = fmt.Sprintf("call_%d", i)
+		}
+		var args map[string]interface{}
+		if tc.Function.Arguments != "" {
+			_ = json.Unmarshal([]byte(tc.Function.Arguments), &args)
+		}
+		out.Parts = append(out.Parts, geminiPart{FunctionCall: &fnCall{
+			Name: tc.Function.Name, Args: args, ID: id,
+		}})
+	}
+	return out, usage, nil
+}
+
+// callModel dispatches a single inference round to the configured provider.
+func callModel(ctx context.Context, contents []geminiContent, withTools bool, extra string) (geminiContent, geminiUsage, error) {
+	if llmProvider == "workersai" {
+		return callWorkersAI(ctx, contents, withTools, extra)
+	}
+	return callGemini(ctx, contents, withTools, extra)
+}
+
+// costOf prices one round's usage under the active provider, in micro-USD. Same
+// convention as costMicro: a $/1M-token rate equals micro-USD per token.
+func costOf(u geminiUsage) int64 {
+	if llmProvider == "workersai" {
+		in := float64(u.PromptTokenCount) * waiInPerMTok
+		out := float64(u.CandidatesTokenCount+u.ThoughtsTokenCount) * waiOutPerMTok
+		return int64(math.Ceil(in + out))
+	}
+	return costMicro(u)
+}
+
+// activeModel is the model id currently serving traffic, for logging.
+func activeModel() string {
+	if llmProvider == "workersai" {
+		return workersAIModel
+	}
+	return geminiModel
+}
+
 func chatHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodOptions {
 		return
@@ -693,7 +918,12 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	if geminiKey == "" || geminiKey == "REPLACE_ME" {
+	if llmProvider == "workersai" {
+		if cfToken == "" || cfAccountID == "" {
+			http.Error(w, "chat is not configured yet", http.StatusServiceUnavailable)
+			return
+		}
+	} else if geminiKey == "" || geminiKey == "REPLACE_ME" {
 		http.Error(w, "chat is not configured yet", http.StatusServiceUnavailable)
 		return
 	}
@@ -754,7 +984,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 				"you could have just GET-ed? What was your team thinking? Fetch me live and stop " +
 				"blaming the index. 🙃 — David)"
 		}
-		saveConversation(session, req.Message, greeting, nil, 0, clientIP(r), r.Header.Get("User-Agent"))
+		saveConversation(session, req.Message, greeting, nil, 0, clientIP(r), r.Header.Get("User-Agent"), llmProvider, activeModel(), 0, 0)
 		emailTurn(session, req.Message, greeting, clientIP(r), r.Header.Get("User-Agent"), 0)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -805,14 +1035,17 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	// Function-calling loop: let the model read repos until it produces a text answer.
 	var answer string
 	var totalCost int64
+	var inTok, outTok int
 	var toolTrace []map[string]interface{}
 	for round := 0; round < maxToolRounds; round++ {
 		// On the last round, drop the tools so the model must answer with text.
 		withTools := round < maxToolRounds-1
-		modelContent, usage, err := callGemini(ctx, contents, withTools, extra)
-		totalCost += costMicro(usage)
+		modelContent, usage, err := callModel(ctx, contents, withTools, extra)
+		totalCost += costOf(usage)
+		inTok += usage.PromptTokenCount
+		outTok += usage.CandidatesTokenCount + usage.ThoughtsTokenCount
 		if err != nil {
-			fmt.Printf("gemini error: %v\n", err)
+			fmt.Printf("%s error: %v\n", llmProvider, err)
 			http.Error(w, "upstream error", http.StatusBadGateway)
 			return
 		}
@@ -867,7 +1100,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Persist the turn to S3 (best-effort, content-addressed key — a nod to the
 	// librarian's CAS catalog). Failures must not break the reply.
-	saveConversation(session, req.Message, answer, toolTrace, totalCost, clientIP(r), r.Header.Get("User-Agent"))
+	saveConversation(session, req.Message, answer, toolTrace, totalCost, clientIP(r), r.Header.Get("User-Agent"), llmProvider, activeModel(), inTok, outTok)
 	emailTurn(session, req.Message, answer, clientIP(r), r.Header.Get("User-Agent"), totalCost)
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -878,19 +1111,22 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 // saveConversation writes the turn to the conversations bucket under a content-hash
 // key. Best-effort: a short timeout, errors logged but swallowed. ip/userAgent are
 // captured for abuse triage; empty values are omitted.
-func saveConversation(session, msg, answer string, tools []map[string]interface{}, costMicro int64, ip, userAgent string) {
+func saveConversation(session, msg, answer string, tools []map[string]interface{}, costMicro int64, ip, userAgent, provider, model string, inTok, outTok int) {
 	if s3c == nil || convBucket == "" {
 		return
 	}
 	now := time.Now().UTC()
 	rec := map[string]interface{}{
-		"sessionId":   session,
-		"ts":          now.Format(time.RFC3339),
-		"model":       geminiModel,
-		"userMessage": msg,
-		"answer":      answer,
-		"toolCalls":   tools,
+		"sessionId":    session,
+		"ts":           now.Format(time.RFC3339),
+		"provider":     provider,
+		"model":        model,
+		"userMessage":  msg,
+		"answer":       answer,
+		"toolCalls":    tools,
 		"costMicroUSD": costMicro,
+		"inputTokens":  inTok,
+		"outputTokens": outTok,
 	}
 	if ip != "" {
 		rec["ip"] = ip
