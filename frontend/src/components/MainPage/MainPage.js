@@ -94,14 +94,22 @@ const MainPage = () => {
       "A browser-native platform teaching students to code and crush tech interviews, with all code running on-device in WebAssembly at zero marginal cost. As co-founder & CTO I built the AI layer: an in-browser LLM tutor (WebNN/WebGPU), the learning-data instrumentation behind it, and an adaptive ELO that scores real skill from every attempt. Ask LedbetterGPT below to go deeper →",
   };
 
+  // SGST & Finsler carry inline descriptions (not the repo's README excerpt) so
+  // they can point readers to LedbetterGPT, which reads the full public repos
+  // live and can go far deeper than the short public excerpt. Click still opens
+  // the repo.
   const SgstProjectDetails = {
     title: "Sparse Geometric Signal Transport",
     githubUrl: "https://github.com/dledbetter123/SparseGeometricSignalTransport",
+    description:
+      "A geometric theory of the transformer: attention as parallel transport on a fiber bundle, not an O(T²) tax, with tokens as sparse Fourier constellations. It never beat GPT outright, but it surfaced a performant, drop-in curvature-based positional encoding worth further study. The repo shows only an excerpt; ask LedbetterGPT below for the full story →",
   };
 
   const FinslerProjectDetails = {
     title: "The Finsler Transformer",
     githubUrl: "https://github.com/dledbetter123/LedbetterFinslerTransformer",
+    description:
+      "What if attention isn't computed, but a curvature you move through? The Finsler Transformer swaps O(T²) attention for geodesic flow on a learned manifold, where a sentence is a geodesic and meaning is holonomy, aiming at O(T) generation grounded in differential geometry. The repo shows only an excerpt; ask LedbetterGPT below for the full story →",
   };
 
   // Publications & presentations — not repo-backed, so these use PublicationCard.
@@ -144,6 +152,7 @@ const MainPage = () => {
         <ProjectCard
           title={SgstProjectDetails.title}
           githubUrl={SgstProjectDetails.githubUrl}
+          description={SgstProjectDetails.description}
         />
       )
     },
@@ -152,6 +161,7 @@ const MainPage = () => {
         <ProjectCard
           title={FinslerProjectDetails.title}
           githubUrl={FinslerProjectDetails.githubUrl}
+          description={FinslerProjectDetails.description}
         />
       )
     },
