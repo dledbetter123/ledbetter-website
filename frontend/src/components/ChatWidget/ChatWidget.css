@@ -50,12 +50,20 @@
   color: #39FF14;
   font-size: 20px;
   font-weight: bold;
-  margin-right: 8px;
-  min-width: 2.6em; /* reserve width so the button doesn't shift as ❯ grows */
-  text-align: left; /* chevrons build toward the button */
+  min-width: 2.6em; /* reserve width so the button doesn't shift as the chevrons grow */
   letter-spacing: 2px;
   text-shadow: 0 0 6px rgba(57, 255, 20, 0.7);
   user-select: none;
+}
+/* Flanking chevrons on both sides of the centered toggle, each marching inward
+   toward the button as the count grows. */
+.chatArrowLeft {
+  margin-right: 8px;
+  text-align: left; /* anchored away from the button; grows rightward toward it */
+}
+.chatArrowRight {
+  margin-left: 8px;
+  text-align: right; /* mirror: anchored away; grows leftward toward the button */
 }
 
 .chatPanel {
