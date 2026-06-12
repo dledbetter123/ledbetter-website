@@ -249,6 +249,7 @@ var (
 	safeRepoRe    = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
 	safePathRe    = regexp.MustCompile(`^[A-Za-z0-9._/\-]*$`)
 	safeSessionRe = regexp.MustCompile(`^[A-Za-z0-9-]{1,64}$`)
+	emailRe       = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
 )
 
 func init() {
@@ -1304,10 +1305,112 @@ func emailTurn(session, userMsg, answer, ip, userAgent, provider, model string, 
 	}
 }
 
+// contactRequest is a visitor-submitted contact-form payload. Visitors leave their
+// own info instead of David's email/phone being exposed on the site.
+type contactRequest struct {
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Message string `json:"message"`
+}
+
+// contactHandler accepts a contact-form submission and emails it to David via SES,
+// with the visitor's address as Reply-To so a reply goes straight back to them.
+func contactHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	ctx := r.Context()
+	today := time.Now().UTC().Format("2006-01-02")
+	// Abuse cap: a handful of submissions per IP per day (same DynamoDB counter table).
+	if n, err := addN(ctx, "contact#ip#"+today+"#"+clientIP(r), 1); err == nil && n > 5 {
+		http.Error(w, "You've sent a few already today — reach me on LinkedIn instead.", http.StatusTooManyRequests)
+		return
+	}
+
+	var req contactRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	req.Name = strings.TrimSpace(req.Name)
+	req.Email = strings.TrimSpace(req.Email)
+	req.Message = strings.TrimSpace(req.Message)
+	if req.Name == "" || req.Email == "" || req.Message == "" {
+		http.Error(w, "Please fill in your name, email, and a message.", http.StatusBadRequest)
+		return
+	}
+	if !emailRe.MatchString(req.Email) {
+		http.Error(w, "Please enter a valid email so I can reply.", http.StatusBadRequest)
+		return
+	}
+	if len(req.Name) > 120 {
+		req.Name = req.Name[:120]
+	}
+	if len(req.Email) > 200 {
+		req.Email = req.Email[:200]
+	}
+	if len(req.Message) > 4000 {
+		req.Message = req.Message[:4000]
+	}
+	if ses == nil || emailFrom == "" || emailTo == "" {
+		http.Error(w, "The contact form isn't available right now — reach me on LinkedIn.", http.StatusServiceUnavailable)
+		return
+	}
+	if err := emailContact(req, clientIP(r), r.Header.Get("User-Agent")); err != nil {
+		fmt.Printf("contact email error: %v\n", err)
+		http.Error(w, "Something went wrong sending that — please try again.", http.StatusBadGateway)
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	fmt.Fprint(w, "Thanks — your message reached David. He'll get back to you.")
+}
+
+// emailContact sends one contact-form submission to David. Reply-To is the visitor's
+// address so David can reply directly. Synchronous so the handler can report failure.
+func emailContact(req contactRequest, ip, userAgent string) error {
+	now := time.Now().UTC()
+	if ip == "" {
+		ip = "(none)"
+	}
+	if userAgent == "" {
+		userAgent = "(none)"
+	}
+	body := fmt.Sprintf(
+		"New contact-form submission from davidamosledbetter.com.\n\n"+
+			"Name:  %s\nEmail: %s\nTime:  %s\nIP:    %s\nAgent: %s\n\n"+
+			"----------------------------------------\n%s\n----------------------------------------\n",
+		req.Name, req.Email, now.Format("2006-01-02 15:04:05 MST"), ip, userAgent, req.Message)
+
+	var raw bytes.Buffer
+	fmt.Fprintf(&raw, "From: %s\r\n", emailFrom)
+	fmt.Fprintf(&raw, "To: %s\r\n", emailTo)
+	fmt.Fprintf(&raw, "Reply-To: %s\r\n", req.Email)
+	fmt.Fprintf(&raw, "Subject: Contact form: %s\r\n", req.Name)
+	fmt.Fprintf(&raw, "Date: %s\r\n", now.Format(time.RFC1123Z))
+	raw.WriteString("MIME-Version: 1.0\r\n")
+	raw.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
+	raw.WriteString("Content-Transfer-Encoding: 8bit\r\n")
+	raw.WriteString("\r\n")
+	raw.WriteString(body)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := ses.SendEmail(ctx, &sesv2.SendEmailInput{
+		Content: &sestypes.EmailContent{Raw: &sestypes.RawMessage{Data: raw.Bytes()}},
+	})
+	return err
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/status", statusHandler)
 	mux.HandleFunc("/api/chat", chatHandler)
+	mux.HandleFunc("/api/contact", contactHandler)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "LedbetterGPT backend (lambda)")
 	})
