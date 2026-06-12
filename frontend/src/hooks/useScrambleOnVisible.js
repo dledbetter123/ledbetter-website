@@ -1,30 +1,36 @@
 import { useEffect, useRef, useState } from 'react';
 import { runScramble, scrambleOf, randomGlyphs } from '../lib/scramble';
 
-// Visibility-gated scramble/decode effect. Returns [ref, displayText]. The element
-// is prefilled with random glyphs so it's never empty before the decode runs (or
-// while the text is still loading); the shimmer settles to the real text once the
-// element scrolls into view and the text is available.
-export default function useScrambleOnVisible(text, duration = 3000, startDelay = 0) {
+// Visibility-gated scramble/decode effect. Returns [ref, displayText]. The element is
+// prefilled with random glyphs so it's never empty before the decode runs. By default it
+// starts once the element scrolls into view; pass opts.start (boolean) to drive it
+// externally, and opts.onDone to be notified when the decode completes. `startDelay`
+// stays a positional arg for existing callers (cards delay the description after the title).
+export default function useScrambleOnVisible(text, duration = 3000, startDelay = 0, opts = {}) {
+  const { start, onDone } = opts;
+  const controlled = start !== undefined;
   const ref = useRef(null);
   const [display, setDisplay] = useState('');
-  const [started, setStarted] = useState(false);
+  const [vis, setVis] = useState(false);
+  const started = controlled ? !!start : vis;
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
 
-  // Random-glyph placeholder until the decode animation takes over.
+  // Random-glyph placeholder until the decode takes over.
   useEffect(() => {
     if (started) return;
     setDisplay(text != null ? scrambleOf(text) : randomGlyphs(110));
   }, [text, started]);
 
-  // Start the decode when the element first scrolls into view.
+  // Visibility trigger — only used when not externally controlled.
   useEffect(() => {
-    if (started) return;
+    if (controlled || vis) return;
     const el = ref.current;
     if (!el) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
-          setStarted(true);
+          setVis(true);
           observer.disconnect();
         }
       },
@@ -32,15 +38,16 @@ export default function useScrambleOnVisible(text, duration = 3000, startDelay =
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [started]);
+  }, [controlled, vis]);
 
-  // Run the decode once started and the text is available (after an optional delay,
-  // so e.g. a card's title can finish before its description begins).
+  // Run the decode once started and the text is available (after an optional delay).
   useEffect(() => {
     if (!started || text == null) return;
     let cancel = null;
     const timer = setTimeout(() => {
-      cancel = runScramble(text, duration, setDisplay);
+      cancel = runScramble(text, duration, setDisplay, () => {
+        if (onDoneRef.current) onDoneRef.current();
+      });
     }, startDelay);
     return () => {
       clearTimeout(timer);
