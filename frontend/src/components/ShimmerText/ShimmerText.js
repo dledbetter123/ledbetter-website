@@ -18,20 +18,30 @@ const srOnly = {
 // (the visible glyphs are decorative). Honors prefers-reduced-motion (stays static).
 const ShimmerText = ({ text, as: Tag = 'span', prob = 0.06, interval = 110, style }) => {
   const [display, setDisplay] = useState(text);
+  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     const reduce = window.matchMedia
       && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) {
+    // Hold the real text (no twinkle) while hovered/focused or under reduced-motion,
+    // so it's legible to read or copy.
+    if (reduce || hovered) {
       setDisplay(text);
       return undefined;
     }
     const id = setInterval(() => setDisplay(shimmerOf(text, prob)), interval);
     return () => clearInterval(id);
-  }, [text, prob, interval]);
+  }, [text, prob, interval, hovered]);
+
+  const hold = () => setHovered(true);
+  const release = () => setHovered(false);
 
   return (
     <Tag
+      onMouseEnter={hold}
+      onMouseLeave={release}
+      onFocus={hold}
+      onBlur={release}
       style={{
         position: 'relative',
         display: 'inline-block',
