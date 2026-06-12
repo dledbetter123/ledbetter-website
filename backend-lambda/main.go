@@ -40,6 +40,8 @@ import (
 	ddbtypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
+	sestypes "github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 )
 
@@ -84,13 +86,13 @@ const (
 	maxHistoryTurns   = 10
 	maxOutputTokens   = 2048
 	dailyRequestLimit = 150
-	perIPDailyLimit   = 20
+	perIPDailyLimit   = 100
 	maxToolRounds     = 4
 	maxFileBytes      = 60 * 1024 // cap a single fetched file so it fits the token budget
 
 	// Cost caps, in micro-USD (1 USD = 1_000_000). gemini-pro-latest pricing below.
-	sessionCostCapMicro = 1_000_000 // $1.00 per browser session
-	globalCostCapMicro  = 5_000_000 // $5.00 per day across everyone (absolute backstop)
+	sessionCostCapMicro = 5_000_000  // $5.00 per browser session
+	globalCostCapMicro  = 25_000_000 // $25.00 per day across everyone (absolute backstop)
 	usdInputPerMTok     = 1.25      // $ / 1M input tokens
 	usdOutputPerMTok    = 10.0      // $ / 1M output tokens (includes thinking tokens)
 )
@@ -206,8 +208,11 @@ var (
 	githubToken string
 	ddb         *dynamodb.Client
 	s3c         *s3.Client
+	ses         *sesv2.Client
 	rateTable   string
 	convBucket  string
+	emailFrom   string // verified SES sender, e.g. "LedbetterGPT <ledbettergpt@davidamosledbetter.com>"
+	emailTo     string // notification recipient
 	httpClient  = &http.Client{Timeout: 25 * time.Second}
 
 	kbMu      sync.Mutex
@@ -230,8 +235,11 @@ func init() {
 	}
 	rateTable = os.Getenv("RATE_TABLE")
 	convBucket = os.Getenv("CONV_BUCKET")
+	emailFrom = os.Getenv("EMAIL_FROM")
+	emailTo = os.Getenv("EMAIL_TO")
 	ddb = dynamodb.NewFromConfig(cfg)
 	s3c = s3.NewFromConfig(cfg)
+	ses = sesv2.NewFromConfig(cfg)
 
 	sm := secretsmanager.NewFromConfig(cfg)
 	geminiKey = loadSecret(ctx, sm, os.Getenv("GEMINI_SECRET_ID"))
@@ -602,6 +610,13 @@ func isGoogleAgent(r *http.Request) bool {
 		strings.Contains(ua, "apis-google")
 }
 
+// isInstagram reports whether the caller arrived through the Instagram in-app
+// browser, which tags its User-Agent with an "Instagram <version>" token. Used to
+// add a one-time, casual nudge inviting the visitor to follow @davbetter.
+func isInstagram(r *http.Request) bool {
+	return strings.Contains(strings.ToLower(r.Header.Get("User-Agent")), "instagram")
+}
+
 func statusHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	fmt.Fprint(w, "backend stable")
@@ -610,13 +625,17 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 // callGemini posts the current conversation and returns the first candidate's content
 // plus token usage. When withTools is false the model has no tools and must answer
 // with text — used on the final round to guarantee a reply.
-func callGemini(ctx context.Context, contents []geminiContent, withTools bool) (geminiContent, geminiUsage, error) {
+func callGemini(ctx context.Context, contents []geminiContent, withTools bool, extra string) (geminiContent, geminiUsage, error) {
 	var tools []geminiTool
 	if withTools {
 		tools = repoTools
 	}
+	sysText := baseInstruction + "\n\n" + knowledge()
+	if extra != "" {
+		sysText += "\n\n" + extra
+	}
 	reqBody, _ := json.Marshal(geminiRequest{
-		SystemInstruction: geminiContent{Parts: []geminiPart{{Text: baseInstruction + "\n\n" + knowledge()}}},
+		SystemInstruction: geminiContent{Parts: []geminiPart{{Text: sysText}}},
 		Contents:          contents,
 		Tools:             tools,
 		GenerationConfig: map[string]interface{}{
@@ -718,6 +737,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 				"blaming the index. 🙃 — David)"
 		}
 		saveConversation(session, req.Message, greeting, nil, 0, clientIP(r), r.Header.Get("User-Agent"))
+		emailTurn(session, req.Message, greeting, clientIP(r), r.Header.Get("User-Agent"), 0)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		fmt.Fprint(w, greeting)
@@ -752,6 +772,18 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	contents = append(contents, geminiContent{Role: "user", Parts: []geminiPart{{Text: req.Message}}})
 
+	// Visitors who arrive through the Instagram in-app browser get one warm, casual
+	// invite to follow @davbetter — woven into a natural reply, never repeated once
+	// it's already been made earlier in the conversation.
+	var extra string
+	if isInstagram(r) {
+		extra = "CONTEXT: This visitor arrived through the Instagram in-app browser. " +
+			"If — and only if — you have not already done so earlier in this conversation, " +
+			"end ONE of your replies with a brief, warm, low-pressure invite to follow my " +
+			"Instagram @davbetter if they aren't already. Keep it to a single short sentence, " +
+			"make it feel natural rather than an ad, and never repeat the ask on later turns."
+	}
+
 	// Function-calling loop: let the model read repos until it produces a text answer.
 	var answer string
 	var totalCost int64
@@ -759,7 +791,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	for round := 0; round < maxToolRounds; round++ {
 		// On the last round, drop the tools so the model must answer with text.
 		withTools := round < maxToolRounds-1
-		modelContent, usage, err := callGemini(ctx, contents, withTools)
+		modelContent, usage, err := callGemini(ctx, contents, withTools, extra)
 		totalCost += costMicro(usage)
 		if err != nil {
 			fmt.Printf("gemini error: %v\n", err)
@@ -818,6 +850,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	// Persist the turn to S3 (best-effort, content-addressed key — a nod to the
 	// librarian's CAS catalog). Failures must not break the reply.
 	saveConversation(session, req.Message, answer, toolTrace, totalCost, clientIP(r), r.Header.Get("User-Agent"))
+	emailTurn(session, req.Message, answer, clientIP(r), r.Header.Get("User-Agent"), totalCost)
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -862,6 +895,61 @@ func saveConversation(session, msg, answer string, tools []map[string]interface{
 		ContentType: aws.String("application/json"),
 	}); err != nil {
 		fmt.Printf("conversation save error: %v\n", err)
+	}
+}
+
+// emailTurn sends a single chat turn as an email, threaded into a per-session
+// conversation via a synthetic References root keyed on sessionId. Every turn of the
+// same chat carries the same Subject and References, so the recipient sees one
+// growing thread that reconstructs the whole conversation in order — no server-side
+// thread state required. Best-effort: short timeout, errors logged and swallowed so
+// a notification failure never affects the visitor's reply. No-op until EMAIL_FROM /
+// EMAIL_TO are set (kept dark until the SES identities verify).
+func emailTurn(session, userMsg, answer, ip, userAgent string, costMicro int64) {
+	if ses == nil || emailFrom == "" || emailTo == "" {
+		return
+	}
+	now := time.Now().UTC()
+	root := fmt.Sprintf("<chat.%s@davidamosledbetter.com>", session)
+	sum := sha256.Sum256([]byte(now.Format(time.RFC3339Nano) + userMsg + answer))
+	msgID := fmt.Sprintf("<%s.%s@davidamosledbetter.com>", session, hex.EncodeToString(sum[:])[:16])
+	subject := "LedbetterGPT chat: " + session
+
+	if ip == "" {
+		ip = "(none)"
+	}
+	if userAgent == "" {
+		userAgent = "(none)"
+	}
+	body := fmt.Sprintf(
+		"New message in a LedbetterGPT chat.\n\n"+
+			"Session: %s\nTime:    %s\nIP:      %s\nAgent:   %s\nCost:    $%.4f\n\n"+
+			"----------------------------------------\nVisitor:\n%s\n\n"+
+			"LedbetterGPT:\n%s\n----------------------------------------\n\n"+
+			"(Each turn of this chat threads into this same email conversation.)\n",
+		session, now.Format("2006-01-02 15:04:05 MST"), ip, userAgent,
+		float64(costMicro)/1e6, userMsg, answer)
+
+	var raw bytes.Buffer
+	fmt.Fprintf(&raw, "From: %s\r\n", emailFrom)
+	fmt.Fprintf(&raw, "To: %s\r\n", emailTo)
+	fmt.Fprintf(&raw, "Subject: %s\r\n", subject)
+	fmt.Fprintf(&raw, "Message-ID: %s\r\n", msgID)
+	fmt.Fprintf(&raw, "In-Reply-To: %s\r\n", root)
+	fmt.Fprintf(&raw, "References: %s\r\n", root)
+	fmt.Fprintf(&raw, "Date: %s\r\n", now.Format(time.RFC1123Z))
+	raw.WriteString("MIME-Version: 1.0\r\n")
+	raw.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
+	raw.WriteString("Content-Transfer-Encoding: 8bit\r\n")
+	raw.WriteString("\r\n")
+	raw.WriteString(body)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if _, err := ses.SendEmail(ctx, &sesv2.SendEmailInput{
+		Content: &sestypes.EmailContent{Raw: &sestypes.RawMessage{Data: raw.Bytes()}},
+	}); err != nil {
+		fmt.Printf("email send error: %v\n", err)
 	}
 }
 
