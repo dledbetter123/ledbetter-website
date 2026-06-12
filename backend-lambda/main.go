@@ -697,10 +697,36 @@ func costMicro(u geminiUsage) int64 {
 }
 
 func clientIP(r *http.Request) string {
+	// CloudFront-Viewer-Address is set by CloudFront from the real TCP connection and
+	// OVERWRITES any client-supplied value of the same name; since all traffic is
+	// origin-locked to CloudFront, it can't be spoofed. Format is "ip:port" (IPv6 keeps
+	// its colons, so split on the LAST colon). Falls back to XFF/RemoteAddr if the header
+	// isn't forwarded yet — note XFF's first hop IS client-supplied and spoofable.
+	if va := r.Header.Get("CloudFront-Viewer-Address"); va != "" {
+		if i := strings.LastIndex(va, ":"); i > 0 {
+			return strings.Trim(va[:i], "[]")
+		}
+		return va
+	}
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		return strings.TrimSpace(strings.Split(xff, ",")[0])
 	}
 	return r.RemoteAddr
+}
+
+// stripHeader removes CR/LF and other control characters from a value destined for an
+// email header, preventing header injection (e.g. a contact-form "name" smuggling a
+// "\r\nBcc:" line into the notification). Tab is allowed; everything <0x20 is dropped.
+func stripHeader(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r == '\t' {
+			return r
+		}
+		if r == '\r' || r == '\n' || r < 0x20 {
+			return -1
+		}
+		return r
+	}, s)
 }
 
 // isOpenAIAgent reports whether the caller's User-Agent looks like an OpenAI /
@@ -1354,9 +1380,14 @@ func contactHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 	today := time.Now().UTC().Format("2006-01-02")
-	// Abuse cap: a handful of submissions per IP per day (same DynamoDB counter table).
+	// Abuse caps: a handful per IP per day, plus a global daily backstop so the inbox
+	// can't be flooded even if the per-IP key is spoofed (same DynamoDB counter table).
 	if n, err := addN(ctx, "contact#ip#"+today+"#"+clientIP(r), 1); err == nil && n > 5 {
 		http.Error(w, "You've sent a few already today — reach me on LinkedIn instead.", http.StatusTooManyRequests)
+		return
+	}
+	if n, err := addN(ctx, "contact#global#"+today, 1); err == nil && n > 50 {
+		http.Error(w, "The contact form is busy today — reach me on LinkedIn instead.", http.StatusTooManyRequests)
 		return
 	}
 
@@ -1418,8 +1449,8 @@ func emailContact(req contactRequest, ip, userAgent string) error {
 	var raw bytes.Buffer
 	fmt.Fprintf(&raw, "From: %s\r\n", emailFrom)
 	fmt.Fprintf(&raw, "To: %s\r\n", emailTo)
-	fmt.Fprintf(&raw, "Reply-To: %s\r\n", req.Email)
-	fmt.Fprintf(&raw, "Subject: Contact form: %s\r\n", req.Name)
+	fmt.Fprintf(&raw, "Reply-To: %s\r\n", stripHeader(req.Email))
+	fmt.Fprintf(&raw, "Subject: Contact form: %s\r\n", stripHeader(req.Name))
 	fmt.Fprintf(&raw, "Date: %s\r\n", now.Format(time.RFC1123Z))
 	raw.WriteString("MIME-Version: 1.0\r\n")
 	raw.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
