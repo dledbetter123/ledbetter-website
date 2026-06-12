@@ -306,6 +306,8 @@ func init() {
 	if tok := loadSecret(ctx, sm, os.Getenv("CF_SECRET_ID")); tok != "" && tok != "REPLACE_ME" {
 		cfToken = tok
 	}
+
+	initOperator() // passkey/WebAuthn operator (catalog) mode
 	// Notification email from/to: prefer Secrets Manager (JSON {"from","to"}); the
 	// EMAIL_FROM / EMAIL_TO env vars read above remain a fallback during transition.
 	if cfgJSON := loadSecret(ctx, sm, os.Getenv("EMAIL_SECRET_ID")); cfgJSON != "" {
@@ -1471,6 +1473,10 @@ func main() {
 	mux.HandleFunc("/api/status", statusHandler)
 	mux.HandleFunc("/api/chat", chatHandler)
 	mux.HandleFunc("/api/contact", contactHandler)
+	mux.HandleFunc("/api/operator/register/begin", operatorRegisterBegin)
+	mux.HandleFunc("/api/operator/register/finish", operatorRegisterFinish)
+	mux.HandleFunc("/api/operator/auth/begin", operatorAuthBegin)
+	mux.HandleFunc("/api/operator/auth/finish", operatorAuthFinish)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "LedbetterGPT backend (lambda)")
 	})
