@@ -13,7 +13,7 @@ const GREETING = "Hi, I'm David Ledbetter, what do you want to talk about?";
 // resurrecting a stale conversation. (Keyed on the per-tab session, not IP, so people
 // behind a shared IP never see each other's chats.)
 const CHAT_STORE_KEY = 'ledbettergpt_chat';
-const FLUSH_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 hours
+const FLUSH_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 const loadSavedChat = () => {
   try {
