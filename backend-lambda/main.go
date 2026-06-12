@@ -230,12 +230,15 @@ var (
 	llmProvider = "gemini"
 	cfAccountID string
 	cfToken     string
-	// Default to a non-reasoning instruct model: reasoning models (gpt-oss, etc.) spend
-	// the output budget on hidden reasoning and can return null content under the short
-	// max_tokens this bot uses — wrong fit for terse persona replies. Override via env.
-	workersAIModel = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
-	waiInPerMTok   = 0.293 // $ / 1M input tokens  (llama-3.3-70b-fp8-fast default)
-	waiOutPerMTok  = 2.253 // $ / 1M output tokens (llama-3.3-70b-fp8-fast default)
+	// Default model: llama-4-scout. Bake-off (real system prompt + repo tools) showed it
+	// best follows the persona/privacy rules, emits clean structured tool_calls, and
+	// stays grounded in the knowledge base. Avoid llama-3.3-70b (refuses with "input
+	// lacking details", leaks tool-calls as text) and reasoning models like gpt-oss
+	// (null content under short max_tokens). mistral-small-3.1-24b is the tested backup.
+	// Override via WORKERS_AI_MODEL + the WORKERS_AI_USD_*_PER_MTOK rate envs.
+	workersAIModel = "@cf/meta/llama-4-scout-17b-16e-instruct"
+	waiInPerMTok   = 0.270 // $ / 1M input tokens  (llama-4-scout default)
+	waiOutPerMTok  = 0.850 // $ / 1M output tokens (llama-4-scout default)
 
 	kbMu      sync.Mutex
 	kbText    string
@@ -1069,7 +1072,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 				"blaming the index. 🙃 — David)"
 		}
 		saveConversation(session, req.Message, greeting, nil, 0, clientIP(r), r.Header.Get("User-Agent"), llmProvider, activeModel(), 0, 0)
-		emailTurn(session, req.Message, greeting, clientIP(r), r.Header.Get("User-Agent"), 0)
+		emailTurn(session, req.Message, greeting, clientIP(r), r.Header.Get("User-Agent"), "static", "(none)", 0)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		fmt.Fprint(w, greeting)
@@ -1192,7 +1195,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 		servedProvider = llmProvider
 	}
 	saveConversation(session, req.Message, answer, toolTrace, totalCost, clientIP(r), r.Header.Get("User-Agent"), servedProvider, modelFor(servedProvider), inTok, outTok)
-	emailTurn(session, req.Message, answer, clientIP(r), r.Header.Get("User-Agent"), totalCost)
+	emailTurn(session, req.Message, answer, clientIP(r), r.Header.Get("User-Agent"), servedProvider, modelFor(servedProvider), totalCost)
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -1250,7 +1253,7 @@ func saveConversation(session, msg, answer string, tools []map[string]interface{
 // thread state required. Best-effort: short timeout, errors logged and swallowed so
 // a notification failure never affects the visitor's reply. No-op until EMAIL_FROM /
 // EMAIL_TO are set (kept dark until the SES identities verify).
-func emailTurn(session, userMsg, answer, ip, userAgent string, costMicro int64) {
+func emailTurn(session, userMsg, answer, ip, userAgent, provider, model string, costMicro int64) {
 	if ses == nil || emailFrom == "" || emailTo == "" {
 		return
 	}
@@ -1266,13 +1269,16 @@ func emailTurn(session, userMsg, answer, ip, userAgent string, costMicro int64) 
 	if userAgent == "" {
 		userAgent = "(none)"
 	}
+	if model == "" {
+		model = "(none)"
+	}
 	body := fmt.Sprintf(
 		"New message in a LedbetterGPT chat.\n\n"+
-			"Session: %s\nTime:    %s\nIP:      %s\nAgent:   %s\nCost:    $%.4f\n\n"+
+			"Session: %s\nTime:    %s\nIP:      %s\nAgent:   %s\nProvider:%s\nModel:   %s\nCost:    $%.4f\n\n"+
 			"----------------------------------------\nVisitor:\n%s\n\n"+
 			"LedbetterGPT:\n%s\n----------------------------------------\n\n"+
 			"(Each turn of this chat threads into this same email conversation.)\n",
-		session, now.Format("2006-01-02 15:04:05 MST"), ip, userAgent,
+		session, now.Format("2006-01-02 15:04:05 MST"), ip, userAgent, provider, model,
 		float64(costMicro)/1e6, userMsg, answer)
 
 	var raw bytes.Buffer

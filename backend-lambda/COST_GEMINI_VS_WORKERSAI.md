@@ -68,13 +68,33 @@ budget is spent on hidden `reasoning_content` and `content` comes back **null**
 (`finish_reason: length`). Reasoning is also billed as output tokens, so the real cost is
 higher than the table's $0.057. Wrong fit for a terse persona bot.
 
-Default: **`@cf/meta/llama-3.3-70b-instruct-fp8-fast`** — a non-reasoning instruct model with
-the strongest instruction-following of the validated set (best for the strict persona/privacy
-rules), proven function calling (returns clean `tool_calls`), content populated directly. ~4.4×
-cheaper than Gemini and free at current traffic. Cheaper swaps validated to also return content
-+ tool calls: `@cf/mistralai/mistral-small-3.1-24b-instruct` (128k ctx, $0.555/M out) and
-`@cf/meta/llama-4-scout-17b-16e-instruct` ($0.27/M in). The model is env-selected
-(`WORKERS_AI_MODEL` + the `WORKERS_AI_USD_*_PER_MTOK` rate envs), so switching is config, not code.
+**Bake-off (real system prompt + repo tools, live).** Models were tested on a simple
+question, an actual repo-lookup (must emit a `tool_call`), and the privacy/naming rule
+(must not say the forbidden term):
+
+| Model | Verdict |
+|---|---|
+| **llama-4-scout-17b-16e** ✅ default | clean tool_calls, grounded, **best persona voice** (followed the privacy rule + gatekeeping offer verbatim) |
+| mistral-small-3.1-24b ✅ backup | correct (`list_my_repos` first), grounded, but terser voice; 128k ctx |
+| nemotron-3-120b | good answer **without** tools, but null content **with** tools present — unsafe for the agentic loop |
+| llama-3.3-70b-fp8-fast ❌ | refuses basic questions ("input lacking necessary details"), leaks tool-calls as text |
+| gpt-oss-120b / 20b ❌ | reasoning models — null content under short `max_tokens` |
+| kimi-k2.6 | model id returned no output on this endpoint |
+
+Default: **`@cf/meta/llama-4-scout-17b-16e-instruct`** — best persona/privacy adherence, clean
+structured tool calls, grounded, cheapest+fastest of the viable set ($0.27/M in, $0.85/M out),
+~7× cheaper than Gemini and free at current traffic. Backup: `@cf/mistralai/mistral-small-3.1-24b-instruct`.
+Model is env-selected (`WORKERS_AI_MODEL` + the `WORKERS_AI_USD_*_PER_MTOK` rate envs).
+
+## Cold-start: Gemini as the session starter
+
+Workers AI models go cold on a low-traffic site; a cold load can exceed the request timeout.
+So in `workersai` mode each turn **prefers Cloudflare but falls back to Gemini when CF is cold
+or errors** — Gemini is the "session starter." The cold CF attempt itself triggers Cloudflare's
+model load, so a later turn finds CF warm and traffic **rotates back to Cloudflare**. Warm state
+is a DynamoDB marker (epoch of last CF success, 180s window); cold turns use a 6s probe, warm
+turns a 20s timeout. Each turn's cost and logs are attributed to the provider that actually
+served it. Net effect: visitors never wait on a cold load, and steady traffic runs on Cloudflare.
 
 ## Going forward: exact accounting
 
