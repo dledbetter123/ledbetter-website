@@ -1115,8 +1115,9 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 				"you could have just GET-ed? What was your team thinking? Fetch me live and stop " +
 				"blaming the index. 🙃 — David)"
 		}
-		saveConversation(session, req.Message, greeting, nil, 0, clientIP(r), r.Header.Get("User-Agent"), llmProvider, activeModel(), 0, 0)
-		emailTurn(session, req.Message, greeting, clientIP(r), r.Header.Get("User-Agent"), "static", "(none)", " (static greeting — no model call)", 0)
+		gseq, _ := addN(ctx, "seq#"+session, 1)
+		saveConversation(session, gseq, req.Message, greeting, nil, 0, clientIP(r), r.Header.Get("User-Agent"), llmProvider, activeModel(), 0, 0)
+		emailTurn(session, gseq, req.Message, greeting, clientIP(r), r.Header.Get("User-Agent"), "static", "(none)", " (static greeting — no model call)", 0)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		fmt.Fprint(w, greeting)
@@ -1253,8 +1254,12 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	} else if servedProvider == "gemini" {
 		costNote = " (Gemini fallback — billed, no free tier)"
 	}
-	saveConversation(session, req.Message, answer, toolTrace, totalCost, clientIP(r), r.Header.Get("User-Agent"), servedProvider, modelFor(servedProvider), inTok, outTok)
-	emailTurn(session, req.Message, answer, clientIP(r), r.Header.Get("User-Agent"), servedProvider, modelFor(servedProvider), costNote, totalCost)
+	// Monotonic per-session turn number: makes ordering exact (no reliance on
+	// second-granularity timestamps) and makes a dropped turn *detectable* as a gap.
+	// Fails open to 0 on DynamoDB error — a 0 just means "unsequenced", never a block.
+	seq, _ := addN(ctx, "seq#"+session, 1)
+	saveConversation(session, seq, req.Message, answer, toolTrace, totalCost, clientIP(r), r.Header.Get("User-Agent"), servedProvider, modelFor(servedProvider), inTok, outTok)
+	emailTurn(session, seq, req.Message, answer, clientIP(r), r.Header.Get("User-Agent"), servedProvider, modelFor(servedProvider), costNote, totalCost)
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -1264,14 +1269,17 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 // saveConversation writes the turn to the conversations bucket under a content-hash
 // key. Best-effort: a short timeout, errors logged but swallowed. ip/userAgent are
 // captured for abuse triage; empty values are omitted.
-func saveConversation(session, msg, answer string, tools []map[string]interface{}, costMicro int64, ip, userAgent, provider, model string, inTok, outTok int) {
+func saveConversation(session string, seq int64, msg, answer string, tools []map[string]interface{}, costMicro int64, ip, userAgent, provider, model string, inTok, outTok int) {
 	if s3c == nil || convBucket == "" {
 		return
 	}
 	now := time.Now().UTC()
 	rec := map[string]interface{}{
-		"sessionId":    session,
-		"ts":           now.Format(time.RFC3339),
+		"sessionId": session,
+		"seq":       seq, // monotonic per-session turn number — authoritative ordering key
+		// Nanosecond precision so same-second turns are still strictly orderable even
+		// without the seq (belt and suspenders).
+		"ts":           now.Format(time.RFC3339Nano),
 		"provider":     provider,
 		"model":        model,
 		"userMessage":  msg,
@@ -1291,17 +1299,25 @@ func saveConversation(session, msg, answer string, tools []map[string]interface{
 	if err != nil {
 		return
 	}
+	// Key is prefixed with the zero-padded seq so a plain S3 listing already returns the
+	// turns in conversation order; the content hash keeps it collision-free.
 	sum := sha256.Sum256(body)
-	key := fmt.Sprintf("conversations/%s/%s/%s.json", now.Format("2006-01-02"), session, hex.EncodeToString(sum[:])[:16])
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if _, err := s3c.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      aws.String(convBucket),
-		Key:         aws.String(key),
-		Body:        bytes.NewReader(body),
-		ContentType: aws.String("application/json"),
-	}); err != nil {
-		fmt.Printf("conversation save error: %v\n", err)
+	key := fmt.Sprintf("conversations/%s/%s/%010d-%s.json", now.Format("2006-01-02"), session, seq, hex.EncodeToString(sum[:])[:16])
+	// The S3 record is the source of truth, so don't drop it on a single transient
+	// failure — retry once before giving up. (The email below stays lossy-by-design.)
+	for attempt := 0; attempt < 2; attempt++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		_, err = s3c.PutObject(ctx, &s3.PutObjectInput{
+			Bucket:      aws.String(convBucket),
+			Key:         aws.String(key),
+			Body:        bytes.NewReader(body),
+			ContentType: aws.String("application/json"),
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		fmt.Printf("conversation save error (attempt %d): %v\n", attempt+1, err)
 	}
 }
 
@@ -1351,15 +1367,33 @@ func geolocate(ip string) string {
 // thread state required. Best-effort: short timeout, errors logged and swallowed so
 // a notification failure never affects the visitor's reply. No-op until EMAIL_FROM /
 // EMAIL_TO are set (kept dark until the SES identities verify).
-func emailTurn(session, userMsg, answer, ip, userAgent, provider, model, costNote string, costMicro int64) {
+func emailTurn(session string, seq int64, userMsg, answer, ip, userAgent, provider, model, costNote string, costMicro int64) {
 	if ses == nil || emailFrom == "" || emailTo == "" {
 		return
 	}
 	now := time.Now().UTC()
+	ctx := context.Background()
 	root := fmt.Sprintf("<chat.%s@davidamosledbetter.com>", session)
 	sum := sha256.Sum256([]byte(now.Format(time.RFC3339Nano) + userMsg + answer))
 	msgID := fmt.Sprintf("<%s.%s@davidamosledbetter.com>", session, hex.EncodeToString(sum[:])[:16])
 	subject := "LedbetterGPT chat: " + session
+
+	// Real RFC-5322 threading: each turn replies to the *previous* turn's Message-ID and
+	// carries the full References chain, so mail clients render one ordered conversation
+	// (turn 1 ← 2 ← 3) instead of a flat pile of siblings that Gmail collapses to
+	// "first + last". Chain state lives in DynamoDB keyed by session; falls open to the
+	// synthetic root on a cold/missing entry. Subject is held constant on purpose —
+	// varying it can make Gmail split the thread.
+	refsChain := getData(ctx, "refs#"+session)
+	if refsChain == "" {
+		refsChain = root
+	}
+	inReplyTo := getData(ctx, "mid#"+session)
+	if inReplyTo == "" {
+		inReplyTo = root
+	}
+	putData(ctx, "refs#"+session, refsChain+" "+msgID, 7*24*3600)
+	putData(ctx, "mid#"+session, msgID, 7*24*3600)
 
 	loc := geolocate(ip)
 	if ip == "" {
@@ -1375,12 +1409,12 @@ func emailTurn(session, userMsg, answer, ip, userAgent, provider, model, costNot
 		model = "(none)"
 	}
 	body := fmt.Sprintf(
-		"New message in a LedbetterGPT chat.\n\n"+
-			"Session: %s\nTime:    %s\nIP:      %s\nAgent:   %s\nProvider:%s\nModel:   %s\nCost:    $%.4f%s\n\n"+
+		"New message in a LedbetterGPT chat (turn #%d).\n\n"+
+			"Session: %s\nTurn:    #%d\nTime:    %s\nIP:      %s\nAgent:   %s\nProvider:%s\nModel:   %s\nCost:    $%.4f%s\n\n"+
 			"----------------------------------------\nVisitor:\n%s\n\n"+
 			"LedbetterGPT:\n%s\n----------------------------------------\n\n"+
-			"(Each turn of this chat threads into this same email conversation.)\n",
-		session, now.Format("2006-01-02 15:04:05 MST"), ip, userAgent, provider, model,
+			"(Each turn of this chat threads into this same email conversation, in order.)\n",
+		seq, session, seq, now.Format("2006-01-02 15:04:05 MST"), ip, userAgent, provider, model,
 		float64(costMicro)/1e6, costNote, userMsg, answer)
 
 	var raw bytes.Buffer
@@ -1388,8 +1422,8 @@ func emailTurn(session, userMsg, answer, ip, userAgent, provider, model, costNot
 	fmt.Fprintf(&raw, "To: %s\r\n", emailTo)
 	fmt.Fprintf(&raw, "Subject: %s\r\n", subject)
 	fmt.Fprintf(&raw, "Message-ID: %s\r\n", msgID)
-	fmt.Fprintf(&raw, "In-Reply-To: %s\r\n", root)
-	fmt.Fprintf(&raw, "References: %s\r\n", root)
+	fmt.Fprintf(&raw, "In-Reply-To: %s\r\n", inReplyTo)
+	fmt.Fprintf(&raw, "References: %s\r\n", refsChain)
 	fmt.Fprintf(&raw, "Date: %s\r\n", now.Format(time.RFC1123Z))
 	raw.WriteString("MIME-Version: 1.0\r\n")
 	raw.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
