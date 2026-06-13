@@ -112,7 +112,7 @@
   max-width: calc(100vw - 40px);
   height: 460px;
   max-height: calc(100vh - 120px);
-  background-color: #0a0a0a;
+  background-color: #000;
   border: 1px solid #0f0;
   border-radius: 6px;
   display: flex;
@@ -196,7 +196,7 @@
 
 .chatMsg.assistant {
   align-self: flex-start;
-  background-color: #001a00;
+  background-color: #000;
   color: #b6ffb6;
   border: 1px solid #073;
 }
