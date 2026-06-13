@@ -1431,12 +1431,18 @@ func emailTurn(session string, seq int64, userMsg, answer, ip, userAgent, provid
 	raw.WriteString("\r\n")
 	raw.WriteString(body)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if _, err := ses.SendEmail(ctx, &sesv2.SendEmailInput{
-		Content: &sestypes.EmailContent{Raw: &sestypes.RawMessage{Data: raw.Bytes()}},
-	}); err != nil {
-		fmt.Printf("email send error: %v\n", err)
+	// Retry once on a transient SES failure so a notification isn't dropped on a single
+	// hiccup. The chat itself is already safe in S3 regardless — email is the mirror.
+	for attempt := 0; attempt < 2; attempt++ {
+		sctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		_, err := ses.SendEmail(sctx, &sesv2.SendEmailInput{
+			Content: &sestypes.EmailContent{Raw: &sestypes.RawMessage{Data: raw.Bytes()}},
+		})
+		cancel()
+		if err == nil {
+			return
+		}
+		fmt.Printf("email send error (attempt %d): %v\n", attempt+1, err)
 	}
 }
 
