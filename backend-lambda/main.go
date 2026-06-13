@@ -1305,6 +1305,45 @@ func saveConversation(session, msg, answer string, tools []map[string]interface{
 	}
 }
 
+// geolocate returns a coarse "City, Region, Country" for an IP for the notification
+// emails, cached in DynamoDB so each IP is looked up at most once (then reused). Best-
+// effort: returns "" on any failure, with a 1.5s timeout so it can't stall a send.
+// (This sends the visitor IP to ip-api.com.)
+func geolocate(ip string) string {
+	if ip == "" || ip == "(none)" {
+		return ""
+	}
+	ctx := context.Background()
+	if cached := getData(ctx, "geo#"+ip); cached != "" {
+		if cached == "-" { // negative cache
+			return ""
+		}
+		return cached
+	}
+	gctx, cancel := context.WithTimeout(ctx, 1500*time.Millisecond)
+	defer cancel()
+	req, _ := http.NewRequestWithContext(gctx, "GET", "http://ip-api.com/json/"+ip+"?fields=status,city,regionName,country", nil)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	var g struct {
+		Status     string `json:"status"`
+		City       string `json:"city"`
+		RegionName string `json:"regionName"`
+		Country    string `json:"country"`
+	}
+	if json.Unmarshal(body, &g) != nil || g.Status != "success" {
+		putData(ctx, "geo#"+ip, "-", 24*3600) // negative-cache a day
+		return ""
+	}
+	loc := strings.Trim(strings.TrimSpace(g.City+", "+g.RegionName+", "+g.Country), ", ")
+	putData(ctx, "geo#"+ip, loc, 30*24*3600) // cache 30 days
+	return loc
+}
+
 // emailTurn sends a single chat turn as an email, threaded into a per-session
 // conversation via a synthetic References root keyed on sessionId. Every turn of the
 // same chat carries the same Subject and References, so the recipient sees one
@@ -1322,8 +1361,12 @@ func emailTurn(session, userMsg, answer, ip, userAgent, provider, model, costNot
 	msgID := fmt.Sprintf("<%s.%s@davidamosledbetter.com>", session, hex.EncodeToString(sum[:])[:16])
 	subject := "LedbetterGPT chat: " + session
 
+	loc := geolocate(ip)
 	if ip == "" {
 		ip = "(none)"
+	}
+	if loc != "" {
+		ip += " (" + loc + ")"
 	}
 	if userAgent == "" {
 		userAgent = "(none)"
@@ -1437,8 +1480,12 @@ func contactHandler(w http.ResponseWriter, r *http.Request) {
 // address so David can reply directly. Synchronous so the handler can report failure.
 func emailContact(req contactRequest, ip, userAgent string) error {
 	now := time.Now().UTC()
+	loc := geolocate(ip)
 	if ip == "" {
 		ip = "(none)"
+	}
+	if loc != "" {
+		ip += " (" + loc + ")"
 	}
 	if userAgent == "" {
 		userAgent = "(none)"
@@ -1529,8 +1576,12 @@ func emailResumeClick(ip, userAgent, recruiter string) {
 		return
 	}
 	now := time.Now().UTC()
+	loc := geolocate(ip)
 	if ip == "" {
 		ip = "(none)"
+	}
+	if loc != "" {
+		ip += " (" + loc + ")"
 	}
 	if userAgent == "" {
 		userAgent = "(none)"
