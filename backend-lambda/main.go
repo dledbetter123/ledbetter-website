@@ -344,6 +344,17 @@ func loadSecret(ctx context.Context, sm *secretsmanager.Client, id string) strin
 	return ""
 }
 
+// currentDateLine grounds the model in real time so it doesn't read past-dated
+// milestones (e.g. a December 2024 graduation) as still upcoming. Prepended to the
+// system prompt on every turn.
+func currentDateLine() string {
+	now := time.Now().UTC()
+	return "TODAY'S DATE is " + now.Format("Monday, January 2, 2006") + ". Reason about time relative to today: " +
+		"anything with a date on or before today has already happened — speak about it in the past tense. " +
+		"My degrees are both finished (my B.S. in December 2023 and my M.S. in December 2024 are complete); " +
+		"I am NOT still pursuing them and nothing past-dated is 'upcoming.' Compute durations and ages from today's date."
+}
+
 func knowledge() string {
 	kbMu.Lock()
 	defer kbMu.Unlock()
@@ -769,7 +780,7 @@ func callGemini(ctx context.Context, contents []geminiContent, withTools bool, e
 	if withTools {
 		tools = repoTools
 	}
-	sysText := baseInstruction + "\n\n" + knowledge()
+	sysText := baseInstruction + "\n\n" + currentDateLine() + "\n\n" + knowledge()
 	if extra != "" {
 		sysText += "\n\n" + extra
 	}
@@ -904,7 +915,7 @@ func toOAIMessages(sysText string, contents []geminiContent) []oaiMessage {
 // shape, so the tool loop is unchanged. Tool calls without an id get a synthetic one so
 // the assistant tool_call and its later tool message stay matched.
 func callWorkersAI(ctx context.Context, contents []geminiContent, withTools bool, extra string) (geminiContent, geminiUsage, error) {
-	sysText := baseInstruction + "\n\n" + knowledge()
+	sysText := baseInstruction + "\n\n" + currentDateLine() + "\n\n" + knowledge()
 	if extra != "" {
 		sysText += "\n\n" + extra
 	}

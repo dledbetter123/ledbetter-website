@@ -334,7 +334,7 @@ func catalogModelCall(ctx context.Context, messages []oaiMessage, tools []oaiToo
 }
 
 func runCatalogChat(ctx context.Context, message string, history []chatTurn) string {
-	msgs := []oaiMessage{{Role: "system", Content: catalogSystem + "\n\n--- CURRENT KNOWLEDGE BASE ---\n" + knowledge()}}
+	msgs := []oaiMessage{{Role: "system", Content: catalogSystem + "\n\n" + currentDateLine() + "\n\n--- CURRENT KNOWLEDGE BASE ---\n" + knowledge()}}
 	for _, h := range history {
 		role := "user"
 		if h.Role == "model" || h.Role == "assistant" {
