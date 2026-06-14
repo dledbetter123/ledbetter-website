@@ -1804,6 +1804,15 @@ func main() {
 			}
 			return handleSQS(ctx, ev), nil
 		}
+		// SNS notification (CloudWatch alarm → SNS → here → SES email).
+		if json.Unmarshal(raw, &probe) == nil && len(probe.Records) > 0 &&
+			strings.HasPrefix(probe.Records[0].EventSource, "aws:sns") {
+			var ev events.SNSEvent
+			if err := json.Unmarshal(raw, &ev); err != nil {
+				return nil, err
+			}
+			return nil, handleSNS(ctx, ev)
+		}
 		var req events.APIGatewayV2HTTPRequest
 		if err := json.Unmarshal(raw, &req); err != nil {
 			return nil, err

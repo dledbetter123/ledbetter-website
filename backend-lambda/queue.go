@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,8 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
+	sestypes "github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 )
 
@@ -86,6 +89,56 @@ func processQueuedEvent(ctx context.Context, ev queuedEvent) error {
 		fmt.Printf("worker: unknown queued event type %q — dropping\n", ev.Type)
 		return nil // don't retry an unrecognized type forever
 	}
+}
+
+// handleSNS turns a CloudWatch-alarm SNS notification into an email via SES — the same
+// verified sender that delivers chat notifications. Used instead of a raw SNS email
+// subscription, which Gmail/AWS feedback loops tend to auto-unsubscribe.
+func handleSNS(ctx context.Context, e events.SNSEvent) error {
+	for _, rec := range e.Records {
+		raw := rec.SNS.Message
+		subject := rec.SNS.Subject
+		var al struct {
+			AlarmName      string `json:"AlarmName"`
+			NewStateValue  string `json:"NewStateValue"`
+			NewStateReason string `json:"NewStateReason"`
+		}
+		body := raw
+		if json.Unmarshal([]byte(raw), &al) == nil && al.AlarmName != "" {
+			subject = fmt.Sprintf("[%s] %s", al.NewStateValue, al.AlarmName)
+			body = fmt.Sprintf("CloudWatch alarm: %s\nState: %s\n\n%s\n", al.AlarmName, al.NewStateValue, al.NewStateReason)
+		}
+		if subject == "" {
+			subject = "LedbetterGPT alarm"
+		}
+		if err := emailAlarm(subject, body); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// emailAlarm sends a plain notification email via SES (no threading). Returns its error so
+// the SNS retry policy can re-attempt on a transient failure.
+func emailAlarm(subject, body string) error {
+	if ses == nil || emailFrom == "" || emailTo == "" {
+		return nil
+	}
+	var raw bytes.Buffer
+	fmt.Fprintf(&raw, "From: %s\r\n", emailFrom)
+	fmt.Fprintf(&raw, "To: %s\r\n", emailTo)
+	fmt.Fprintf(&raw, "Subject: %s\r\n", subject)
+	raw.WriteString("MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n")
+	raw.WriteString(body)
+	sctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	if _, err := ses.SendEmail(sctx, &sesv2.SendEmailInput{
+		Content: &sestypes.EmailContent{Raw: &sestypes.RawMessage{Data: raw.Bytes()}},
+	}); err != nil {
+		fmt.Printf("alarm email error: %v\n", err)
+		return err
+	}
+	return nil
 }
 
 // handleSQS is the async worker entrypoint. It processes each record and reports per-message
