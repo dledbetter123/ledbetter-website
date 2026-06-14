@@ -241,18 +241,20 @@ var (
 	llmProvider = "gemini"
 	cfAccountID string
 	cfToken     string
-	// Default model: mistral-small-3.1-24b. A dense 24B follows the long persona/privacy
-	// rule-set more reliably than llama-4-scout (a 17B-active MoE that fabricated facts and
-	// drifted tone in A/B testing). Avoid llama-3.3-70b (refuses, leaks tool-calls as text)
-	// and reasoning models (gpt-oss / kimi-k2.6 / nemotron — null content under short
-	// max_tokens, reasoning billed as output). Override via WORKERS_AI_MODEL + rate envs.
-	workersAIModel = "@cf/mistralai/mistral-small-3.1-24b-instruct"
-	waiInPerMTok   = 0.351 // $ / 1M input tokens  (mistral-small-3.1 default)
-	waiOutPerMTok  = 0.555 // $ / 1M output tokens (mistral-small-3.1 default)
-	// Neurons per 1M tokens (mistral-small-3.1 defaults) — for the free-tier readout. Switch
-	// these alongside WORKERS_AI_MODEL via the WORKERS_AI_NEURONS_*_PER_MTOK envs.
-	waiNeuronsInPerMTok  = 31876.0
-	waiNeuronsOutPerMTok = 50488.0
+	// Default model: llama-4-scout-17b-16e. With cost no longer a constraint, scout was
+	// chosen over mistral-small-3.1-24b after stress testing: under the multi-round tool
+	// loop mistral fabricated ungrounded tech (claimed Terraform/Docker after reading files
+	// that named neither), while scout emits clean structured tool_calls and held the
+	// grounding rule. Avoid llama-3.3-70b (refuses, leaks tool-calls as text) and reasoning
+	// models (gpt-oss / kimi-k2.6 / nemotron — null content under short max_tokens, reasoning
+	// billed as output). Override via WORKERS_AI_MODEL + rate envs.
+	workersAIModel = "@cf/meta/llama-4-scout-17b-16e-instruct"
+	waiInPerMTok   = 0.27 // $ / 1M input tokens  (llama-4-scout)
+	waiOutPerMTok  = 0.85 // $ / 1M output tokens (llama-4-scout)
+	// Neurons per 1M tokens (llama-4-scout) — for the free-tier readout. = $/Mtok ÷ ($0.011/1000
+	// per neuron). Switch these alongside WORKERS_AI_MODEL via WORKERS_AI_NEURONS_*_PER_MTOK.
+	waiNeuronsInPerMTok  = 24545.0
+	waiNeuronsOutPerMTok = 77273.0
 
 	kbMu      sync.Mutex
 	kbText    string
