@@ -93,8 +93,9 @@ const (
 	maxOutputTokens   = 2048
 	dailyRequestLimit = 150
 	perIPDailyLimit   = 100
-	maxToolRounds     = 6 // up to 5 tool-call rounds + 1 forced text answer; tool rounds are fast, so this still fits the 30s API Gateway limit while allowing real repo exploration
+	maxToolRounds     = 6 // up to 5 tool-call rounds + 1 forced text answer; the turnSoftBudget wall-clock guard (not the round count) is what keeps a turn under the 30s API Gateway limit
 	maxFileBytes      = 60 * 1024 // cap a single fetched file so it fits the token budget
+	turnSoftBudget    = 18 * time.Second // after this much wall-clock in a turn, stop offering tools and force the final answer (keeps us under API Gateway's 30s)
 
 	// Workers AI warm/cold rotation (only used when LLM_PROVIDER=workersai). A turn
 	// prefers Cloudflare; if CF is cold it falls back to Gemini (the "session starter")
@@ -1259,9 +1260,18 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	var totalCost int64
 	var inTok, outTok int
 	var toolTrace []map[string]interface{}
+	turnStart := time.Now()
 	for round := 0; round < maxToolRounds; round++ {
 		// On the last round, drop the tools so the model must answer with text.
 		withTools := round < maxToolRounds-1
+		// Wall-clock guard: a single CF generation can take many seconds, and API
+		// Gateway hard-kills the request at 30s. If we've already spent the soft
+		// budget exploring, stop offering tools so this round produces the final
+		// answer with what we've gathered — better a slightly shallower grounded
+		// reply than a 504 mid-exploration.
+		if time.Since(turnStart) > turnSoftBudget {
+			withTools = false
+		}
 		modelContent, usage, err := tl.call(ctx, contents, withTools, extra)
 		totalCost += costForProvider(usage, tl.used)
 		inTok += usage.PromptTokenCount
