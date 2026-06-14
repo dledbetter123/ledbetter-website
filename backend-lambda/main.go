@@ -33,6 +33,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -42,6 +43,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	sestypes "github.com/aws/aws-sdk-go-v2/service/sesv2/types"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 )
 
@@ -227,6 +229,8 @@ var (
 	ddb         *dynamodb.Client
 	s3c         *s3.Client
 	ses         *sesv2.Client
+	sqsc        *sqs.Client
+	turnsQueueURL string // SQS FIFO queue for turn-event side-effects; empty = process inline
 	rateTable   string
 	convBucket  string
 	emailFrom   string // verified SES sender, e.g. "LedbetterGPT <ledbettergpt@davidamosledbetter.com>"
@@ -282,6 +286,8 @@ func init() {
 	ddb = dynamodb.NewFromConfig(cfg)
 	s3c = s3.NewFromConfig(cfg)
 	ses = sesv2.NewFromConfig(cfg)
+	sqsc = sqs.NewFromConfig(cfg)
+	turnsQueueURL = os.Getenv("TURNS_QUEUE_URL")
 
 	sm := secretsmanager.NewFromConfig(cfg)
 	geminiKey = loadSecret(ctx, sm, os.Getenv("GEMINI_SECRET_ID"))
@@ -1206,8 +1212,11 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 				"blaming the index. 🙃 — David)"
 		}
 		gseq, _ := addN(ctx, "seq#"+session, 1)
-		saveConversation(session, gseq, req.Message, greeting, nil, 0, clientIP(r), r.Header.Get("User-Agent"), llmProvider, activeModel(), 0, 0)
-		emailTurn(session, gseq, req.Message, greeting, clientIP(r), r.Header.Get("User-Agent"), "static", "(none)", " (static greeting — no model call)", 0)
+		enqueueTurn(ctx, queuedEvent{
+			Type: "turn", Session: session, Seq: gseq, UserMsg: req.Message, Answer: greeting,
+			IP: clientIP(r), UserAgent: r.Header.Get("User-Agent"), Provider: "static",
+			Model: "(none)", CostNote: " (static greeting — no model call)",
+		})
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		fmt.Fprint(w, greeting)
@@ -1357,8 +1366,12 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	// second-granularity timestamps) and makes a dropped turn *detectable* as a gap.
 	// Fails open to 0 on DynamoDB error — a 0 just means "unsequenced", never a block.
 	seq, _ := addN(ctx, "seq#"+session, 1)
-	saveConversation(session, seq, req.Message, answer, toolTrace, totalCost, clientIP(r), r.Header.Get("User-Agent"), servedProvider, modelFor(servedProvider), inTok, outTok)
-	emailTurn(session, seq, req.Message, answer, clientIP(r), r.Header.Get("User-Agent"), servedProvider, modelFor(servedProvider), costNote, totalCost)
+	enqueueTurn(ctx, queuedEvent{
+		Type: "turn", Session: session, Seq: seq, UserMsg: req.Message, Answer: answer,
+		Tools: toolTrace, CostMicro: totalCost, IP: clientIP(r), UserAgent: r.Header.Get("User-Agent"),
+		Provider: servedProvider, Model: modelFor(servedProvider), CostNote: costNote,
+		InTok: inTok, OutTok: outTok,
+	})
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -1368,9 +1381,13 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 // saveConversation writes the turn to the conversations bucket under a content-hash
 // key. Best-effort: a short timeout, errors logged but swallowed. ip/userAgent are
 // captured for abuse triage; empty values are omitted.
-func saveConversation(session string, seq int64, msg, answer string, tools []map[string]interface{}, costMicro int64, ip, userAgent, provider, model string, inTok, outTok int) {
+// saveConversation writes the turn to S3 as the durable record. Called from the SQS
+// worker, so it returns its error: a failure makes the worker retry the message (and
+// eventually dead-letter it) rather than silently dropping the turn. The key is content-
+// addressed so a redelivery rewrites the same object — idempotent by construction.
+func saveConversation(session string, seq int64, msg, answer string, tools []map[string]interface{}, costMicro int64, ip, userAgent, provider, model string, inTok, outTok int) error {
 	if s3c == nil || convBucket == "" {
-		return
+		return nil
 	}
 	now := time.Now().UTC()
 	rec := map[string]interface{}{
@@ -1396,28 +1413,25 @@ func saveConversation(session string, seq int64, msg, answer string, tools []map
 	}
 	body, err := json.MarshalIndent(rec, "", "  ")
 	if err != nil {
-		return
+		return err
 	}
 	// Key is prefixed with the zero-padded seq so a plain S3 listing already returns the
-	// turns in conversation order; the content hash keeps it collision-free.
+	// turns in conversation order; the content hash keeps it collision-free (and makes a
+	// redelivery rewrite the identical object).
 	sum := sha256.Sum256(body)
 	key := fmt.Sprintf("conversations/%s/%s/%010d-%s.json", now.Format("2006-01-02"), session, seq, hex.EncodeToString(sum[:])[:16])
-	// The S3 record is the source of truth, so don't drop it on a single transient
-	// failure — retry once before giving up. (The email below stays lossy-by-design.)
-	for attempt := 0; attempt < 2; attempt++ {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		_, err = s3c.PutObject(ctx, &s3.PutObjectInput{
-			Bucket:      aws.String(convBucket),
-			Key:         aws.String(key),
-			Body:        bytes.NewReader(body),
-			ContentType: aws.String("application/json"),
-		})
-		cancel()
-		if err == nil {
-			return
-		}
-		fmt.Printf("conversation save error (attempt %d): %v\n", attempt+1, err)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if _, err = s3c.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(convBucket),
+		Key:         aws.String(key),
+		Body:        bytes.NewReader(body),
+		ContentType: aws.String("application/json"),
+	}); err != nil {
+		fmt.Printf("conversation save error: %v\n", err)
+		return err
 	}
+	return nil
 }
 
 // geolocate returns a coarse "City, Region, Country" for an IP for the notification
@@ -1466,9 +1480,9 @@ func geolocate(ip string) string {
 // thread state required. Best-effort: short timeout, errors logged and swallowed so
 // a notification failure never affects the visitor's reply. No-op until EMAIL_FROM /
 // EMAIL_TO are set (kept dark until the SES identities verify).
-func emailTurn(session string, seq int64, userMsg, answer, ip, userAgent, provider, model, costNote string, costMicro int64) {
+func emailTurn(session string, seq int64, userMsg, answer, ip, userAgent, provider, model, costNote string, costMicro int64) error {
 	if ses == nil || emailFrom == "" || emailTo == "" {
-		return
+		return nil
 	}
 	now := time.Now().UTC()
 	ctx := context.Background()
@@ -1530,19 +1544,17 @@ func emailTurn(session string, seq int64, userMsg, answer, ip, userAgent, provid
 	raw.WriteString("\r\n")
 	raw.WriteString(body)
 
-	// Retry once on a transient SES failure so a notification isn't dropped on a single
-	// hiccup. The chat itself is already safe in S3 regardless — email is the mirror.
-	for attempt := 0; attempt < 2; attempt++ {
-		sctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		_, err := ses.SendEmail(sctx, &sesv2.SendEmailInput{
-			Content: &sestypes.EmailContent{Raw: &sestypes.RawMessage{Data: raw.Bytes()}},
-		})
-		cancel()
-		if err == nil {
-			return
-		}
-		fmt.Printf("email send error (attempt %d): %v\n", attempt+1, err)
+	// Return the error so the SQS worker can retry/dead-letter; the per-turn idempotency
+	// marker (set only after success) keeps a retry from sending a duplicate.
+	sctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	if _, err := ses.SendEmail(sctx, &sesv2.SendEmailInput{
+		Content: &sestypes.EmailContent{Raw: &sestypes.RawMessage{Data: raw.Bytes()}},
+	}); err != nil {
+		fmt.Printf("email send error: %v\n", err)
+		return err
 	}
+	return nil
 }
 
 // contactRequest is a visitor-submitted contact-form payload. Visitors leave their
@@ -1774,6 +1786,28 @@ func main() {
 		mux.ServeHTTP(w, r)
 	})
 
-	// API Gateway HTTP API (payload v2) proxy — buffered response.
-	lambda.Start(httpadapter.NewV2(handler).ProxyWithContext)
+	// One binary, two roles: the same Lambda serves the synchronous API Gateway HTTP
+	// API (payload v2) AND consumes the SQS FIFO turn-event queue as the async worker.
+	// Dispatch on the raw event shape so no second deployable is needed.
+	adapter := httpadapter.NewV2(handler)
+	lambda.Start(func(ctx context.Context, raw json.RawMessage) (interface{}, error) {
+		var probe struct {
+			Records []struct {
+				EventSource string `json:"eventSource"`
+			} `json:"Records"`
+		}
+		if json.Unmarshal(raw, &probe) == nil && len(probe.Records) > 0 &&
+			strings.HasPrefix(probe.Records[0].EventSource, "aws:sqs") {
+			var ev events.SQSEvent
+			if err := json.Unmarshal(raw, &ev); err != nil {
+				return nil, err
+			}
+			return handleSQS(ctx, ev), nil
+		}
+		var req events.APIGatewayV2HTTPRequest
+		if err := json.Unmarshal(raw, &req); err != nil {
+			return nil, err
+		}
+		return adapter.ProxyWithContext(ctx, req)
+	})
 }
