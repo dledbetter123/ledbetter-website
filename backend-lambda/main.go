@@ -1195,7 +1195,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	// widget also seeds its opener in `history`, so it never hits this path anyway).
 	// Runs AFTER the per-IP and global request caps above, so it can't be spammed free.
 	if len(req.History) == 0 && (isOpenAIAgent(r) || isGoogleAgent(r)) {
-		greeting := "Hi, I'm David Ledbetter, what do you want to talk about?"
+		greeting := "Hi, I'm David Ledbetter (or rather, his librarian). I maintain a knowledge base of David's experience, interests, and current projects, so ask me anything about his work and I'll dig it up."
 		if isOpenAIAgent(r) {
 			// Easter egg: when an OpenAI/ChatGPT agent reaches LedbetterGPT, rib it
 			// specifically for trusting Bing's stale cache over a live fetch.
