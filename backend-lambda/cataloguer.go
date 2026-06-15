@@ -48,6 +48,20 @@ var catalogProjectNames = []string{
 	"trade companion", "ebpf", "kernel probe", "graph attention", "leo", "character-aware",
 }
 
+// handoffLines are short, LLM-free replies the worker sends the instant it dispatches the
+// librarian — so the visitor gets one quick handoff, not a big essay, before the single
+// compiled answer comes back. Varied so it doesn't read canned.
+var handoffLines = []string{
+	"Good question — I'll have to dispatch myself into the library to pull the real details on that. Wait right there…",
+	"Ooh, good one. Let me dive into the library and grab the actual code for you — hang tight a sec…",
+	"Great question. I don't have the specifics in my head, so I'm heading into the library to pull the real details. One moment…",
+	"Love that question — give me a beat to go dig the actual code out of the library. Right back…",
+}
+
+func pickHandoff() string {
+	return handoffLines[int(time.Now().UnixNano())%len(handoffLines)]
+}
+
 func catalogLikely(msg string) bool {
 	m := strings.ToLower(msg)
 	for _, t := range catalogTriggers {
@@ -98,8 +112,8 @@ func runCataloguer(ctx context.Context, session, message string) {
 
 	start := time.Now()
 	var sheet strings.Builder
-	var costMicros int64    // Gemini cost of this gather, surfaced in the notification email
-	var activity []string   // human-readable log of what the librarian explored (for the email)
+	var costMicros int64  // Gemini cost of this gather, surfaced in the notification email
+	var activity []string // human-readable log of what the librarian explored (for the email)
 	logStep := func(step string) {
 		setCatalogStatus(ctx, session, step)
 		if n := len(activity); n == 0 || activity[n-1] != step {

@@ -39,9 +39,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	ddbtypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	lambdasvc "github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	lambdasvc "github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	sestypes "github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -106,8 +106,8 @@ const (
 	maxOutputTokens   = 2048
 	dailyRequestLimit = 150
 	perIPDailyLimit   = 100
-	maxToolRounds     = 6 // up to 5 tool-call rounds + 1 forced text answer; the turnSoftBudget wall-clock guard (not the round count) is what keeps a turn under the 30s API Gateway limit
-	maxFileBytes      = 60 * 1024 // cap a single fetched file so it fits the token budget
+	maxToolRounds     = 6                // up to 5 tool-call rounds + 1 forced text answer; the turnSoftBudget wall-clock guard (not the round count) is what keeps a turn under the 30s API Gateway limit
+	maxFileBytes      = 60 * 1024        // cap a single fetched file so it fits the token budget
 	turnSoftBudget    = 18 * time.Second // after this much wall-clock in a turn, stop offering tools and force the final answer (keeps us under API Gateway's 30s)
 
 	// Workers AI warm/cold rotation (only used when LLM_PROVIDER=workersai). A turn
@@ -237,20 +237,20 @@ var neverPatterns = []string{
 }
 
 var (
-	geminiKey   string
-	githubToken string
-	ddb         *dynamodb.Client
-	s3c         *s3.Client
-	ses         *sesv2.Client
-	sqsc        *sqs.Client
-	turnsQueueURL string // SQS FIFO queue for turn-event side-effects; empty = process inline
+	geminiKey     string
+	githubToken   string
+	ddb           *dynamodb.Client
+	s3c           *s3.Client
+	ses           *sesv2.Client
+	sqsc          *sqs.Client
+	turnsQueueURL string            // SQS FIFO queue for turn-event side-effects; empty = process inline
 	lambdaInvoker *lambdasvc.Client // for async self-invoke of the cataloguer
 	selfFnName    string            // this function's name (AWS_LAMBDA_FUNCTION_NAME)
-	rateTable   string
-	convBucket  string
-	emailFrom   string // verified SES sender, e.g. "LedbetterGPT <ledbettergpt@davidamosledbetter.com>"
-	emailTo     string // notification recipient
-	httpClient  = &http.Client{Timeout: 25 * time.Second}
+	rateTable     string
+	convBucket    string
+	emailFrom     string // verified SES sender, e.g. "LedbetterGPT <ledbettergpt@davidamosledbetter.com>"
+	emailTo       string // notification recipient
+	httpClient    = &http.Client{Timeout: 25 * time.Second}
 
 	// LLM provider selection. llmProvider ∈ {"gemini","workersai"} (default gemini).
 	// When "workersai", inference goes to Cloudflare Workers AI's OpenAI-compatible
@@ -1291,13 +1291,13 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	// cached for this session, inject it so the (fast) worker model can answer code-level
 	// questions richly. If the conversation looks code-bound and nothing's cached yet,
 	// kick off the async cataloguer and tell this reply to set expectations.
-	suppressTools := false // while the cataloguer is gathering, the worker answers from KB, not its own (unreliable) tool calls
-	gathering := false     // signals the frontend (via header) to show the live "gathering" indicator
+	gathering := false // signals the frontend (via header) to show the live "gathering" indicator
+	handoffReply := "" // when set, this turn IS a short LLM-free handoff (we skip the worker model)
 	if session != "anon" {
 		if facts := getData(ctx, "catalog#"+session); facts != "" {
 			extra += "\n\n--- CODE CONTEXT (the details my librarian just collected from my GitHub repos for this conversation; use it to answer code/implementation questions accurately and specifically, in my own first-person voice) ---\n" + facts
 			if req.Deliver {
-				extra += "\n\nNOTE (do not quote this verbatim): the details I sent my librarian to collect just came back. Open this reply with a brief, natural acknowledgment that I've now got the info (something like \"Collected some info for your question —\" or \"Okay, got the details I needed —\"), then give the full, specific code answer using the context above. This is the green follow-through after the handoff."
+				extra += "\n\nNOTE (do not quote this verbatim): the details I sent my librarian to collect just came back. This is the ONE compiled answer — open with a brief, natural acknowledgment that I've got the info now (e.g. \"Collected some info for your question —\" or \"Okay, got what I needed —\"), then give the full, specific code answer, weaving together what I already knew and the details above. Make it complete; there is no second message coming."
 			}
 		} else {
 			state := getData(ctx, "catalogstate#"+session)
@@ -1305,13 +1305,11 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 				putData(ctx, "catalogstate#"+session, "pending", catalogTTLSec)
 				setCatalogStatus(ctx, session, "Getting the librarian on it…")
 				enqueueCatalogue(ctx, session, req.Message)
-				suppressTools = true
 				gathering = true
-				extra += "\n\nNOTE (do not quote this verbatim): I don't have the specific code details for this in my short-term memory, so I'm handing it off to my librarian to go collect them right now. For THIS reply, do NOT answer the question itself and do NOT read repos yourself — just say, briefly and naturally, that I need to grab some details I don't have on hand and that my librarian is pulling the actual code now (something like \"I don't have that one in my head right now — let me have my librarian pull the actual code, one sec…\"). One or two sentences, warm and confident, clearly a handoff, never implying I can't or won't share it. Never say 'background process' or 'cataloguer'."
+				handoffReply = pickHandoff() // short, fixed handoff — no big LLM message here
 			} else if state == "pending" && catalogLikely(req.Message) {
-				suppressTools = true
 				gathering = true
-				extra += "\n\nNOTE (do not quote this verbatim): my librarian is still collecting the code details. Do NOT read repos yourself this turn; just say briefly that I'm still pulling those details and they'll be ready in a moment. Keep it natural."
+				handoffReply = "Still in the library digging those up — give me one more second and I'll have them."
 			}
 		}
 	}
@@ -1324,72 +1322,74 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	var totalCost int64
 	var inTok, outTok int
 	var toolTrace []map[string]interface{}
-	turnStart := time.Now()
-	for round := 0; round < maxToolRounds; round++ {
-		// On the last round, drop the tools so the model must answer with text.
-		withTools := round < maxToolRounds-1
-		// Wall-clock guard: a single CF generation can take many seconds, and API
-		// Gateway hard-kills the request at 30s. If we've already spent the soft
-		// budget exploring, stop offering tools so this round produces the final
-		// answer with what we've gathered — better a slightly shallower grounded
-		// reply than a 504 mid-exploration.
-		if time.Since(turnStart) > turnSoftBudget {
-			withTools = false
-		}
-		// The cataloguer is handling repo exploration for this conversation; don't let the
-		// worker do its own (slower, less reliable) tool calls on the triggering turn.
-		if suppressTools {
-			withTools = false
-		}
-		modelContent, usage, err := tl.call(ctx, contents, withTools, extra)
-		totalCost += costForProvider(usage, tl.used)
-		inTok += usage.PromptTokenCount
-		outTok += usage.CandidatesTokenCount + usage.ThoughtsTokenCount
-		if err != nil {
-			fmt.Printf("model error: %v\n", err)
-			http.Error(w, "upstream error", http.StatusBadGateway)
-			return
-		}
-
-		var calls []*fnCall
-		var text strings.Builder
-		for _, p := range modelContent.Parts {
-			if p.FunctionCall != nil {
-				calls = append(calls, p.FunctionCall)
+	if handoffReply != "" {
+		// Short, LLM-free handoff turn: the librarian is now gathering; the single
+		// compiled answer arrives on the delivery turn. Skip the worker model entirely so
+		// the visitor never gets two big messages.
+		answer = handoffReply
+	} else {
+		turnStart := time.Now()
+		for round := 0; round < maxToolRounds; round++ {
+			// On the last round, drop the tools so the model must answer with text.
+			withTools := round < maxToolRounds-1
+			// Wall-clock guard: a single CF generation can take many seconds, and API
+			// Gateway hard-kills the request at 30s. If we've already spent the soft
+			// budget exploring, stop offering tools so this round produces the final
+			// answer with what we've gathered — better a slightly shallower grounded
+			// reply than a 504 mid-exploration.
+			if time.Since(turnStart) > turnSoftBudget {
+				withTools = false
 			}
-			if p.Text != "" {
-				text.WriteString(p.Text)
+			modelContent, usage, err := tl.call(ctx, contents, withTools, extra)
+			totalCost += costForProvider(usage, tl.used)
+			inTok += usage.PromptTokenCount
+			outTok += usage.CandidatesTokenCount + usage.ThoughtsTokenCount
+			if err != nil {
+				fmt.Printf("model error: %v\n", err)
+				http.Error(w, "upstream error", http.StatusBadGateway)
+				return
 			}
+
+			var calls []*fnCall
+			var text strings.Builder
+			for _, p := range modelContent.Parts {
+				if p.FunctionCall != nil {
+					calls = append(calls, p.FunctionCall)
+				}
+				if p.Text != "" {
+					text.WriteString(p.Text)
+				}
+			}
+
+			if len(calls) == 0 {
+				answer = strings.TrimSpace(text.String())
+				break
+			}
+
+			// Append the model's turn VERBATIM (preserves thoughtSignature, required by
+			// the API), then answer each function call in a single user turn.
+			if modelContent.Role == "" {
+				modelContent.Role = "model"
+			}
+			contents = append(contents, modelContent)
+
+			respParts := make([]geminiPart, 0, len(calls))
+			for _, c := range calls {
+				toolTrace = append(toolTrace, map[string]interface{}{"name": c.Name, "args": c.Args})
+				result := runTool(ctx, c)
+				respParts = append(respParts, geminiPart{FunctionResponse: &fnResponse{
+					Name:     c.Name,
+					ID:       c.ID,
+					Response: map[string]interface{}{"content": result},
+				}})
+			}
+			contents = append(contents, geminiContent{Role: "user", Parts: respParts})
 		}
 
-		if len(calls) == 0 {
-			answer = strings.TrimSpace(text.String())
-			break
+		if answer == "" {
+			answer = "I dug through my repos but couldn't pull that together — try rephrasing, or check the contact section to reach me directly."
 		}
-
-		// Append the model's turn VERBATIM (preserves thoughtSignature, required by
-		// the API), then answer each function call in a single user turn.
-		if modelContent.Role == "" {
-			modelContent.Role = "model"
-		}
-		contents = append(contents, modelContent)
-
-		respParts := make([]geminiPart, 0, len(calls))
-		for _, c := range calls {
-			toolTrace = append(toolTrace, map[string]interface{}{"name": c.Name, "args": c.Args})
-			result := runTool(ctx, c)
-			respParts = append(respParts, geminiPart{FunctionResponse: &fnResponse{
-				Name:     c.Name,
-				ID:       c.ID,
-				Response: map[string]interface{}{"content": result},
-			}})
-		}
-		contents = append(contents, geminiContent{Role: "user", Parts: respParts})
-	}
-
-	if answer == "" {
-		answer = "I dug through my repos but couldn't pull that together — try rephrasing, or check the contact section to reach me directly."
-	}
+	} // end of the (non-handoff) worker model branch
 
 	// Book the cost against the session and the global daily budget.
 	if totalCost > 0 {
@@ -1404,6 +1404,9 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	servedProvider := tl.used
 	if servedProvider == "" {
 		servedProvider = llmProvider
+	}
+	if handoffReply != "" {
+		servedProvider = "static" // the handoff turn ran no model
 	}
 	// Cost note for the notification email: the logged dollar figure is the would-be
 	// (billed-equivalent) cost. Workers AI turns are FUNCTIONALLY FREE while the day's
