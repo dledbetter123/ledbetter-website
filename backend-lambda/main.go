@@ -1266,7 +1266,10 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 		if role != "model" {
 			role = "user"
 		}
-		text := t.Text
+		text := strings.TrimSpace(t.Text)
+		if text == "" {
+			continue // skip empty turns — an empty part makes Gemini reject the whole request (400)
+		}
 		if len(text) > maxMessageChars {
 			text = text[:maxMessageChars]
 		}

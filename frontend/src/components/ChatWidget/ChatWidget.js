@@ -47,6 +47,13 @@ const shuffled = (arr) => {
   return a;
 };
 
+// One-line summary shown when a librarian gather collapses — derived from its log.
+const gatherSummary = (log = []) => {
+  const reads = log.filter((l) => /^Reading /i.test(l)).length;
+  if (reads > 0) return `Pulled the code details — read ${reads} file${reads > 1 ? 's' : ''} from the library.`;
+  return 'Pulled the code details from the library.';
+};
+
 // LedbetterGPT — a small chat assistant that streams answers about David from the
 // backend's /api/chat endpoint (Gemini-backed). The backend URL is injected at
 // runtime via window.env.REACT_APP_BACKEND_URI (see config.js / IntroPage).
@@ -67,18 +74,15 @@ const ChatWidget = () => {
   // the plain greeting; set to a glyph-twinkled copy each interval tick).
   const [greetingShimmer, setGreetingShimmer] = useState(null);
   const [loadingGlyph, setLoadingGlyph] = useState('');
-  // The cataloguer ("librarian") is out gathering code context: drives the inline orange
-  // pulsing message that shows the running exploration log, polled from /api/catalog-status.
-  const [gathering, setGathering] = useState(false);
-  const [gatherLog, setGatherLog] = useState([]);
   // Set after a passkey login → chat talks to the catalog (KB-writing) endpoint.
   const [operatorToken, setOperatorToken] = useState(null);
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
   const sessionIdRef = useRef(null);
+  // The cataloguer ("librarian") gather lives as a message of role 'gather' in the flow:
+  // an inline orange pulsing log while it runs, collapsing to a one-line summary when done.
   const gatherTimerRef = useRef(null);   // poll interval for the gathering status
   const gatherQuestionRef = useRef('');  // the question to re-deliver once the gather finishes
-  const gatherLogRef = useRef(null);     // the running-log box, kept scrolled to the latest step
   // Time of the last message activity, for the IDLE flush window. Seeded from the
   // restored chat so a bare page load/refresh does NOT reset the clock — only sending
   // or receiving a message does. Restore is allowed only while idle < FLUSH_WINDOW_MS.
@@ -97,7 +101,7 @@ const ChatWidget = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isOpen, gathering, gatherLog]);
+  }, [messages, isOpen]);
 
   // Persist the conversation (and open state) so a refresh repopulates it. Only when
   // settled — never mid-stream — so we never restore a half-typed answer. savedAt is
@@ -139,27 +143,22 @@ const ChatWidget = () => {
     if (gatherTimerRef.current) clearInterval(gatherTimerRef.current);
   }, []);
 
-  // Keep the running-log box scrolled to the newest step.
-  useEffect(() => {
-    if (gatherLogRef.current) gatherLogRef.current.scrollTop = gatherLogRef.current.scrollHeight;
-  }, [gatherLog]);
+  // Update the most recent 'gather' message in place (the live orange box).
+  const updateGather = (fn) =>
+    setMessages((prev) => {
+      const idx = prev.map((m) => m.role).lastIndexOf('gather');
+      if (idx < 0) return prev;
+      const next = [...prev];
+      next[idx] = fn(next[idx]);
+      return next;
+    });
 
-  const stopGathering = () => {
-    if (gatherTimerRef.current) {
-      clearInterval(gatherTimerRef.current);
-      gatherTimerRef.current = null;
-    }
-    setGathering(false);
-    setGatherLog([]);
-  };
-
-  // Poll the librarian's progress ~1s while it gathers code context; accumulate its steps
-  // into the running exploration log shown in the orange message, and once it's ready,
-  // proactively deliver the enriched (green) answer as a fresh bot message.
+  // Append the orange gather message to the flow and poll the librarian's progress ~1s:
+  // accumulate its steps into the running log, and once it's ready, collapse the box to a
+  // one-line summary and proactively deliver the enriched (green) answer.
   const startGathering = () => {
     if (gatherTimerRef.current) return;
-    setGathering(true);
-    setGatherLog(['Reaching out to my librarian…']);
+    setMessages((prev) => [...prev, { role: 'gather', log: ['Reaching out to my librarian…'], done: false }]);
     const backendUri = (window.env && window.env.REACT_APP_BACKEND_URI) || '';
     gatherTimerRef.current = setInterval(async () => {
       try {
@@ -169,10 +168,13 @@ const ChatWidget = () => {
         if (!r.ok) return;
         const data = await r.json();
         if (data.status) {
-          setGatherLog((prev) => (prev[prev.length - 1] === data.status ? prev : [...prev, data.status]));
+          updateGather((g) =>
+            g.log[g.log.length - 1] === data.status ? g : { ...g, log: [...g.log, data.status] });
         }
         if (data.state === 'ready') {
-          stopGathering();
+          clearInterval(gatherTimerRef.current);
+          gatherTimerRef.current = null;
+          updateGather((g) => ({ ...g, done: true })); // collapse to the one-line summary
           const q = gatherQuestionRef.current;
           gatherQuestionRef.current = '';
           if (q) send({ silent: true, messageOverride: q });
@@ -232,12 +234,9 @@ const ChatWidget = () => {
         return;
       }
 
-      // If the librarian (cataloguer) started gathering code context for this turn, light
-      // up the live indicator and poll until it's ready, then proactively deliver.
-      if (!silent && !operatorToken && res.headers.get('X-Catalog') === 'gathering') {
-        gatherQuestionRef.current = message;
-        startGathering();
-      }
+      // If the librarian (cataloguer) started gathering code context for this turn, we
+      // append the orange gather box AFTER the short handoff text settles (below).
+      const willGather = !silent && !operatorToken && res.headers.get('X-Catalog') === 'gathering';
 
       const fullText = (await res.text()).trim() || '(no response)';
       // Decode the answer in with the shimmer effect (same as the project cards):
@@ -250,13 +249,20 @@ const ChatWidget = () => {
           (s) => {
             setMessages((prev) => {
               const next = [...prev];
-              next[next.length - 1] = { role: 'assistant', text: s };
+              // While streaming the handoff text, the trailing message is the assistant
+              // placeholder (or, on a silent delivery, the new assistant bubble).
+              const idx = next.length - 1;
+              if (next[idx] && next[idx].role === 'assistant') next[idx] = { role: 'assistant', text: s };
               return next;
             });
           },
           resolve,
         );
       });
+      if (willGather) {
+        gatherQuestionRef.current = message;
+        startGathering();
+      }
     } catch (e) {
       setMessages((prev) => {
         const next = [...prev];
@@ -325,6 +331,24 @@ const ChatWidget = () => {
           <div className="chatMessages" ref={scrollRef}>
             {messages.map((m, i) => {
               const isLast = i === messages.length - 1;
+              // The librarian gather: an orange box that shows the live exploration log
+              // while running, then collapses to a one-line summary (and stays).
+              if (m.role === 'gather') {
+                return (
+                  <div key={i} className={`chatGather${m.done ? ' done' : ''}`} role="status" aria-live="polite">
+                    <span className="chatGatherDot" aria-hidden="true" />
+                    {m.done ? (
+                      <div className="chatGatherSummary">{gatherSummary(m.log)}</div>
+                    ) : (
+                      <div className="chatGatherLog">
+                        {m.log.slice(-3).map((l, k) => (
+                          <div key={k} className="chatGatherLine">{l}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
               // The trailing assistant bubble is "typing" while streaming and it
               // still has text being revealed; show the loading run before that.
               const typing = streaming && isLast && m.role === 'assistant';
@@ -340,16 +364,6 @@ const ChatWidget = () => {
                 </div>
               );
             })}
-            {gathering && (
-              <div className="chatGather" role="status" aria-live="polite">
-                <span className="chatGatherDot" aria-hidden="true" />
-                <div className="chatGatherLog" ref={gatherLogRef}>
-                  {gatherLog.map((l, i) => (
-                    <div key={i} className="chatGatherLine">{l}</div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
           <div className="chatInputRow">
             <textarea

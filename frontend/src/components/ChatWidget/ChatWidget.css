@@ -198,6 +198,22 @@
   opacity: 0.7;
 }
 .chatGatherLine:last-child { opacity: 1; } /* highlight the current step */
+/* Collapsed one-line summary once the gather finishes — stays in the flow, no pulse. */
+.chatGather.done {
+  opacity: 0.85;
+  border-color: rgba(255, 153, 0, 0.35);
+}
+.chatGather.done .chatGatherDot {
+  animation: none;
+  transform: none;
+  opacity: 1;
+}
+.chatGatherSummary {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 @keyframes chatGatherPulse {
   0%   { transform: scale(0.7); opacity: 0.5; }
   50%  { transform: scale(1.15); opacity: 1; box-shadow: 0 0 12px #ff9000; }
