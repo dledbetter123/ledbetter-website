@@ -1296,8 +1296,9 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	// cached for this session, inject it so the (fast) worker model can answer code-level
 	// questions richly. If the conversation looks code-bound and nothing's cached yet,
 	// kick off the async cataloguer and tell this reply to set expectations.
-	gathering := false // signals the frontend (via header) to show the live "gathering" indicator
-	handoffReply := "" // when set, this turn IS a short LLM-free handoff (we skip the worker model)
+	gathering := false     // signals the frontend (via header) to show the live "gathering" indicator
+	handoffReply := ""     // when set, this turn IS a short LLM-free handoff (we skip the worker model)
+	suppressTools := false // when the librarian already gathered the context, the worker answers from it (no slow self-exploration)
 	if session != "anon" {
 		facts := getData(ctx, "catalog#"+session)
 		state := getData(ctx, "catalogstate#"+session)
@@ -1323,6 +1324,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 			gathering = true
 			handoffReply = "Still in the library digging those up — give me one more second and I'll have them."
 		} else if facts != "" {
+			suppressTools = true // answer from the gathered fact sheet; don't re-explore (keeps delivery under 30s)
 			extra += "\n\n--- CODE CONTEXT (the details my librarian collected from my GitHub repos for this conversation; use it to answer code/implementation questions accurately and specifically, in my own first-person voice) ---\n" + facts
 			if req.Deliver {
 				extra += "\n\nNOTE (do not quote this verbatim): the details I sent my librarian to collect just came back. This is the ONE compiled answer — open with a brief, natural acknowledgment that I've got the info now (e.g. \"Collected some info for your question —\" or \"Okay, got what I needed —\"), then give the full, specific code answer, weaving together what I already knew and the details above. Make it complete; there is no second message coming."
@@ -1355,6 +1357,9 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 			// reply than a 504 mid-exploration.
 			if time.Since(turnStart) > turnSoftBudget {
 				withTools = false
+			}
+			if suppressTools {
+				withTools = false // the librarian already gathered the code; answer from the fact sheet
 			}
 			modelContent, usage, err := tl.call(ctx, contents, withTools, extra)
 			totalCost += costForProvider(usage, tl.used)
