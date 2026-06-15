@@ -276,6 +276,26 @@
 .chatMsg.assistant ul { margin: 4px 0; padding-left: 18px; }
 .chatMsg.assistant li { margin: 2px 0; }
 .chatMsg.assistant .mdBr { display: block; height: 6px; }
+.chatMsg.assistant .mdCode {
+  margin: 6px 0;
+  padding: 8px 10px;
+  background-color: #0a140a;
+  border: 1px solid #084;
+  border-radius: 4px;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.chatMsg.assistant .mdCode code {
+  display: block;
+  background: none;
+  border: none;
+  padding: 0;
+  white-space: pre;
+  color: #c9ffc9;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+}
 
 /* "Thinking" indicator: accumulating Greek-letter names in the green mono style */
 .chatLoading {

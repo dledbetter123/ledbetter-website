@@ -62,6 +62,63 @@ func pickHandoff() string {
 	return handoffLines[int(time.Now().UnixNano())%len(handoffLines)]
 }
 
+// catalogTopics maps detection keywords to a canonical project key, so we can tell when
+// the conversation's code topic SHIFTS to a different project and re-gather for it.
+var catalogTopics = []struct {
+	key   string
+	words []string
+}{
+	{"self-healing-agent", []string{"self-healing", "self healing", "self-heal"}},
+	{"finsler", []string{"finsler"}},
+	{"sgst", []string{"sgst", "sparse geometric"}},
+	{"trade-companion", []string{"trade-companion", "trade companion", "trading companion", "algorithmic trading"}},
+	{"ebpf", []string{"ebpf", "kernel probe", "kernel monitor"}},
+	{"character-aware", []string{"character-aware", "character aware", "char-aware", "character-level", "character level"}},
+	{"leo", []string{"leo", "coding tutor", "coding-education", "learning platform"}},
+	{"graph-attention", []string{"graph attention", "gat pooling"}},
+	{"depression", []string{"depression"}},
+	{"website", []string{"portfolio site", "this site", "this website", "the website"}},
+}
+
+// detectTopic returns the canonical project key the current question is about, scanning the
+// message and recent history (so "dive into the code there" resolves to the prior topic).
+func detectTopic(message string, history []chatTurn) string {
+	texts := []string{strings.ToLower(message)}
+	for i := len(history) - 1; i >= 0 && len(texts) < 6; i-- {
+		texts = append(texts, strings.ToLower(history[i].Text))
+	}
+	for _, t := range texts {
+		for _, top := range catalogTopics {
+			for _, w := range top.words {
+				if strings.Contains(t, w) {
+					return top.key
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// gatherPrompt gives the cataloguer the recent conversation so it gathers for the CURRENT
+// topic even when the question is anaphoric ("dive into the code there").
+func gatherPrompt(message string, history []chatTurn) string {
+	var lines []string
+	n := len(history)
+	for i := n - 1; i >= 0 && i >= n-4; i-- {
+		role := "Visitor"
+		if history[i].Role == "model" {
+			role = "Me"
+		}
+		lines = append([]string{role + ": " + history[i].Text}, lines...)
+	}
+	if len(lines) > 0 {
+		return "Recent conversation:\n" + strings.Join(lines, "\n") +
+			"\n\nCurrent question: " + message +
+			"\n\nGather code context for whatever specific project this question is about."
+	}
+	return message
+}
+
 func catalogLikely(msg string) bool {
 	m := strings.ToLower(msg)
 	for _, t := range catalogTriggers {

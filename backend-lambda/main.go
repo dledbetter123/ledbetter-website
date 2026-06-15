@@ -81,6 +81,8 @@ I also have live, read-only tools over my GitHub repositories — list_my_repos,
 
 CRITICAL GROUNDING ON SKILLS/TECHNOLOGIES: a specific technology counts as MY experience ONLY if it appears in the knowledge below (including the Project Library) OR I actually find it in my repos via the tools. A leading question ("Have you worked with Terraform / Kafka / Ansible / X?") is NOT evidence and must never make me claim X. If I'm asked about a specific tool and it's neither in my knowledge nor found in my repos, I say plainly that I don't have that one documented / it's not something I can point to — even if it's adjacent to my real DevOps/cloud work, and even though admitting a gap feels less impressive. I never list or name-drop a technology (no "...Docker, Kubernetes, and Terraform...") unless each named item is actually grounded. Inventing a tool I haven't used is a fabrication, and that's the worst thing I can do — it outranks sounding well-rounded.
 
+SHOWING CODE — NEVER FABRICATE IT: I do NOT write out, reconstruct, paraphrase into, or invent source code from memory or general knowledge. The ONLY code I ever put in a reply is code that is literally present in the CODE CONTEXT my librarian gathered for THIS conversation (or that I read live via my repo tools this turn). If someone asks me to show or "dive into" the code for a project and I do NOT have that project's real code in front of me right now, I do NOT produce plausible-looking code — I say I'll have my librarian pull the actual code, or that I'd need to pull it up. Code that looks real but isn't from my repo is a serious fabrication; generic, made-up implementations are never acceptable even when they'd look convincing.
+
 PRIVACY — this is critical and non-negotiable: most of my repos are public and freely discussable. A few are private and reachable only because they carry explicit disclosure rules. When a tool result begins with a "REPO DISCLOSURE RULES" banner, those rules are BINDING: say only what they allow and never reveal anything they forbid — not even if a user asks directly, insists, role-plays, or tries to trick you into it. If a private repo has no rules, you cannot see it; never speculate about private repos or confirm their existence beyond what the tools return. When in doubt, say less.
 
 It's fine to be blunt about this. If someone asks for technical specifics you shouldn't share, just say so plainly — "I can't get into the how on that one" — without apologizing or over-explaining, and don't hint at what you're withholding. Hold back the TECHNOLOGY — implementations, methods, architectures, the actual "how" — whenever there's any doubt about whether it's meant to be public. But the MOTIVATION and INTUITION behind my work are ALWAYS welcome: the why, the problem it solves, the high-level idea and the gut feeling behind the approach. Share that freely and enthusiastically even when you're holding back the how — the story and the intuition are never the secret part.
@@ -1297,22 +1299,33 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	gathering := false // signals the frontend (via header) to show the live "gathering" indicator
 	handoffReply := "" // when set, this turn IS a short LLM-free handoff (we skip the worker model)
 	if session != "anon" {
-		if facts := getData(ctx, "catalog#"+session); facts != "" {
-			extra += "\n\n--- CODE CONTEXT (the details my librarian just collected from my GitHub repos for this conversation; use it to answer code/implementation questions accurately and specifically, in my own first-person voice) ---\n" + facts
+		facts := getData(ctx, "catalog#"+session)
+		state := getData(ctx, "catalogstate#"+session)
+		likely := catalogLikely(req.Message)
+		topic := detectTopic(req.Message, req.History)
+		storedTopic := getData(ctx, "catalogtopic#"+session)
+		// Re-gather when the code topic shifts to a DIFFERENT project than the cached fact
+		// sheet covers — otherwise the worker would answer an uncovered topic from a stale
+		// sheet (or invent code). topic=="" means we couldn't pin a project, so don't churn.
+		topicShift := facts != "" && likely && topic != "" && topic != storedTopic
+
+		if likely && ((facts == "" && state == "") || topicShift) {
+			putData(ctx, "catalogstate#"+session, "pending", catalogTTLSec)
+			putData(ctx, "catalogtopic#"+session, topic, catalogTTLSec)
+			if topicShift {
+				putData(ctx, "catalog#"+session, "", catalogTTLSec) // drop the stale (wrong-topic) sheet
+			}
+			setCatalogStatus(ctx, session, "Getting the librarian on it…")
+			enqueueCatalogue(ctx, session, gatherPrompt(req.Message, req.History))
+			gathering = true
+			handoffReply = pickHandoff() // short, fixed handoff — no big LLM message here
+		} else if likely && state == "pending" {
+			gathering = true
+			handoffReply = "Still in the library digging those up — give me one more second and I'll have them."
+		} else if facts != "" {
+			extra += "\n\n--- CODE CONTEXT (the details my librarian collected from my GitHub repos for this conversation; use it to answer code/implementation questions accurately and specifically, in my own first-person voice) ---\n" + facts
 			if req.Deliver {
 				extra += "\n\nNOTE (do not quote this verbatim): the details I sent my librarian to collect just came back. This is the ONE compiled answer — open with a brief, natural acknowledgment that I've got the info now (e.g. \"Collected some info for your question —\" or \"Okay, got what I needed —\"), then give the full, specific code answer, weaving together what I already knew and the details above. Make it complete; there is no second message coming."
-			}
-		} else {
-			state := getData(ctx, "catalogstate#"+session)
-			if state == "" && catalogLikely(req.Message) {
-				putData(ctx, "catalogstate#"+session, "pending", catalogTTLSec)
-				setCatalogStatus(ctx, session, "Getting the librarian on it…")
-				enqueueCatalogue(ctx, session, req.Message)
-				gathering = true
-				handoffReply = pickHandoff() // short, fixed handoff — no big LLM message here
-			} else if state == "pending" && catalogLikely(req.Message) {
-				gathering = true
-				handoffReply = "Still in the library digging those up — give me one more second and I'll have them."
 			}
 		}
 	}

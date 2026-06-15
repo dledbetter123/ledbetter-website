@@ -37,7 +37,28 @@ export function mdToHtml(src) {
       inList = false;
     }
   };
+  // Fenced code blocks (``` … ```): render verbatim in a <pre><code>, no inline formatting.
+  let inCode = false;
+  let code = [];
+  const flushCode = () => {
+    out.push(`<pre class="mdCode"><code>${escapeHtml(code.join('\n'))}</code></pre>`);
+    code = [];
+  };
   for (const raw of lines) {
+    if (/^\s*```/.test(raw)) {
+      if (inCode) {
+        flushCode();
+        inCode = false;
+      } else {
+        closeList();
+        inCode = true;
+      }
+      continue;
+    }
+    if (inCode) {
+      code.push(raw);
+      continue;
+    }
     const line = raw.replace(/\s+$/, '');
     const heading = line.match(/^(#{1,6})\s+(.*)$/);
     const bullet = line.match(/^\s*[-*]\s+(.*)$/);
@@ -59,6 +80,7 @@ export function mdToHtml(src) {
       out.push(`<div>${inline(line)}</div>`);
     }
   }
+  if (inCode) flushCode(); // unterminated fence → still render what we have
   closeList();
   return out.join('');
 }
