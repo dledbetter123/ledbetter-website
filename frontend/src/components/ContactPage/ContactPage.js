@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import './ContactPage.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLinkedin, faGithub } from '@fortawesome/free-brands-svg-icons';
+import { faLinkedin, faGithub, faInstagram } from '@fortawesome/free-brands-svg-icons';
 import { faFileLines, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import TypingText from '../TypingText/TypingText';
 
@@ -106,6 +106,12 @@ const ContactPage = () => {
             <FontAwesomeIcon icon={faGithub} className="icon" />
             <a href="https://github.com/dledbetter123" className="contactLink">
               <TypingText as="span" speed={40} text="GitHub" style={label} />
+            </a>
+          </li>
+          <li>
+            <FontAwesomeIcon icon={faInstagram} className="icon" />
+            <a href="https://www.instagram.com/davbetter" className="contactLink" target="_blank" rel="noopener noreferrer">
+              <TypingText as="span" speed={40} text="Instagram" style={label} />
             </a>
           </li>
           <li>
