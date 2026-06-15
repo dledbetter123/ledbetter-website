@@ -136,6 +136,7 @@ type chatRequest struct {
 	Message   string     `json:"message"`
 	History   []chatTurn `json:"history"`
 	SessionID string     `json:"sessionId"`
+	Deliver   bool       `json:"deliver"` // proactive delivery turn after the librarian finished gathering
 }
 
 // Gemini wire types. A part can carry text, a functionCall (model -> us), a
@@ -1294,7 +1295,10 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	gathering := false     // signals the frontend (via header) to show the live "gathering" indicator
 	if session != "anon" {
 		if facts := getData(ctx, "catalog#"+session); facts != "" {
-			extra += "\n\n--- CODE CONTEXT (gathered from my GitHub repos for this conversation; use it to answer code/implementation questions accurately and specifically, in my own first-person voice — do not mention that it was 'gathered' or that any background process exists) ---\n" + facts
+			extra += "\n\n--- CODE CONTEXT (the details my librarian just collected from my GitHub repos for this conversation; use it to answer code/implementation questions accurately and specifically, in my own first-person voice) ---\n" + facts
+			if req.Deliver {
+				extra += "\n\nNOTE (do not quote this verbatim): the details I sent my librarian to collect just came back. Open this reply with a brief, natural acknowledgment that I've now got the info (something like \"Collected some info for your question —\" or \"Okay, got the details I needed —\"), then give the full, specific code answer using the context above. This is the green follow-through after the handoff."
+			}
 		} else {
 			state := getData(ctx, "catalogstate#"+session)
 			if state == "" && catalogLikely(req.Message) {
@@ -1303,11 +1307,11 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 				enqueueCatalogue(ctx, session, req.Message)
 				suppressTools = true
 				gathering = true
-				extra += "\n\nNOTE (do not quote this): I'm pulling up the actual code from my repos for this topic right now. For THIS reply, do NOT read repos yourself — give a warm, high-level answer from what I already know and make clear I'm HAPPY to go deep, then invite them to ask about a specific part so I can dig into the real code with them in a moment. CRUCIAL: do NOT imply I can't or won't share it — this is my own (mostly public) work and I'm glad to. Frame it as 'let me pull that up' or 'give me a sec and I'll have the actual code', NEVER 'I'm not at liberty to share' or anything that sounds like withholding. Keep it brief and natural; never say 'background process' or 'cataloguer'."
+				extra += "\n\nNOTE (do not quote this verbatim): I don't have the specific code details for this in my short-term memory, so I'm handing it off to my librarian to go collect them right now. For THIS reply, do NOT answer the question itself and do NOT read repos yourself — just say, briefly and naturally, that I need to grab some details I don't have on hand and that my librarian is pulling the actual code now (something like \"I don't have that one in my head right now — let me have my librarian pull the actual code, one sec…\"). One or two sentences, warm and confident, clearly a handoff, never implying I can't or won't share it. Never say 'background process' or 'cataloguer'."
 			} else if state == "pending" && catalogLikely(req.Message) {
 				suppressTools = true
 				gathering = true
-				extra += "\n\nNOTE (do not quote this): I'm still pulling up the code-level details from my repos. Do NOT read repos yourself this turn; answer with what I know at a high level and let them know the specifics are still loading, so they can ask again in a moment. Keep it natural."
+				extra += "\n\nNOTE (do not quote this verbatim): my librarian is still collecting the code details. Do NOT read repos yourself this turn; just say briefly that I'm still pulling those details and they'll be ready in a moment. Keep it natural."
 			}
 		}
 	}

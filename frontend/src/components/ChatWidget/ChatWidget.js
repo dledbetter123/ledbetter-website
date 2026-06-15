@@ -67,10 +67,10 @@ const ChatWidget = () => {
   // the plain greeting; set to a glyph-twinkled copy each interval tick).
   const [greetingShimmer, setGreetingShimmer] = useState(null);
   const [loadingGlyph, setLoadingGlyph] = useState('');
-  // The cataloguer ("librarian") is out gathering code context: drives the orange
-  // pulsing indicator + live status line, polled from /api/catalog-status.
+  // The cataloguer ("librarian") is out gathering code context: drives the inline orange
+  // pulsing message that shows the running exploration log, polled from /api/catalog-status.
   const [gathering, setGathering] = useState(false);
-  const [gatherStatus, setGatherStatus] = useState('');
+  const [gatherLog, setGatherLog] = useState([]);
   // Set after a passkey login → chat talks to the catalog (KB-writing) endpoint.
   const [operatorToken, setOperatorToken] = useState(null);
   const scrollRef = useRef(null);
@@ -78,6 +78,7 @@ const ChatWidget = () => {
   const sessionIdRef = useRef(null);
   const gatherTimerRef = useRef(null);   // poll interval for the gathering status
   const gatherQuestionRef = useRef('');  // the question to re-deliver once the gather finishes
+  const gatherLogRef = useRef(null);     // the running-log box, kept scrolled to the latest step
   // Time of the last message activity, for the IDLE flush window. Seeded from the
   // restored chat so a bare page load/refresh does NOT reset the clock — only sending
   // or receiving a message does. Restore is allowed only while idle < FLUSH_WINDOW_MS.
@@ -96,7 +97,7 @@ const ChatWidget = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, gathering, gatherLog]);
 
   // Persist the conversation (and open state) so a refresh repopulates it. Only when
   // settled — never mid-stream — so we never restore a half-typed answer. savedAt is
@@ -138,22 +139,27 @@ const ChatWidget = () => {
     if (gatherTimerRef.current) clearInterval(gatherTimerRef.current);
   }, []);
 
+  // Keep the running-log box scrolled to the newest step.
+  useEffect(() => {
+    if (gatherLogRef.current) gatherLogRef.current.scrollTop = gatherLogRef.current.scrollHeight;
+  }, [gatherLog]);
+
   const stopGathering = () => {
     if (gatherTimerRef.current) {
       clearInterval(gatherTimerRef.current);
       gatherTimerRef.current = null;
     }
     setGathering(false);
-    setGatherStatus('');
+    setGatherLog([]);
   };
 
-  // Poll the librarian's progress ~1s while it gathers code context; surface its live
-  // status line, and once it's ready, proactively deliver the enriched answer as a fresh
-  // bot message (the "it notifies you when it has more info" step).
+  // Poll the librarian's progress ~1s while it gathers code context; accumulate its steps
+  // into the running exploration log shown in the orange message, and once it's ready,
+  // proactively deliver the enriched (green) answer as a fresh bot message.
   const startGathering = () => {
     if (gatherTimerRef.current) return;
     setGathering(true);
-    setGatherStatus('Getting the librarian on it…');
+    setGatherLog(['Reaching out to my librarian…']);
     const backendUri = (window.env && window.env.REACT_APP_BACKEND_URI) || '';
     gatherTimerRef.current = setInterval(async () => {
       try {
@@ -162,7 +168,9 @@ const ChatWidget = () => {
         );
         if (!r.ok) return;
         const data = await r.json();
-        if (data.status) setGatherStatus(data.status);
+        if (data.status) {
+          setGatherLog((prev) => (prev[prev.length - 1] === data.status ? prev : [...prev, data.status]));
+        }
         if (data.state === 'ready') {
           stopGathering();
           const q = gatherQuestionRef.current;
@@ -201,7 +209,7 @@ const ChatWidget = () => {
     const path = operatorToken ? '/api/operator/chat' : '/api/chat';
     const payload = operatorToken
       ? { message, history, token: operatorToken }
-      : { message, history, sessionId: sessionIdRef.current };
+      : { message, history, sessionId: sessionIdRef.current, deliver: silent };
     try {
       const res = await fetch(`${backendUri}${path}`, {
         method: 'POST',
@@ -314,12 +322,6 @@ const ChatWidget = () => {
               ? 'Catalog mode — tell me what to remember and I’ll save it to the KB.'
               : 'Heads up — these chats are logged.'}
           </div>
-          {gathering && (
-            <div className="chatGather" role="status" aria-live="polite">
-              <span className="chatGatherDot" aria-hidden="true" />
-              <span className="chatGatherText">{gatherStatus || 'Gathering…'}</span>
-            </div>
-          )}
           <div className="chatMessages" ref={scrollRef}>
             {messages.map((m, i) => {
               const isLast = i === messages.length - 1;
@@ -338,6 +340,16 @@ const ChatWidget = () => {
                 </div>
               );
             })}
+            {gathering && (
+              <div className="chatGather" role="status" aria-live="polite">
+                <span className="chatGatherDot" aria-hidden="true" />
+                <div className="chatGatherLog" ref={gatherLogRef}>
+                  {gatherLog.map((l, i) => (
+                    <div key={i} className="chatGatherLine">{l}</div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="chatInputRow">
             <textarea

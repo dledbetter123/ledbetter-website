@@ -161,33 +161,43 @@
   letter-spacing: 0.2px;
 }
 
-/* Live "librarian is gathering code context" indicator — orange pulsing dot + status. */
+/* Inline "librarian is gathering" message — an orange bubble in the chat flow with a
+   pulsing dot and a running exploration log, capped to ~3 lines tall (then it scrolls). */
 .chatGather {
+  align-self: flex-start;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
-  padding: 7px 14px;
-  background-color: #1a0f00;
-  border-bottom: 1px solid rgba(255, 153, 0, 0.45);
-  font-size: 12px;
+  max-width: 90%;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 153, 0, 0.55);
+  border-radius: 4px;
+  background-color: #140c00;
   color: #ffb347;
-  letter-spacing: 0.2px;
+  font-size: 12px;
+  line-height: 1.25;
 }
 .chatGatherDot {
   width: 9px;
   height: 9px;
+  margin-top: 3px;
   border-radius: 50%;
   background-color: #ff9000;
   box-shadow: 0 0 6px #ff9000;
   flex: 0 0 auto;
   animation: chatGatherPulse 1s ease-in-out infinite;
 }
-.chatGatherText {
-  opacity: 0.95;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.chatGatherLog {
+  max-height: 3.75em; /* ~3 lines, then scroll to the latest step */
+  overflow-y: auto;
+  flex: 1 1 auto;
 }
+.chatGatherLine {
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0.7;
+}
+.chatGatherLine:last-child { opacity: 1; } /* highlight the current step */
 @keyframes chatGatherPulse {
   0%   { transform: scale(0.7); opacity: 0.5; }
   50%  { transform: scale(1.15); opacity: 1; box-shadow: 0 0 12px #ff9000; }
