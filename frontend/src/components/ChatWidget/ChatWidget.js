@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './ChatWidget.css';
 import { runScramble } from '../../lib/scramble';
+import { mdToHtml } from '../../lib/markdown';
 import OperatorMode from '../OperatorMode/OperatorMode';
 
 // LedbetterGPT's opening line — kept as a constant so the character-shimmer effect
@@ -246,7 +247,11 @@ const ChatWidget = () => {
               return (
                 <div key={i} className={`chatMsg ${m.role}`}>
                   {m.text
-                    ? (i === 0 ? (greetingShimmer || m.text) : m.text)
+                    ? (i === 0
+                        ? (greetingShimmer || m.text)
+                        : (m.role === 'assistant'
+                            ? <span dangerouslySetInnerHTML={{ __html: mdToHtml(m.text) }} />
+                            : m.text))
                     : (typing ? <span className="chatLoading">{loadingGlyph}</span> : '')}
                 </div>
               );
