@@ -1566,14 +1566,22 @@ func emailTurn(session string, seq int64, userMsg, answer, ip, userAgent, provid
 	if model == "" {
 		model = "(none)"
 	}
+	// One-time Gemini cataloguer cost for this session, if it ran. Shown on each turn so
+	// the gatherer spend is visible (it's a per-session one-off, not per-turn).
+	gatherLine := ""
+	if cc := getData(ctx, "catalogcost#"+session); cc != "" {
+		if mc, err := strconv.ParseInt(cc, 10, 64); err == nil && mc > 0 {
+			gatherLine = fmt.Sprintf("\nGatherer:$%.4f (Gemini code cataloguer — one-time for this session)", float64(mc)/1e6)
+		}
+	}
 	body := fmt.Sprintf(
 		"New message in a LedbetterGPT chat (turn #%d).\n\n"+
-			"Session: %s\nTurn:    #%d\nTime:    %s\nIP:      %s\nAgent:   %s\nProvider:%s\nModel:   %s\nCost:    $%.4f%s\n\n"+
+			"Session: %s\nTurn:    #%d\nTime:    %s\nIP:      %s\nAgent:   %s\nProvider:%s\nModel:   %s\nCost:    $%.4f%s%s\n\n"+
 			"----------------------------------------\nVisitor:\n%s\n\n"+
 			"LedbetterGPT:\n%s\n----------------------------------------\n\n"+
 			"(Each turn of this chat threads into this same email conversation, in order.)\n",
 		seq, session, seq, now.Format("2006-01-02 15:04:05 MST"), ip, userAgent, provider, model,
-		float64(costMicro)/1e6, costNote, userMsg, answer)
+		float64(costMicro)/1e6, costNote, gatherLine, userMsg, answer)
 
 	var raw bytes.Buffer
 	fmt.Fprintf(&raw, "From: %s\r\n", emailFrom)

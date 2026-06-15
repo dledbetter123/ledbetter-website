@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -97,12 +98,14 @@ func runCataloguer(ctx context.Context, session, message string) {
 
 	start := time.Now()
 	var sheet strings.Builder
+	var costMicros int64 // Gemini cost of this gather, surfaced in the notification email
 	for round := 0; round < catalogMaxRounds; round++ {
 		withTools := round < catalogMaxRounds-1
 		if time.Since(start) > catalogWallBudget {
 			withTools = false // out of time → force the final fact sheet
 		}
-		mc, _, err := geminiRaw(ctx, sys, contents, withTools)
+		mc, usage, err := geminiRaw(ctx, sys, contents, withTools)
+		costMicros += costMicro(usage)
 		if err != nil {
 			fmt.Printf("cataloguer gemini error (round %d): %v\n", round, err)
 			break
@@ -143,5 +146,6 @@ func runCataloguer(ctx context.Context, session, message string) {
 	}
 	putData(ctx, "catalog#"+session, facts, catalogTTLSec)
 	putData(ctx, "catalogstate#"+session, "ready", catalogTTLSec)
-	fmt.Printf("cataloguer done for session %s: %d bytes in %s\n", session, len(facts), time.Since(start))
+	putData(ctx, "catalogcost#"+session, strconv.FormatInt(costMicros, 10), catalogTTLSec)
+	fmt.Printf("cataloguer done for session %s: %d bytes, $%.4f, in %s\n", session, len(facts), float64(costMicros)/1e6, time.Since(start))
 }
