@@ -41,6 +41,7 @@ import (
 	ddbtypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	lambdasvc "github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	sestypes "github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -237,6 +238,8 @@ var (
 	ses         *sesv2.Client
 	sqsc        *sqs.Client
 	turnsQueueURL string // SQS FIFO queue for turn-event side-effects; empty = process inline
+	lambdaInvoker *lambdasvc.Client // for async self-invoke of the cataloguer
+	selfFnName    string            // this function's name (AWS_LAMBDA_FUNCTION_NAME)
 	rateTable   string
 	convBucket  string
 	emailFrom   string // verified SES sender, e.g. "LedbetterGPT <ledbettergpt@davidamosledbetter.com>"
@@ -294,6 +297,8 @@ func init() {
 	ses = sesv2.NewFromConfig(cfg)
 	sqsc = sqs.NewFromConfig(cfg)
 	turnsQueueURL = os.Getenv("TURNS_QUEUE_URL")
+	lambdaInvoker = lambdasvc.NewFromConfig(cfg)
+	selfFnName = os.Getenv("AWS_LAMBDA_FUNCTION_NAME")
 
 	sm := secretsmanager.NewFromConfig(cfg)
 	geminiKey = loadSecret(ctx, sm, os.Getenv("GEMINI_SECRET_ID"))
@@ -795,13 +800,19 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 // plus token usage. When withTools is false the model has no tools and must answer
 // with text — used on the final round to guarantee a reply.
 func callGemini(ctx context.Context, contents []geminiContent, withTools bool, extra string) (geminiContent, geminiUsage, error) {
-	var tools []geminiTool
-	if withTools {
-		tools = repoTools
-	}
 	sysText := baseInstruction + "\n\n" + currentDateLine() + "\n\n" + knowledge()
 	if extra != "" {
 		sysText += "\n\n" + extra
+	}
+	return geminiRaw(ctx, sysText, contents, withTools)
+}
+
+// geminiRaw is the low-level Gemini call with an explicit system prompt, shared by the
+// public chat (callGemini) and the cataloguer (which needs a different system prompt).
+func geminiRaw(ctx context.Context, sysText string, contents []geminiContent, withTools bool) (geminiContent, geminiUsage, error) {
+	var tools []geminiTool
+	if withTools {
+		tools = repoTools
 	}
 	reqBody, _ := json.Marshal(geminiRequest{
 		SystemInstruction: geminiContent{Parts: []geminiPart{{Text: sysText}}},
@@ -1267,6 +1278,26 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 			"end ONE of your replies with a brief, warm, low-pressure invite to follow my " +
 			"Instagram @davbetter if they aren't already. Keep it to a single short sentence, " +
 			"make it feel natural rather than an ad, and never repeat the ask on later turns."
+	}
+
+	// Cataloguer: a Gemini agentic pass gathers real code context from my repos for
+	// code-heavy conversations, once, off the request path. If a fact sheet is already
+	// cached for this session, inject it so the (fast) worker model can answer code-level
+	// questions richly. If the conversation looks code-bound and nothing's cached yet,
+	// kick off the async cataloguer and tell this reply to set expectations.
+	if session != "anon" {
+		if facts := getData(ctx, "catalog#"+session); facts != "" {
+			extra += "\n\n--- CODE CONTEXT (gathered from my GitHub repos for this conversation; use it to answer code/implementation questions accurately and specifically, in my own first-person voice — do not mention that it was 'gathered' or that any background process exists) ---\n" + facts
+		} else {
+			state := getData(ctx, "catalogstate#"+session)
+			if state == "" && catalogLikely(req.Message) {
+				putData(ctx, "catalogstate#"+session, "pending", catalogTTLSec)
+				enqueueCatalogue(ctx, session, req.Message)
+				extra += "\n\nNOTE (do not quote this): I'm pulling up the actual code from my repos for this topic in the background right now. For THIS reply, answer at a high level with what I already know, and naturally invite them to ask about a specific part (e.g. a particular component) so I can dig into the real code with them in a moment. Keep it brief and natural; never say 'background process' or 'cataloguer'."
+			} else if state == "pending" && catalogLikely(req.Message) {
+				extra += "\n\nNOTE (do not quote this): I'm still pulling up the code-level details from my repos. Answer with what I know at a high level and let them know the specifics are still loading, so they can ask again in a moment. Keep it natural."
+			}
+		}
 	}
 
 	// Function-calling loop: let the model read repos until it produces a text answer.
@@ -1797,6 +1828,17 @@ func main() {
 	// Dispatch on the raw event shape so no second deployable is needed.
 	adapter := httpadapter.NewV2(handler)
 	lambda.Start(func(ctx context.Context, raw json.RawMessage) (interface{}, error) {
+		// Async self-invoke for the cataloguer (Gemini agentic repo exploration).
+		var cat struct {
+			Catalogue *struct {
+				Session string `json:"session"`
+				Message string `json:"message"`
+			} `json:"catalogue"`
+		}
+		if json.Unmarshal(raw, &cat) == nil && cat.Catalogue != nil {
+			runCataloguer(ctx, cat.Catalogue.Session, cat.Catalogue.Message)
+			return nil, nil
+		}
 		var probe struct {
 			Records []struct {
 				EventSource string `json:"eventSource"`
