@@ -161,6 +161,39 @@
   letter-spacing: 0.2px;
 }
 
+/* Live "librarian is gathering code context" indicator — orange pulsing dot + status. */
+.chatGather {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background-color: #1a0f00;
+  border-bottom: 1px solid rgba(255, 153, 0, 0.45);
+  font-size: 12px;
+  color: #ffb347;
+  letter-spacing: 0.2px;
+}
+.chatGatherDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: #ff9000;
+  box-shadow: 0 0 6px #ff9000;
+  flex: 0 0 auto;
+  animation: chatGatherPulse 1s ease-in-out infinite;
+}
+.chatGatherText {
+  opacity: 0.95;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@keyframes chatGatherPulse {
+  0%   { transform: scale(0.7); opacity: 0.5; }
+  50%  { transform: scale(1.15); opacity: 1; box-shadow: 0 0 12px #ff9000; }
+  100% { transform: scale(0.7); opacity: 0.5; }
+}
+
 /* Catalog (operator) mode — brighter so David can tell writes are live. */
 .chatNotice--operator {
   color: #0f0;

@@ -67,11 +67,17 @@ const ChatWidget = () => {
   // the plain greeting; set to a glyph-twinkled copy each interval tick).
   const [greetingShimmer, setGreetingShimmer] = useState(null);
   const [loadingGlyph, setLoadingGlyph] = useState('');
+  // The cataloguer ("librarian") is out gathering code context: drives the orange
+  // pulsing indicator + live status line, polled from /api/catalog-status.
+  const [gathering, setGathering] = useState(false);
+  const [gatherStatus, setGatherStatus] = useState('');
   // Set after a passkey login → chat talks to the catalog (KB-writing) endpoint.
   const [operatorToken, setOperatorToken] = useState(null);
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
   const sessionIdRef = useRef(null);
+  const gatherTimerRef = useRef(null);   // poll interval for the gathering status
+  const gatherQuestionRef = useRef('');  // the question to re-deliver once the gather finishes
   // Time of the last message activity, for the IDLE flush window. Seeded from the
   // restored chat so a bare page load/refresh does NOT reset the clock — only sending
   // or receiving a message does. Restore is allowed only while idle < FLUSH_WINDOW_MS.
@@ -127,8 +133,53 @@ const ChatWidget = () => {
     return cancel;
   }, [isOpen]);
 
-  const send = async () => {
-    const message = input.trim();
+  // Clear the gather poll if the widget unmounts mid-gather.
+  useEffect(() => () => {
+    if (gatherTimerRef.current) clearInterval(gatherTimerRef.current);
+  }, []);
+
+  const stopGathering = () => {
+    if (gatherTimerRef.current) {
+      clearInterval(gatherTimerRef.current);
+      gatherTimerRef.current = null;
+    }
+    setGathering(false);
+    setGatherStatus('');
+  };
+
+  // Poll the librarian's progress ~1s while it gathers code context; surface its live
+  // status line, and once it's ready, proactively deliver the enriched answer as a fresh
+  // bot message (the "it notifies you when it has more info" step).
+  const startGathering = () => {
+    if (gatherTimerRef.current) return;
+    setGathering(true);
+    setGatherStatus('Getting the librarian on it…');
+    const backendUri = (window.env && window.env.REACT_APP_BACKEND_URI) || '';
+    gatherTimerRef.current = setInterval(async () => {
+      try {
+        const r = await fetch(
+          `${backendUri}/api/catalog-status?session=${encodeURIComponent(sessionIdRef.current)}`,
+        );
+        if (!r.ok) return;
+        const data = await r.json();
+        if (data.status) setGatherStatus(data.status);
+        if (data.state === 'ready') {
+          stopGathering();
+          const q = gatherQuestionRef.current;
+          gatherQuestionRef.current = '';
+          if (q) send({ silent: true, messageOverride: q });
+        }
+      } catch (e) {
+        /* transient — keep polling */
+      }
+    }, 1000);
+  };
+
+  const send = async (opts = {}) => {
+    // `silent` deliveries (the proactive "the librarian finished, here's the answer" turn)
+    // re-ask the question without showing a duplicate user bubble.
+    const { silent = false, messageOverride } = opts;
+    const message = (messageOverride !== undefined ? messageOverride : input).trim();
     if (!message || streaming) return;
 
     lastActivityRef.current = Date.now(); // reset the idle flush window on each exchange
@@ -137,8 +188,12 @@ const ChatWidget = () => {
       .filter((m) => m.text)
       .map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', text: m.text }));
 
-    setMessages((prev) => [...prev, { role: 'user', text: message }, { role: 'assistant', text: '' }]);
-    setInput('');
+    if (silent) {
+      setMessages((prev) => [...prev, { role: 'assistant', text: '' }]);
+    } else {
+      setMessages((prev) => [...prev, { role: 'user', text: message }, { role: 'assistant', text: '' }]);
+      setInput('');
+    }
     setStreaming(true);
 
     const backendUri = (window.env && window.env.REACT_APP_BACKEND_URI) || '';
@@ -167,6 +222,13 @@ const ChatWidget = () => {
           return next;
         });
         return;
+      }
+
+      // If the librarian (cataloguer) started gathering code context for this turn, light
+      // up the live indicator and poll until it's ready, then proactively deliver.
+      if (!silent && !operatorToken && res.headers.get('X-Catalog') === 'gathering') {
+        gatherQuestionRef.current = message;
+        startGathering();
       }
 
       const fullText = (await res.text()).trim() || '(no response)';
@@ -252,6 +314,12 @@ const ChatWidget = () => {
               ? 'Catalog mode — tell me what to remember and I’ll save it to the KB.'
               : 'Heads up — these chats are logged.'}
           </div>
+          {gathering && (
+            <div className="chatGather" role="status" aria-live="polite">
+              <span className="chatGatherDot" aria-hidden="true" />
+              <span className="chatGatherText">{gatherStatus || 'Gathering…'}</span>
+            </div>
+          )}
           <div className="chatMessages" ref={scrollRef}>
             {messages.map((m, i) => {
               const isLast = i === messages.length - 1;

@@ -99,6 +99,7 @@ func runCataloguer(ctx context.Context, session, message string) {
 	start := time.Now()
 	var sheet strings.Builder
 	var costMicros int64 // Gemini cost of this gather, surfaced in the notification email
+	setCatalogStatus(ctx, session, "Looking through my projects…")
 	for round := 0; round < catalogMaxRounds; round++ {
 		withTools := round < catalogMaxRounds-1
 		if time.Since(start) > catalogWallBudget {
@@ -121,9 +122,11 @@ func runCataloguer(ctx context.Context, session, message string) {
 			}
 		}
 		if len(calls) == 0 {
+			setCatalogStatus(ctx, session, "Putting the details together…")
 			sheet.WriteString(text.String())
 			break
 		}
+		setCatalogStatus(ctx, session, catalogStatusFor(calls))
 		if mc.Role == "" {
 			mc.Role = "model"
 		}
@@ -147,5 +150,37 @@ func runCataloguer(ctx context.Context, session, message string) {
 	putData(ctx, "catalog#"+session, facts, catalogTTLSec)
 	putData(ctx, "catalogstate#"+session, "ready", catalogTTLSec)
 	putData(ctx, "catalogcost#"+session, strconv.FormatInt(costMicros, 10), catalogTTLSec)
+	setCatalogStatus(ctx, session, "Done — putting it together.")
 	fmt.Printf("cataloguer done for session %s: %d bytes, $%.4f, in %s\n", session, len(facts), float64(costMicros)/1e6, time.Since(start))
+}
+
+// setCatalogStatus records the cataloguer's current human-readable activity, polled by the
+// frontend to drive the live "gathering" status line.
+func setCatalogStatus(ctx context.Context, session, status string) {
+	putData(ctx, "catalogstatus#"+session, status, catalogTTLSec)
+}
+
+// catalogStatusFor turns a batch of tool calls into a friendly one-liner for the UI.
+func catalogStatusFor(calls []*fnCall) string {
+	for _, c := range calls {
+		args := c.Args
+		repo, _ := args["repo"].(string)
+		switch c.Name {
+		case "read_repo_file":
+			path, _ := args["path"].(string)
+			if repo != "" && path != "" {
+				return "Reading " + repo + "/" + path + "…"
+			}
+			if repo != "" {
+				return "Reading files in " + repo + "…"
+			}
+		case "list_repo_files":
+			if repo != "" {
+				return "Browsing the " + repo + " repo…"
+			}
+		case "list_my_repos":
+			return "Looking through my repositories…"
+		}
+	}
+	return "Gathering details from my code…"
 }

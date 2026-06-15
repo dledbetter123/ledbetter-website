@@ -1291,6 +1291,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	// questions richly. If the conversation looks code-bound and nothing's cached yet,
 	// kick off the async cataloguer and tell this reply to set expectations.
 	suppressTools := false // while the cataloguer is gathering, the worker answers from KB, not its own (unreliable) tool calls
+	gathering := false     // signals the frontend (via header) to show the live "gathering" indicator
 	if session != "anon" {
 		if facts := getData(ctx, "catalog#"+session); facts != "" {
 			extra += "\n\n--- CODE CONTEXT (gathered from my GitHub repos for this conversation; use it to answer code/implementation questions accurately and specifically, in my own first-person voice — do not mention that it was 'gathered' or that any background process exists) ---\n" + facts
@@ -1298,11 +1299,14 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 			state := getData(ctx, "catalogstate#"+session)
 			if state == "" && catalogLikely(req.Message) {
 				putData(ctx, "catalogstate#"+session, "pending", catalogTTLSec)
+				setCatalogStatus(ctx, session, "Getting the librarian on it…")
 				enqueueCatalogue(ctx, session, req.Message)
 				suppressTools = true
+				gathering = true
 				extra += "\n\nNOTE (do not quote this): I'm pulling up the actual code from my repos for this topic right now. For THIS reply, do NOT read repos yourself — give a warm, high-level answer from what I already know and make clear I'm HAPPY to go deep, then invite them to ask about a specific part so I can dig into the real code with them in a moment. CRUCIAL: do NOT imply I can't or won't share it — this is my own (mostly public) work and I'm glad to. Frame it as 'let me pull that up' or 'give me a sec and I'll have the actual code', NEVER 'I'm not at liberty to share' or anything that sounds like withholding. Keep it brief and natural; never say 'background process' or 'cataloguer'."
 			} else if state == "pending" && catalogLikely(req.Message) {
 				suppressTools = true
+				gathering = true
 				extra += "\n\nNOTE (do not quote this): I'm still pulling up the code-level details from my repos. Do NOT read repos yourself this turn; answer with what I know at a high level and let them know the specifics are still loading, so they can ask again in a moment. Keep it natural."
 			}
 		}
@@ -1425,12 +1429,37 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
+	if gathering {
+		// Tell the widget to show the live "gathering" indicator and poll /api/catalog-status.
+		w.Header().Set("X-Catalog", "gathering")
+	}
 	fmt.Fprint(w, answer)
 }
 
 // saveConversation writes the turn to the conversations bucket under a content-hash
 // key. Best-effort: a short timeout, errors logged but swallowed. ip/userAgent are
 // captured for abuse triage; empty values are omitted.
+// catalogStatusHandler lets the widget poll the cataloguer's progress for a session, so it
+// can show the live "gathering" indicator + status line and know when the fact sheet is ready.
+func catalogStatusHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	session := r.URL.Query().Get("session")
+	if session == "" || session == "anon" {
+		fmt.Fprint(w, `{"state":"","status":""}`)
+		return
+	}
+	ctx := r.Context()
+	out, _ := json.Marshal(map[string]string{
+		"state":  getData(ctx, "catalogstate#"+session),
+		"status": getData(ctx, "catalogstatus#"+session),
+	})
+	w.Write(out)
+}
+
 // saveConversation writes the turn to S3 as the durable record. Called from the SQS
 // worker, so it returns its error: a failure makes the worker retry the message (and
 // eventually dead-letter it) rather than silently dropping the turn. The key is content-
@@ -1822,6 +1851,7 @@ func main() {
 	mux.HandleFunc("/api/status", statusHandler)
 	mux.HandleFunc("/api/resume-click", resumeClickHandler)
 	mux.HandleFunc("/api/chat", chatHandler)
+	mux.HandleFunc("/api/catalog-status", catalogStatusHandler)
 	mux.HandleFunc("/api/contact", contactHandler)
 	mux.HandleFunc("/api/operator/register/begin", operatorRegisterBegin)
 	mux.HandleFunc("/api/operator/register/finish", operatorRegisterFinish)
