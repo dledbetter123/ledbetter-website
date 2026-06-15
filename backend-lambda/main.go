@@ -1295,7 +1295,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 				putData(ctx, "catalogstate#"+session, "pending", catalogTTLSec)
 				enqueueCatalogue(ctx, session, req.Message)
 				suppressTools = true
-				extra += "\n\nNOTE (do not quote this): I'm pulling up the actual code from my repos for this topic in the background right now. For THIS reply, do NOT try to read repos yourself — just answer at a high level with what I already know, and naturally invite them to ask about a specific part (e.g. a particular component) so I can dig into the real code with them in a moment. Keep it brief and natural; never say 'background process' or 'cataloguer'."
+				extra += "\n\nNOTE (do not quote this): I'm pulling up the actual code from my repos for this topic right now. For THIS reply, do NOT read repos yourself — give a warm, high-level answer from what I already know and make clear I'm HAPPY to go deep, then invite them to ask about a specific part so I can dig into the real code with them in a moment. CRUCIAL: do NOT imply I can't or won't share it — this is my own (mostly public) work and I'm glad to. Frame it as 'let me pull that up' or 'give me a sec and I'll have the actual code', NEVER 'I'm not at liberty to share' or anything that sounds like withholding. Keep it brief and natural; never say 'background process' or 'cataloguer'."
 			} else if state == "pending" && catalogLikely(req.Message) {
 				suppressTools = true
 				extra += "\n\nNOTE (do not quote this): I'm still pulling up the code-level details from my repos. Do NOT read repos yourself this turn; answer with what I know at a high level and let them know the specifics are still loading, so they can ask again in a moment. Keep it natural."
