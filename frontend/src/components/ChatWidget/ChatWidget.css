@@ -241,6 +241,7 @@
 
 .chatInputRow {
   display: flex;
+  align-items: stretch;
   border-top: 1px solid #0f0;
 }
 
@@ -253,6 +254,14 @@
   font-family: 'Courier New', monospace;
   font-size: 16px; /* >=16px stops iOS Safari from zooming on focus */
   outline: none;
+  /* Wrap text instead of scrolling on one line; grow up to a cap (set in JS), then scroll. */
+  resize: none;
+  line-height: 1.4;
+  max-height: 120px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-sizing: border-box;
 }
 
 .chatInput::placeholder {

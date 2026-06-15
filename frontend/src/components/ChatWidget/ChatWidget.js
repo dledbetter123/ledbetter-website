@@ -82,6 +82,7 @@ const ChatWidget = () => {
   // Set after a passkey login → chat talks to the catalog (KB-writing) endpoint.
   const [operatorToken, setOperatorToken] = useState(null);
   const scrollRef = useRef(null);
+  const inputRef = useRef(null);
   const sessionIdRef = useRef(null);
   // Time of the last message activity, for the IDLE flush window. Seeded from the
   // restored chat so a bare page load/refresh does NOT reset the clock — only sending
@@ -200,6 +201,15 @@ const ChatWidget = () => {
     }
   };
 
+  // Auto-grow the input as lines wrap, capped so it never eats the chat. Resets when the
+  // field is cleared (e.g. after sending).
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, [input]);
+
   // "Thinking" indicator: while the response is still in flight (the trailing
   // assistant bubble is empty), accumulate a freshly-shuffled run of Greek-letter
   // names ("phi" → "phi chi" → …, ~6 long) and then restart with a new shuffle.
@@ -258,13 +268,15 @@ const ChatWidget = () => {
             })}
           </div>
           <div className="chatInputRow">
-            <input
+            <textarea
+              ref={inputRef}
               className="chatInput"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
               placeholder="Ask David…"
               disabled={streaming}
+              rows={1}
             />
             <button className="chatSend" onClick={send} disabled={streaming || !input.trim()}>
               {streaming ? '…' : 'Send'}
