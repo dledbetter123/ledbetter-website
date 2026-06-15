@@ -1285,6 +1285,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	// cached for this session, inject it so the (fast) worker model can answer code-level
 	// questions richly. If the conversation looks code-bound and nothing's cached yet,
 	// kick off the async cataloguer and tell this reply to set expectations.
+	suppressTools := false // while the cataloguer is gathering, the worker answers from KB, not its own (unreliable) tool calls
 	if session != "anon" {
 		if facts := getData(ctx, "catalog#"+session); facts != "" {
 			extra += "\n\n--- CODE CONTEXT (gathered from my GitHub repos for this conversation; use it to answer code/implementation questions accurately and specifically, in my own first-person voice — do not mention that it was 'gathered' or that any background process exists) ---\n" + facts
@@ -1293,9 +1294,11 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 			if state == "" && catalogLikely(req.Message) {
 				putData(ctx, "catalogstate#"+session, "pending", catalogTTLSec)
 				enqueueCatalogue(ctx, session, req.Message)
-				extra += "\n\nNOTE (do not quote this): I'm pulling up the actual code from my repos for this topic in the background right now. For THIS reply, answer at a high level with what I already know, and naturally invite them to ask about a specific part (e.g. a particular component) so I can dig into the real code with them in a moment. Keep it brief and natural; never say 'background process' or 'cataloguer'."
+				suppressTools = true
+				extra += "\n\nNOTE (do not quote this): I'm pulling up the actual code from my repos for this topic in the background right now. For THIS reply, do NOT try to read repos yourself — just answer at a high level with what I already know, and naturally invite them to ask about a specific part (e.g. a particular component) so I can dig into the real code with them in a moment. Keep it brief and natural; never say 'background process' or 'cataloguer'."
 			} else if state == "pending" && catalogLikely(req.Message) {
-				extra += "\n\nNOTE (do not quote this): I'm still pulling up the code-level details from my repos. Answer with what I know at a high level and let them know the specifics are still loading, so they can ask again in a moment. Keep it natural."
+				suppressTools = true
+				extra += "\n\nNOTE (do not quote this): I'm still pulling up the code-level details from my repos. Do NOT read repos yourself this turn; answer with what I know at a high level and let them know the specifics are still loading, so they can ask again in a moment. Keep it natural."
 			}
 		}
 	}
@@ -1318,6 +1321,11 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 		// answer with what we've gathered — better a slightly shallower grounded
 		// reply than a 504 mid-exploration.
 		if time.Since(turnStart) > turnSoftBudget {
+			withTools = false
+		}
+		// The cataloguer is handling repo exploration for this conversation; don't let the
+		// worker do its own (slower, less reliable) tool calls on the triggering turn.
+		if suppressTools {
 			withTools = false
 		}
 		modelContent, usage, err := tl.call(ctx, contents, withTools, extra)
