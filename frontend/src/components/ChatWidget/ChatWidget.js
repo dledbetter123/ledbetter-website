@@ -37,18 +37,6 @@ const GREEK_NAMES = [
   'β', 'ζ', 'θ', 'σ', 'ω', 'λ', 'γ', 'δ', 'κ',
 ];
 
-// Stable per-tab session id shared with the backend. Generated once with
-// crypto.randomUUID() and persisted in sessionStorage so it survives reloads
-// within the same tab but differs across tabs.
-const getSessionId = () => {
-  let id = sessionStorage.getItem('ledbettergpt_session');
-  if (!id) {
-    id = crypto.randomUUID();
-    sessionStorage.setItem('ledbettergpt_session', id);
-  }
-  return id;
-};
-
 // Fisher–Yates shuffle returning a new array (leaves the pool untouched).
 const shuffled = (arr) => {
   const a = [...arr];
@@ -89,8 +77,14 @@ const ChatWidget = () => {
   // or receiving a message does. Restore is allowed only while idle < FLUSH_WINDOW_MS.
   const lastActivityRef = useRef(saved?.savedAt ?? Date.now());
 
-  // Lazily initialise (and persist) the per-tab session id on first render.
-  if (sessionIdRef.current === null) sessionIdRef.current = getSessionId();
+  // Tie the session id to the restored conversation: if we're resuming a saved chat
+  // (within the idle window) reuse its session id so the backend keeps logging under the
+  // same session the visitor actually sees; otherwise mint a fresh one. This keeps "same
+  // session" and "same visible conversation" in lockstep — once the history flushes after
+  // the idle window, the session id resets too, instead of a stale id outliving the chat.
+  if (sessionIdRef.current === null) {
+    sessionIdRef.current = saved?.sessionId || crypto.randomUUID();
+  }
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -107,7 +101,12 @@ const ChatWidget = () => {
     try {
       sessionStorage.setItem(
         CHAT_STORE_KEY,
-        JSON.stringify({ savedAt: lastActivityRef.current, isOpen, messages }),
+        JSON.stringify({
+          savedAt: lastActivityRef.current,
+          isOpen,
+          messages,
+          sessionId: sessionIdRef.current,
+        }),
       );
     } catch (e) {
       /* storage disabled/full — restoration just won't happen, non-fatal */
@@ -156,10 +155,15 @@ const ChatWidget = () => {
       });
 
       if (!res.ok) {
-        const errText = (await res.text()) || 'Something went wrong. Please try again.';
+        // Never surface the raw error body (e.g. API Gateway's {"message":"Service
+        // Unavailable"} on a 30s timeout). Show a friendly line, tailored for timeouts.
+        const friendly =
+          res.status === 502 || res.status === 503 || res.status === 504
+            ? "That one took me too long to pull together — mind trying again, maybe a little simpler?"
+            : 'Something went wrong on my end. Please try again in a moment.';
         setMessages((prev) => {
           const next = [...prev];
-          next[next.length - 1] = { role: 'assistant', text: errText };
+          next[next.length - 1] = { role: 'assistant', text: friendly };
           return next;
         });
         return;
