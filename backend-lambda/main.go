@@ -1644,6 +1644,67 @@ func emailTurn(session string, seq int64, userMsg, answer, ip, userAgent, provid
 	return nil
 }
 
+// emailCatalogue threads a librarian-gather summary into the session's email conversation:
+// what the cataloguer explored, the fact sheet it compiled, and the gather cost/time, so the
+// whole agentic gather is visible in the inbox alongside the chat turns.
+func emailCatalogue(session, trigger string, activity []string, facts string, costMicro int64, elapsed time.Duration) {
+	if ses == nil || emailFrom == "" || emailTo == "" {
+		return
+	}
+	now := time.Now().UTC()
+	ctx := context.Background()
+	root := fmt.Sprintf("<chat.%s@davidamosledbetter.com>", session)
+	sum := sha256.Sum256([]byte(now.Format(time.RFC3339Nano) + "catalogue" + facts))
+	msgID := fmt.Sprintf("<%s.cat.%s@davidamosledbetter.com>", session, hex.EncodeToString(sum[:])[:12])
+	subject := "LedbetterGPT chat: " + session
+
+	refsChain := getData(ctx, "refs#"+session)
+	if refsChain == "" {
+		refsChain = root
+	}
+	inReplyTo := getData(ctx, "mid#"+session)
+	if inReplyTo == "" {
+		inReplyTo = root
+	}
+	putData(ctx, "refs#"+session, refsChain+" "+msgID, 7*24*3600)
+	putData(ctx, "mid#"+session, msgID, 7*24*3600)
+
+	if len(trigger) > 300 {
+		trigger = trigger[:300] + "…"
+	}
+	var steps strings.Builder
+	for _, a := range activity {
+		steps.WriteString("  - " + a + "\n")
+	}
+	body := fmt.Sprintf(
+		"LIBRARIAN gathered code context for this chat (off the request path, via the Gemini cataloguer).\n\n"+
+			"Session:      %s\nTriggered by: %s\nTime:         %s\nGather:       %.1fs, $%.4f\n\n"+
+			"What it explored:\n%s\n"+
+			"----------------------------------------\nFact sheet it compiled (the context the chat model then answered from):\n\n%s\n"+
+			"----------------------------------------\n",
+		session, trigger, now.Format("2006-01-02 15:04:05 MST"), elapsed.Seconds(), float64(costMicro)/1e6,
+		steps.String(), facts)
+
+	var raw bytes.Buffer
+	fmt.Fprintf(&raw, "From: %s\r\n", emailFrom)
+	fmt.Fprintf(&raw, "To: %s\r\n", emailTo)
+	fmt.Fprintf(&raw, "Subject: %s\r\n", subject)
+	fmt.Fprintf(&raw, "Message-ID: %s\r\n", msgID)
+	fmt.Fprintf(&raw, "In-Reply-To: %s\r\n", inReplyTo)
+	fmt.Fprintf(&raw, "References: %s\r\n", refsChain)
+	fmt.Fprintf(&raw, "Date: %s\r\n", now.Format(time.RFC1123Z))
+	raw.WriteString("MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n")
+	raw.WriteString(body)
+
+	sctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	if _, err := ses.SendEmail(sctx, &sesv2.SendEmailInput{
+		Content: &sestypes.EmailContent{Raw: &sestypes.RawMessage{Data: raw.Bytes()}},
+	}); err != nil {
+		fmt.Printf("catalogue email error: %v\n", err)
+	}
+}
+
 // contactRequest is a visitor-submitted contact-form payload. Visitors leave their
 // own info instead of David's email/phone being exposed on the site.
 type contactRequest struct {

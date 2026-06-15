@@ -98,8 +98,15 @@ func runCataloguer(ctx context.Context, session, message string) {
 
 	start := time.Now()
 	var sheet strings.Builder
-	var costMicros int64 // Gemini cost of this gather, surfaced in the notification email
-	setCatalogStatus(ctx, session, "Looking through my projects…")
+	var costMicros int64    // Gemini cost of this gather, surfaced in the notification email
+	var activity []string   // human-readable log of what the librarian explored (for the email)
+	logStep := func(step string) {
+		setCatalogStatus(ctx, session, step)
+		if n := len(activity); n == 0 || activity[n-1] != step {
+			activity = append(activity, step)
+		}
+	}
+	logStep("Looking through my projects…")
 	for round := 0; round < catalogMaxRounds; round++ {
 		withTools := round < catalogMaxRounds-1
 		if time.Since(start) > catalogWallBudget {
@@ -122,11 +129,11 @@ func runCataloguer(ctx context.Context, session, message string) {
 			}
 		}
 		if len(calls) == 0 {
-			setCatalogStatus(ctx, session, "Putting the details together…")
+			logStep("Putting the details together…")
 			sheet.WriteString(text.String())
 			break
 		}
-		setCatalogStatus(ctx, session, catalogStatusFor(calls))
+		logStep(catalogStatusFor(calls))
 		if mc.Role == "" {
 			mc.Role = "model"
 		}
@@ -152,6 +159,9 @@ func runCataloguer(ctx context.Context, session, message string) {
 	putData(ctx, "catalogcost#"+session, strconv.FormatInt(costMicros, 10), catalogTTLSec)
 	setCatalogStatus(ctx, session, "Done — putting it together.")
 	fmt.Printf("cataloguer done for session %s: %d bytes, $%.4f, in %s\n", session, len(facts), float64(costMicros)/1e6, time.Since(start))
+	// Surface the whole gather in the notification thread: what it explored, the fact
+	// sheet it compiled, cost, and time — threaded into the conversation's email.
+	emailCatalogue(session, message, activity, facts, costMicros, time.Since(start))
 }
 
 // setCatalogStatus records the cataloguer's current human-readable activity, polled by the
