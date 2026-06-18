@@ -21,17 +21,51 @@ import (
 // nanosecond id so a plain listing is roughly chronological.
 const contactPrefix = "contacts/"
 
+// Replies to visitors come from David's personal address (the domain is SES-verified),
+// not the bot sender. Reply-To uses plus-addressing — me+<contactID>@domain — so when the
+// visitor responds, SES inbound routes it straight back to the right thread by the +tag.
+const (
+	replyDomain      = "davidamosledbetter.com"
+	replyFromAddr    = "me@davidamosledbetter.com"
+	replyFromDisplay = "David Ledbetter <me@davidamosledbetter.com>"
+)
+
+func threadReplyTo(id string) string { return "me+" + id + "@" + replyDomain }
+
+// threadMsg is one turn in a contact conversation: "in" = from the visitor, "out" = from
+// David. The visitor's original form submission is stored on contactRecord.Message (turn 0);
+// every later turn (David's replies + the visitor's emailed responses) is appended here.
+type threadMsg struct {
+	Dir   string `json:"dir"` // "in" | "out"
+	From  string `json:"from"`
+	Body  string `json:"body"`
+	Ts    string `json:"ts"`
+	MsgID string `json:"msgId,omitempty"`
+}
+
 type contactRecord struct {
-	ID        string `json:"id"`
-	Ts        string `json:"ts"`
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	Message   string `json:"message"`
-	IP        string `json:"ip,omitempty"`
-	Loc       string `json:"loc,omitempty"`
-	Replied   bool   `json:"replied"`
-	ReplyBody string `json:"replyBody,omitempty"`
-	ReplyTs   string `json:"replyTs,omitempty"`
+	ID        string      `json:"id"`
+	Ts        string      `json:"ts"`
+	Name      string      `json:"name"`
+	Email     string      `json:"email"`
+	Message   string      `json:"message"`
+	IP        string      `json:"ip,omitempty"`
+	Loc       string      `json:"loc,omitempty"`
+	Replied   bool        `json:"replied"`
+	ReplyBody string      `json:"replyBody,omitempty"`
+	ReplyTs   string      `json:"replyTs,omitempty"`
+	Thread    []threadMsg `json:"thread,omitempty"`
+}
+
+// lastInboundMsgID returns the Message-ID of the most recent visitor reply, so David's next
+// reply can In-Reply-To it and thread correctly in the visitor's mail client.
+func lastInboundMsgID(rec contactRecord) string {
+	for i := len(rec.Thread) - 1; i >= 0; i-- {
+		if rec.Thread[i].Dir == "in" && rec.Thread[i].MsgID != "" {
+			return rec.Thread[i].MsgID
+		}
+	}
+	return ""
 }
 
 func saveContact(rec contactRecord) {
@@ -151,22 +185,31 @@ func operatorReplyHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to send the reply", http.StatusBadGateway)
 		return
 	}
+	now := time.Now().UTC().Format(time.RFC3339)
 	rec.Replied = true
-	rec.ReplyBody = reply
-	rec.ReplyTs = time.Now().UTC().Format(time.RFC3339)
+	rec.ReplyBody = reply // kept for back-compat with older records
+	rec.ReplyTs = now
+	rec.Thread = append(rec.Thread, threadMsg{Dir: "out", From: replyFromAddr, Body: reply, Ts: now})
 	saveContact(rec)
 	opWriteJSON(w, map[string]interface{}{"ok": true})
 }
 
-// emailReply sends David's reply to the visitor who submitted the contact form. Reply-To is
-// the contact recipient so the visitor's response comes back to David.
+// emailReply sends David's reply to the visitor who submitted the contact form. It goes out
+// From David's personal address; Reply-To is a per-thread plus address so the visitor's
+// response is routed by SES inbound back into this conversation (see inbound.go).
 func emailReply(rec contactRecord, reply string) error {
 	now := time.Now().UTC()
 	subject := "Re: your message to David Ledbetter"
+	msgID := fmt.Sprintf("<reply-%s-%d@%s>", rec.ID, now.UnixNano(), replyDomain)
 	var raw bytes.Buffer
-	fmt.Fprintf(&raw, "From: %s\r\n", emailFrom)
+	fmt.Fprintf(&raw, "From: %s\r\n", replyFromDisplay)
 	fmt.Fprintf(&raw, "To: %s\r\n", stripHeader(rec.Email))
-	fmt.Fprintf(&raw, "Reply-To: %s\r\n", contactEmailTo)
+	fmt.Fprintf(&raw, "Reply-To: %s\r\n", threadReplyTo(rec.ID))
+	fmt.Fprintf(&raw, "Message-ID: %s\r\n", msgID)
+	if irt := lastInboundMsgID(rec); irt != "" {
+		fmt.Fprintf(&raw, "In-Reply-To: %s\r\n", stripHeader(irt))
+		fmt.Fprintf(&raw, "References: %s\r\n", stripHeader(irt))
+	}
 	fmt.Fprintf(&raw, "Subject: %s\r\n", subject)
 	fmt.Fprintf(&raw, "Date: %s\r\n", now.Format(time.RFC1123Z))
 	raw.WriteString("MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n")

@@ -14,6 +14,17 @@ const api = (path, body) => {
   });
 };
 
+// A contact is a conversation: turn 0 is the visitor's original form submission, followed by
+// every threaded turn (David's replies + the visitor's emailed responses).
+const threadTurns = (m) => [
+  { dir: 'in', from: m.email, body: m.message, ts: m.ts },
+  ...(m.thread || []),
+];
+
+const fmtTs = (ts) => {
+  try { return new Date(ts).toLocaleString(); } catch (e) { return ts; }
+};
+
 const InboxPage = () => {
   const [token, setToken] = useState(() => {
     try { return sessionStorage.getItem('ledbettergpt_operator') || ''; } catch (e) { return ''; }
@@ -24,16 +35,16 @@ const InboxPage = () => {
   const [replyText, setReplyText] = useState({}); // id -> draft
   const [sending, setSending] = useState({}); // id -> bool
 
-  const loadMessages = async (t) => {
-    setStatus('busy'); setError('');
+  const loadMessages = async (t, silent) => {
+    if (!silent) { setStatus('busy'); setError(''); }
     try {
       const res = await api('/api/operator/messages', { token: t || token });
-      if (res.status === 401) { setToken(''); setStatus('idle'); return; }
+      if (res.status === 401) { if (!silent) { setToken(''); setStatus('idle'); } return; }
       if (!res.ok) throw new Error('load failed');
       const data = await res.json();
       setMessages(data.messages || []);
       setStatus('loaded');
-    } catch (e) { setStatus('error'); setError('Could not load messages.'); }
+    } catch (e) { if (!silent) { setStatus('error'); setError('Could not load messages.'); } }
   };
 
   const authenticate = async () => {
@@ -62,7 +73,10 @@ const InboxPage = () => {
         const t = await res.text();
         setError(`Reply failed: ${(t || '').slice(0, 200) || res.status}`);
       } else {
-        setMessages((ms) => ms.map((m) => (m.id === id ? { ...m, replied: true, replyBody: body } : m)));
+        const out = { dir: 'out', from: 'me@davidamosledbetter.com', body, ts: new Date().toISOString() };
+        setMessages((ms) => ms.map((m) => (
+          m.id === id ? { ...m, replied: true, thread: [...(m.thread || []), out] } : m
+        )));
         setReplyText((r) => ({ ...r, [id]: '' }));
       }
     } catch (e) { setError('Reply failed (network).'); }
@@ -70,6 +84,14 @@ const InboxPage = () => {
   };
 
   useEffect(() => { if (token) loadMessages(token); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+
+  // Poll for new inbound replies while the inbox is open, without flickering the list.
+  useEffect(() => {
+    if (!(token && status === 'loaded')) return undefined;
+    const h = setInterval(() => loadMessages(token, true), 30000);
+    return () => clearInterval(h);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [token, status]);
 
   return (
     <div className="inboxPage">
@@ -102,10 +124,14 @@ const InboxPage = () => {
                 {m.loc && <span className="inboxLoc">{m.loc}</span>}
                 {m.replied && <span className="inboxReplied">✓ replied</span>}
               </div>
-              <div className="inboxBody">{m.message}</div>
-              {m.replied && m.replyBody && (
-                <div className="inboxYourReply"><span className="inboxYourReplyLabel">Your reply:</span> {m.replyBody}</div>
-              )}
+              <div className="inboxThread">
+                {threadTurns(m).map((t, i) => (
+                  <div key={i} className={`inboxBubble ${t.dir === 'out' ? 'out' : 'in'}`}>
+                    <div className="inboxBubbleBody">{t.body}</div>
+                    {t.ts && <div className="inboxBubbleTs">{fmtTs(t.ts)}</div>}
+                  </div>
+                ))}
+              </div>
               <textarea
                 className="inboxReplyBox"
                 placeholder="Write a reply…"

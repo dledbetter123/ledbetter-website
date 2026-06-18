@@ -252,8 +252,8 @@ var (
 	selfFnName     string            // this function's name (AWS_LAMBDA_FUNCTION_NAME)
 	rateTable      string
 	convBucket     string
-	emailFrom      string                        // verified SES sender, e.g. "LedbetterGPT <ledbettergpt@davidamosledbetter.com>"
-	emailTo        string                        // notification recipient (turn/resume notifications)
+	emailFrom      string                      // verified SES sender, e.g. "LedbetterGPT <ledbettergpt@davidamosledbetter.com>"
+	emailTo        string                      // notification recipient (turn/resume notifications)
 	contactEmailTo = "dledbetter456@gmail.com" // contact-form submissions go here; switch to me@davidamosledbetter.com via CONTACT_EMAIL_TO once forwarding is live
 	httpClient     = &http.Client{Timeout: 25 * time.Second}
 
@@ -2019,6 +2019,15 @@ func main() {
 				return nil, err
 			}
 			return nil, handleSNS(ctx, ev)
+		}
+		// S3 object-created (SES inbound receipt drops a raw email under inbound/).
+		if json.Unmarshal(raw, &probe) == nil && len(probe.Records) > 0 &&
+			strings.HasPrefix(probe.Records[0].EventSource, "aws:s3") {
+			var ev events.S3Event
+			if err := json.Unmarshal(raw, &ev); err != nil {
+				return nil, err
+			}
+			return nil, handleS3(ctx, ev)
 		}
 		var req events.APIGatewayV2HTTPRequest
 		if err := json.Unmarshal(raw, &req); err != nil {
