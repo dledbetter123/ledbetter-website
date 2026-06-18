@@ -85,13 +85,13 @@ const MainPage = () => {
     githubUrl: "https://github.com/dledbetter123/ledbetter-website",
   };
 
-  // LILO is an active startup with private repos, so this card carries its own
-  // description (no public README to fetch) and links to the live product.
-  const LiloProjectDetails = {
-    title: "LinkedInOrLeftOut (LILO)",
+  // LEO is my personal project (private repos, no public README to fetch), so this card
+  // carries its own description and links to the live product.
+  const LeoProjectDetails = {
+    title: "LEO — In-Browser AI Coding Tutor",
     url: "https://learnwleo.com",
     description:
-      "A browser-native platform teaching students to code and crush tech interviews, with all code running on-device in WebAssembly at zero marginal cost. As co-founder & CTO I built the AI layer: an in-browser LLM tutor (WebNN/WebGPU), the learning-data instrumentation behind it, and an adaptive ELO that scores real skill from every attempt. Ask LedbetterGPT below to go deeper →",
+      "A browser-native learn-to-code platform I built, where students learn to code and prep for tech interviews with all code running on-device in WebAssembly at zero marginal cost. I built the AI layer end to end: an in-browser LLM tutor (WebNN/WebGPU), the learning-data instrumentation behind it, and an adaptive ELO that scores real skill from every attempt. Ask LedbetterGPT below to go deeper →",
   };
 
   // SGST & Finsler carry inline descriptions (not the repo's README excerpt) so
@@ -133,9 +133,9 @@ const MainPage = () => {
     {
       content: (
         <ProjectCard
-          title={LiloProjectDetails.title}
-          linkUrl={LiloProjectDetails.url}
-          description={LiloProjectDetails.description}
+          title={LeoProjectDetails.title}
+          linkUrl={LeoProjectDetails.url}
+          description={LeoProjectDetails.description}
         />
       )
     },
