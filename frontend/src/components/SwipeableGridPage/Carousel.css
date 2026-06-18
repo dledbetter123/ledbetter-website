@@ -7,11 +7,13 @@
   width: 100%;
   height: auto;
   /* max-width: 500px; */
-  max-height: 600px;
+  /* No vertical cap: the container fits the tallest card so nothing gets clipped.
+     align-items: flex-start keeps content top-aligned, so any overflow falls off the
+     BOTTOM, never the top. overflow:hidden still clips the off-screen cards horizontally. */
   border-radius: 20px;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   margin: auto;
   /* padding: 0 15%;  */
 }
@@ -51,19 +53,18 @@
   z-index: 48;
   flex: 0 0 100%;
   width: 90%;
-  height: 100%;
+  height: auto;
   display: flex;
-  justify-content: top;
-  align-items: center;
+  justify-content: center;
+  align-items: flex-start;
   text-align: center;
 }
 
 @media (max-width: 600px) {
   .carousel-container {
     width: 80vw;
-    height: auto; 
+    height: auto;
     max-width: 100vw;
-    max-height: 120vw;
     padding: 0 5%;
   }
 
