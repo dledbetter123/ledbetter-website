@@ -83,6 +83,16 @@ const MainPage = () => {
   const LedbetterProjectDetails = {
     title: "This Website!",
     githubUrl: "https://github.com/dledbetter123/ledbetter-website",
+    description:
+      "The site you're on, and the AI you're talking to. It's a fully serverless AWS build: a React front end on S3 behind CloudFront, with one Go Lambda behind API Gateway powering LedbetterGPT, my digital likeness, grounded on a knowledge base I maintain. It runs a two-model design — a fast, cheap worker model (Cloudflare Workers AI, with Gemini as a warm-start fallback) carries the conversation, and when you ask something that needs real code it hands off to a \"librarian\": an agentic pass that explores my GitHub repos live, compiles the actual code into context, and hands it back so answers are grounded, not guessed (you'll watch the handoff happen). Every message is decoupled onto an SQS FIFO queue and processed by an async worker that durably logs the turn and threads a notification — idempotent and strictly ordered per conversation. Ask LedbetterGPT below how any of it works →",
+  };
+
+  // Proprietary Apple work — no public repo, so the card carries its own description and
+  // isn't clickable (it points readers to LedbetterGPT for the high-level story).
+  const SelfHealProjectDetails = {
+    title: "Self-Healing Coding Agent (Apple)",
+    description:
+      "My flagship project at Apple, on the Release Validation team: an agentic system that automatically repairs code. I built a custom in-house harness (built on LangGraph) that orchestrates a frontier model — Anthropic Claude — for the repair reasoning alongside a local Qwen model that handles tool calling to cut token costs, and I modeled code exploration as a partially observable Markov decision process so it acts on true divergences and ignores false error reports. Around it I built an in-house distributed task queue (replacing Celery) with IPC, state management, and episode tracking, an async probe manager that feeds live metrics into the agent without latency, and a RAG pipeline that marshals those metrics into the model's context. It's proprietary Apple work, so there's no public repo — ask LedbetterGPT below for the high-level story →",
   };
 
   // LEO is my personal project (private repos, no public README to fetch), so this card
@@ -133,17 +143,26 @@ const MainPage = () => {
     {
       content: (
         <ProjectCard
-          title={LeoProjectDetails.title}
-          linkUrl={LeoProjectDetails.url}
-          description={LeoProjectDetails.description}
+          title={LedbetterProjectDetails.title}
+          githubUrl={LedbetterProjectDetails.githubUrl}
+          description={LedbetterProjectDetails.description}
         />
       )
     },
     {
       content: (
         <ProjectCard
-          title={LedbetterProjectDetails.title}
-          githubUrl={LedbetterProjectDetails.githubUrl}
+          title={SelfHealProjectDetails.title}
+          description={SelfHealProjectDetails.description}
+        />
+      )
+    },
+    {
+      content: (
+        <ProjectCard
+          title={LeoProjectDetails.title}
+          linkUrl={LeoProjectDetails.url}
+          description={LeoProjectDetails.description}
         />
       )
     },

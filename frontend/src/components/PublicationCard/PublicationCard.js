@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../ProjectCard/ProjectCard.css';
 import './PublicationCard.css';
+import useTypeOnVisible from '../../hooks/useTypeOnVisible';
 import useScrambleOnVisible from '../../hooks/useScrambleOnVisible';
 
 // A carousel card for a publication / presentation. Unlike ProjectCard it isn't
@@ -11,9 +12,10 @@ const PublicationCard = ({ title, citation, url, footer = 'Read the paper →' }
   const [showHint, setShowHint] = useState(false);
   const clickable = Boolean(url);
 
-  // Title decodes first, then the citation right after — top to bottom, but quick.
-  const [titleRef, titleText] = useScrambleOnVisible(title, 600);
-  const [descRef, citationText] = useScrambleOnVisible(citation, 600, 600);
+  // The title types out like a typewriter; once it finishes, the citation shimmers in.
+  const [titleDone, setTitleDone] = useState(false);
+  const [titleRef, titleText] = useTypeOnVisible(title, 45, { onDone: () => setTitleDone(true) });
+  const [descRef, citationText] = useScrambleOnVisible(citation, 700, 0, { start: titleDone });
   const bidi = { unicodeBidi: 'bidi-override', direction: 'ltr' };
 
   // Auto-dismiss the hint shortly after it shows.
@@ -39,7 +41,7 @@ const PublicationCard = ({ title, citation, url, footer = 'Read the paper →' }
       onClick={handleClick}
       style={{ position: 'relative', ...(clickable ? {} : { cursor: 'default' }) }}
     >
-      <h2 ref={titleRef} style={bidi}>{titleText}</h2>
+      <h2 ref={titleRef}>{titleText}</h2>
       <p ref={descRef} style={bidi}>{citationText}</p>
       <div className="project-card-footer">{footer}</div>
       {showHint && <div className="pub-hint">no online link</div>}

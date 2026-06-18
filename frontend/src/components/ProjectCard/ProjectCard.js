@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './ProjectCard.css';
+import useTypeOnVisible from '../../hooks/useTypeOnVisible';
 import useScrambleOnVisible from '../../hooks/useScrambleOnVisible';
 
 const DEFAULT_DESCRIPTION = 'missing portfolio readme.';
@@ -38,10 +39,11 @@ const ProjectCard = ({ title, githubUrl, description = null, linkUrl }) => {
   const fullDescription = description || fetchedDescription;
   const clickUrl = linkUrl || githubUrl;
 
-  // Both shimmer (decode) in when the card scrolls into view.
-  // Title decodes first, then the description right after — top to bottom, but quick.
-  const [titleRef, titleText] = useScrambleOnVisible(title, 600);
-  const [descRef, descriptionText] = useScrambleOnVisible(fullDescription, 600, 600);
+  // The header types out like a typewriter; once it finishes, the body text shimmers
+  // (decodes) in — top to bottom.
+  const [titleDone, setTitleDone] = useState(false);
+  const [titleRef, titleText] = useTypeOnVisible(title, 45, { onDone: () => setTitleDone(true) });
+  const [descRef, descriptionText] = useScrambleOnVisible(fullDescription, 700, 0, { start: titleDone });
   const bidi = { unicodeBidi: 'bidi-override', direction: 'ltr' };
 
   return (
@@ -49,11 +51,12 @@ const ProjectCard = ({ title, githubUrl, description = null, linkUrl }) => {
       className={`project-card ${isHovered ? 'hovered' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => window.open(clickUrl, '_blank')} // Keeping the click to redirect
+      onClick={() => clickUrl && window.open(clickUrl, '_blank')}
+      style={clickUrl ? undefined : { cursor: 'default' }}
     >
-      <h2 ref={titleRef} style={bidi}>{titleText}</h2>
+      <h2 ref={titleRef}>{titleText}</h2>
       <p ref={descRef} style={bidi}>{descriptionText}</p>
-      <div className="project-card-footer">Click me</div>
+      <div className="project-card-footer">{clickUrl ? 'Click me' : 'Ask LedbetterGPT below ↓'}</div>
     </div>
   );
 };
