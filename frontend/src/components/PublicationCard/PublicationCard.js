@@ -11,9 +11,9 @@ const PublicationCard = ({ title, citation, url, footer = 'Read the paper →' }
   const [showHint, setShowHint] = useState(false);
   const clickable = Boolean(url);
 
-  // Both shimmer (decode) in together when the card scrolls into view (no stagger).
-  const [titleRef, titleText] = useScrambleOnVisible(title, 1100);
-  const [descRef, citationText] = useScrambleOnVisible(citation, 1100);
+  // Title decodes first, then the citation right after — top to bottom, but quick.
+  const [titleRef, titleText] = useScrambleOnVisible(title, 600);
+  const [descRef, citationText] = useScrambleOnVisible(citation, 600, 600);
   const bidi = { unicodeBidi: 'bidi-override', direction: 'ltr' };
 
   // Auto-dismiss the hint shortly after it shows.
