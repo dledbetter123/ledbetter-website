@@ -3,7 +3,7 @@ import React from 'react';
 import './NavBar.css';
 
 // forward refs to navbar
-const NavBar = React.forwardRef(({ isOpen, onHomeClick, onAboutClick, onPortfolioClick, onContactClick }, ref) => {
+const NavBar = React.forwardRef(({ isOpen, onHomeClick, onAboutClick, onPortfolioClick, onContactClick, onInboxClick }, ref) => {
   return (
     // attach the forwarded ref to the nav element
     <nav ref={ref} className={`navbar ${isOpen ? 'open' : ''}`}>
@@ -12,6 +12,7 @@ const NavBar = React.forwardRef(({ isOpen, onHomeClick, onAboutClick, onPortfoli
         <li><button onClick={onAboutClick}>About</button></li>
         <li><button onClick={onPortfolioClick}>Portfolio</button></li>
         <li><button onClick={onContactClick}>Contact</button></li>
+        {onInboxClick && <li><button onClick={onInboxClick}>Inbox</button></li>}
       </ul>
     </nav>
   );

@@ -1,6 +1,7 @@
 // frontend/src/components/MainPage/MainPage.js
 
 import React, { useRef, useEffect, useState} from 'react';
+import { useNavigate } from 'react-router-dom';
 import IntroPage from '../IntroPage/IntroPage';
 import Carousel from '../SwipeableGridPage/Carousel';
 import AboutPage from '../AboutPage/AboutPage';
@@ -13,6 +14,7 @@ import heroImg from '../IntroPage/images/hero.jpg';
 import "../MainPage/MainPage.css"
 
 const MainPage = () => {
+  const navigate = useNavigate();
   const [isNavbarOpen, setIsNavbarOpen] = useState(false);
   const homeRef = useRef(null);
   const aboutRef = useRef(null);
@@ -269,6 +271,7 @@ const MainPage = () => {
         onAboutClick={() => scrollToSection(aboutRef)}
         onPortfolioClick={() => scrollToSection(portfolioRef)}
         onContactClick={() => scrollToSection(contactRef)}
+        onInboxClick={() => { closeNavBar(); navigate('/inbox'); }}
       />
       <button className="menuIcon" onClick={() => setIsNavbarOpen(!isNavbarOpen)}>
         <div className="bar"></div>
