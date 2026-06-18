@@ -1,0 +1,130 @@
+// Operator inbox — read and reply to contact-form submissions. Behind the same passkey
+// (WebAuthn) as operator mode: only David's enrolled devices can authenticate. Reachable
+// at /inbox. Messages are stored server-side (S3) and read here; replies go out via SES.
+import React, { useState, useEffect } from 'react';
+import { startAuthentication } from '@simplewebauthn/browser';
+import './InboxPage.css';
+
+const api = (path, body) => {
+  const base = (window.env && window.env.REACT_APP_BACKEND_URI) || '';
+  return fetch(`${base}${path}`, {
+    method: 'POST',
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+};
+
+const InboxPage = () => {
+  const [token, setToken] = useState(() => {
+    try { return sessionStorage.getItem('ledbettergpt_operator') || ''; } catch (e) { return ''; }
+  });
+  const [status, setStatus] = useState('idle'); // idle | busy | loaded | denied | error
+  const [messages, setMessages] = useState([]);
+  const [error, setError] = useState('');
+  const [replyText, setReplyText] = useState({}); // id -> draft
+  const [sending, setSending] = useState({}); // id -> bool
+
+  const loadMessages = async (t) => {
+    setStatus('busy'); setError('');
+    try {
+      const res = await api('/api/operator/messages', { token: t || token });
+      if (res.status === 401) { setToken(''); setStatus('idle'); return; }
+      if (!res.ok) throw new Error('load failed');
+      const data = await res.json();
+      setMessages(data.messages || []);
+      setStatus('loaded');
+    } catch (e) { setStatus('error'); setError('Could not load messages.'); }
+  };
+
+  const authenticate = async () => {
+    setStatus('busy'); setError('');
+    try {
+      const begin = await api('/api/operator/auth/begin');
+      if (!begin.ok) throw new Error('denied');
+      const optionsJSON = (await begin.json()).publicKey;
+      const assertion = await startAuthentication({ optionsJSON });
+      const finish = await api('/api/operator/auth/finish', assertion);
+      if (!finish.ok) throw new Error('denied');
+      const { token: t } = await finish.json();
+      try { sessionStorage.setItem('ledbettergpt_operator', t); } catch (e) { /* memory only */ }
+      setToken(t);
+      await loadMessages(t);
+    } catch (e) { setStatus('denied'); setError("This is David's inbox only."); }
+  };
+
+  const sendReply = async (id) => {
+    const body = (replyText[id] || '').trim();
+    if (!body) return;
+    setSending((s) => ({ ...s, [id]: true })); setError('');
+    try {
+      const res = await api('/api/operator/reply', { token, id, body });
+      if (!res.ok) {
+        const t = await res.text();
+        setError(`Reply failed: ${(t || '').slice(0, 200) || res.status}`);
+      } else {
+        setMessages((ms) => ms.map((m) => (m.id === id ? { ...m, replied: true, replyBody: body } : m)));
+        setReplyText((r) => ({ ...r, [id]: '' }));
+      }
+    } catch (e) { setError('Reply failed (network).'); }
+    setSending((s) => ({ ...s, [id]: false }));
+  };
+
+  useEffect(() => { if (token) loadMessages(token); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+
+  return (
+    <div className="inboxPage">
+      <h1 className="inboxTitle">LedbetterGPT — Inbox</h1>
+
+      {!(token && status === 'loaded') && (
+        <div className="inboxAuth">
+          <p>Operator inbox. Sign in with your passkey to read and reply to contact messages.</p>
+          <button onClick={authenticate} disabled={status === 'busy'}>
+            {status === 'busy' ? '…' : 'Sign in with passkey'}
+          </button>
+          {error && <p className="inboxErr">{error}</p>}
+        </div>
+      )}
+
+      {token && status === 'loaded' && (
+        <div className="inboxList">
+          <div className="inboxBar">
+            <button onClick={() => loadMessages()}>Refresh</button>
+            <span>{messages.length} message{messages.length === 1 ? '' : 's'}</span>
+          </div>
+          {error && <p className="inboxErr">{error}</p>}
+          {messages.length === 0 && <p className="inboxEmpty">No messages yet.</p>}
+          {messages.map((m) => (
+            <div key={m.id} className={`inboxMsg${m.replied ? ' replied' : ''}`}>
+              <div className="inboxMeta">
+                <span className="inboxName">{m.name}</span>
+                <a href={`mailto:${m.email}`} className="inboxEmail">{m.email}</a>
+                <span className="inboxTs">{(m.ts || '').replace('T', ' ').replace('Z', ' UTC')}</span>
+                {m.loc && <span className="inboxLoc">{m.loc}</span>}
+                {m.replied && <span className="inboxReplied">✓ replied</span>}
+              </div>
+              <div className="inboxBody">{m.message}</div>
+              {m.replied && m.replyBody && (
+                <div className="inboxYourReply"><span className="inboxYourReplyLabel">Your reply:</span> {m.replyBody}</div>
+              )}
+              <textarea
+                className="inboxReplyBox"
+                placeholder="Write a reply…"
+                value={replyText[m.id] || ''}
+                onChange={(e) => setReplyText((r) => ({ ...r, [m.id]: e.target.value }))}
+              />
+              <button
+                className="inboxSend"
+                onClick={() => sendReply(m.id)}
+                disabled={sending[m.id] || !(replyText[m.id] || '').trim()}
+              >
+                {sending[m.id] ? 'Sending…' : (m.replied ? 'Send another reply' : 'Send reply')}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default InboxPage;

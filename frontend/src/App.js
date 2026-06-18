@@ -1,8 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import NavBar from './components/NavBar/NavBar';
 import './App.css';
 import MainPage from './components/MainPage/MainPage'; // Assuming MainPage is now a component
+import InboxPage from './components/InboxPage/InboxPage';
 
 const App = () => {
   const [isNavbarOpen, setIsNavbarOpen] = useState(false);
@@ -28,7 +29,10 @@ const App = () => {
   return (
     <Router>
       <div className="App">
-        <MainPage ref={mainPageRef}/>
+        <Routes>
+          <Route path="/" element={<MainPage ref={mainPageRef} />} />
+          <Route path="/inbox" element={<InboxPage />} />
+        </Routes>
       </div>
     </Router>
   );
