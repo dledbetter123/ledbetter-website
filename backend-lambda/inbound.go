@@ -47,6 +47,7 @@ func handleS3(ctx context.Context, e events.S3Event) error {
 		if !strings.HasPrefix(key, inboundPrefix) {
 			continue
 		}
+		fmt.Printf("inbound: received s3://%s/%s\n", r.S3.Bucket.Name, key)
 		if err := processInboundEmail(ctx, r.S3.Bucket.Name, key); err != nil {
 			fmt.Printf("inbound process error (%s): %v\n", key, err)
 		}
@@ -99,10 +100,13 @@ func processInboundEmail(ctx context.Context, bucket, key string) error {
 			rec.Replied = false // a fresh inbound is unanswered
 			saveContact(rec)
 			matched = true
+			fmt.Printf("inbound matched thread %s (from=%q, %d chars)\n", id, from, len(body))
+		} else {
+			fmt.Printf("inbound id %q parsed but getContact failed: %v\n", id, gerr)
 		}
 	}
 	if !matched {
-		fmt.Printf("inbound unmatched (id=%q from=%q) — forwarding only\n", id, from)
+		fmt.Printf("inbound unmatched (id=%q from=%q recipients=%q) — forwarding only\n", id, from, recipients)
 	}
 	forwardInbound(rec, from, body, matched)
 	return nil
