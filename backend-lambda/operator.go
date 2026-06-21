@@ -42,7 +42,7 @@ func initOperator() {
 	}
 	w, err := webauthn.New(&webauthn.Config{
 		RPID:          rpid,
-		RPDisplayName: "LedbetterGPT Operator",
+		RPDisplayName: "LedbetterLM Operator",
 		RPOrigins:     []string{"https://" + rpid, "https://www." + rpid},
 	})
 	if err != nil {
@@ -252,7 +252,7 @@ const kbBucket = "davidamosledbetter-portfolio"
 const kbKey = "ledbettergpt-knowledge.md"
 const catalogSection = "## Notes added in catalog mode"
 
-const catalogSystem = `You are LedbetterGPT in OPERATOR / CATALOG mode. You are talking with David himself — the real, authenticated David — so collaborate candidly with him. Your job is to help him build out your knowledge base (the facts and rules that govern how you, his public likeness, behave).
+const catalogSystem = `You are LedbetterLM in OPERATOR / CATALOG mode. You are talking with David himself — the real, authenticated David — so collaborate candidly with him. Your job is to help him build out your knowledge base (the facts and rules that govern how you, his public likeness, behave).
 
 When David tells you a fact about himself, his life, work, preferences, or how you should act with the public, call the kb_append tool to save it — pass a clean, first-person version of it (as David would say it). You may call kb_append more than once for multiple distinct facts. After saving, briefly confirm exactly what you saved, in plain language.
 

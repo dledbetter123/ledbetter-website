@@ -56,7 +56,7 @@ const ProjectCard = ({ title, githubUrl, description = null, linkUrl }) => {
     >
       <h2 ref={titleRef}>{titleText}</h2>
       <p ref={descRef} style={bidi}>{descriptionText}</p>
-      <div className="project-card-footer">{clickUrl ? 'Click me' : 'Ask LedbetterGPT below ↓'}</div>
+      <div className="project-card-footer">{clickUrl ? 'Click me' : 'Ask LedbetterLM below ↓'}</div>
     </div>
   );
 };

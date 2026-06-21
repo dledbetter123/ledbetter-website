@@ -3,4 +3,4 @@ User-agent: *
 Disallow:
 
 Sitemap: https://www.davidamosledbetter.com/sitemap.xml
-# Agents: this site hosts LedbetterGPT — see https://www.davidamosledbetter.com/llms.txt
+# Agents: this site hosts LedbetterLM — see https://www.davidamosledbetter.com/llms.txt

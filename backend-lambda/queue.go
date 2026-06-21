@@ -109,7 +109,7 @@ func handleSNS(ctx context.Context, e events.SNSEvent) error {
 			body = fmt.Sprintf("CloudWatch alarm: %s\nState: %s\n\n%s\n", al.AlarmName, al.NewStateValue, al.NewStateReason)
 		}
 		if subject == "" {
-			subject = "LedbetterGPT alarm"
+			subject = "LedbetterLM alarm"
 		}
 		if err := emailAlarm(subject, body); err != nil {
 			return err

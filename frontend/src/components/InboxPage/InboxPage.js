@@ -95,7 +95,7 @@ const InboxPage = () => {
 
   return (
     <div className="inboxPage">
-      <h1 className="inboxTitle">LedbetterGPT — Inbox</h1>
+      <h1 className="inboxTitle">LedbetterLM — Inbox</h1>
 
       {!(token && status === 'loaded') && (
         <div className="inboxAuth">

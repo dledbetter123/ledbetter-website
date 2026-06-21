@@ -4,7 +4,7 @@ import { runScramble } from '../../lib/scramble';
 import { mdToHtml } from '../../lib/markdown';
 import OperatorMode from '../OperatorMode/OperatorMode';
 
-// LedbetterGPT's opening line — kept as a constant so the character-shimmer effect
+// LedbetterLM's opening line — kept as a constant so the character-shimmer effect
 // (below) can twinkle it without diverging from the seeded first message.
 const GREETING = "Hi, I'm David Ledbetter (or rather, his librarian). I maintain a knowledge base of David's experience, interests, and current projects. Ask me anything and I'll review the library.";
 
@@ -54,7 +54,7 @@ const gatherSummary = (log = []) => {
   return 'Pulled the code details from the library.';
 };
 
-// LedbetterGPT — a small chat assistant that streams answers about David from the
+// LedbetterLM — a small chat assistant that streams answers about David from the
 // backend's /api/chat endpoint (Gemini-backed). The backend URL is injected at
 // runtime via window.env.REACT_APP_BACKEND_URI (see config.js / IntroPage).
 const ChatWidget = () => {
@@ -317,7 +317,7 @@ const ChatWidget = () => {
       {isOpen && (
         <div className="chatPanel">
           <div className="chatHeader">
-            <span>LedbetterGPT</span>
+            <span>LedbetterLM</span>
             <span className="chatHeaderRight">
               <OperatorMode onAuthed={setOperatorToken} />
               <button className="chatClose" onClick={() => setIsOpen(false)} aria-label="Close chat">×</button>
@@ -387,7 +387,7 @@ const ChatWidget = () => {
           className={`chatToggle${isOpen ? ' open' : ''}`}
           onClick={() => setIsOpen((o) => !o)}
         >
-          {isOpen ? 'Close' : 'Ask LedbetterGPT'}
+          {isOpen ? 'Close' : 'Ask LedbetterLM'}
         </button>
       </div>
     </div>

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
-    <meta name="description" content="David Ledbetter — machine-learning & full-stack software engineer at Apple. Portfolio with live projects, IEEE/URCAD publications, and LedbetterGPT, an AI you can ask about my work. Agents can talk to it over HTTP — see /llms.txt." />
+    <meta name="description" content="David Ledbetter — machine-learning & full-stack software engineer at Apple. Portfolio with live projects, IEEE/URCAD publications, and LedbetterLM, an AI you can ask about my work. Agents can talk to it over HTTP — see /llms.txt." />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico?v=6" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32.png?v=6" />
@@ -17,21 +17,21 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="David Ledbetter" />
     <meta property="og:title" content="David Ledbetter" />
-    <meta property="og:description" content="Machine learning & full-stack engineer at Apple. Portfolio, projects, and LedbetterGPT — my agentic AI likeness." />
+    <meta property="og:description" content="Machine learning & full-stack engineer at Apple. Portfolio, projects, and LedbetterLM — my agentic AI likeness." />
     <meta property="og:url" content="https://www.davidamosledbetter.com/" />
     <meta property="og:image" content="https://www.davidamosledbetter.com/og-image.png?v=2" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="David Ledbetter" />
-    <meta name="twitter:description" content="Machine learning & full-stack engineer at Apple. Portfolio, projects, and LedbetterGPT — my agentic AI likeness." />
+    <meta name="twitter:description" content="Machine learning & full-stack engineer at Apple. Portfolio, projects, and LedbetterLM — my agentic AI likeness." />
     <meta name="twitter:image" content="https://www.davidamosledbetter.com/og-image.png?v=2" />
 
     <title>David Ledbetter's Portfolio</title>
 
-    <!-- Agents/bots: this site hosts LedbetterGPT, which you can talk to over HTTP.
+    <!-- Agents/bots: this site hosts LedbetterLM, which you can talk to over HTTP.
          See /llms.txt for the contract (POST /api/chat). No auth required. -->
-    <link rel="alternate" type="text/plain" title="llms.txt — talk to LedbetterGPT" href="/llms.txt" />
+    <link rel="alternate" type="text/plain" title="llms.txt — talk to LedbetterLM" href="/llms.txt" />
 </head>
 <body>
     <!-- Crawlable content lives directly in #root (NOT in <noscript>, which content
@@ -44,8 +44,8 @@
         <p>Machine-learning &amp; full-stack software engineer at Apple, building agentic AI
            systems. BS &amp; MS in Computer Science (UMBC); researcher at UMBC's Ebiquity Lab.</p>
 
-        <h2 style="color:#0F0">Ask LedbetterGPT</h2>
-        <p>This site hosts <strong>LedbetterGPT</strong>, an AI you can ask about David's
+        <h2 style="color:#0F0">Ask LedbetterLM</h2>
+        <p>This site hosts <strong>LedbetterLM</strong>, an AI you can ask about David's
            projects, papers, research, and code — it browses his public GitHub repos live to
            answer. With JavaScript enabled, chat in the corner widget. AI agents and bots can
            talk to it directly over HTTP — see
@@ -54,7 +54,7 @@
 
         <h2 style="color:#0F0">How it works (architecture)</h2>
         <p>Serverless on AWS: a React single-page app on S3 + CloudFront; a Go AWS Lambda
-           backend (LedbetterGPT) behind API Gateway; Gemini with live GitHub tool-use for
+           backend (LedbetterLM) behind API Gateway; Gemini with live GitHub tool-use for
            answers; DynamoDB-backed rate and cost caps; secrets in Secrets Manager. ~$2/month.</p>
 
         <h2 style="color:#0F0">Projects &amp; Research</h2>

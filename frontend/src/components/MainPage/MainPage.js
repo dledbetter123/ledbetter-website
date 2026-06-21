@@ -86,15 +86,15 @@ const MainPage = () => {
     title: "This Website!",
     githubUrl: "https://github.com/dledbetter123/ledbetter-website",
     description:
-      "The site you're on, and the AI you're talking to. It's a fully serverless AWS build: a React front end on S3 behind CloudFront, with one Go Lambda behind API Gateway powering LedbetterGPT, my digital likeness, grounded on a knowledge base I maintain. It runs a two-model design — a fast, cheap worker model (Cloudflare Workers AI, with Gemini as a warm-start fallback) carries the conversation, and when you ask something that needs real code it hands off to a \"librarian\": an agentic pass that explores my GitHub repos live, compiles the actual code into context, and hands it back so answers are grounded, not guessed (you'll watch the handoff happen). Every message is decoupled onto an SQS FIFO queue and processed by an async worker that durably logs the turn and threads a notification — idempotent and strictly ordered per conversation. Ask LedbetterGPT below how any of it works →",
+      "The site you're on, and the AI you're talking to. It's a fully serverless AWS build: a React front end on S3 behind CloudFront, with one Go Lambda behind API Gateway powering LedbetterLM, my digital likeness, grounded on a knowledge base I maintain. It runs a two-model design — a fast, cheap worker model (Cloudflare Workers AI, with Gemini as a warm-start fallback) carries the conversation, and when you ask something that needs real code it hands off to a \"librarian\": an agentic pass that explores my GitHub repos live, compiles the actual code into context, and hands it back so answers are grounded, not guessed (you'll watch the handoff happen). Every message is decoupled onto an SQS FIFO queue and processed by an async worker that durably logs the turn and threads a notification — idempotent and strictly ordered per conversation. Ask LedbetterLM below how any of it works →",
   };
 
   // Proprietary Apple work — no public repo, so the card carries its own description and
-  // isn't clickable (it points readers to LedbetterGPT for the high-level story).
+  // isn't clickable (it points readers to LedbetterLM for the high-level story).
   const SelfHealProjectDetails = {
     title: "Self-Healing Coding Agent (Apple)",
     description:
-      "My flagship project at Apple, on the Release Validation team: an agentic system that automatically repairs code. I built a custom in-house harness (built on LangGraph) that orchestrates a frontier model — Anthropic Claude — for the repair reasoning alongside a local Qwen model that handles tool calling to cut token costs, and I modeled code exploration as a partially observable Markov decision process so it acts on true divergences and ignores false error reports. Around it I built an in-house distributed task queue (replacing Celery) with IPC, state management, and episode tracking, an async probe manager that feeds live metrics into the agent without latency, and a RAG pipeline that marshals those metrics into the model's context. It's proprietary Apple work, so there's no public repo — ask LedbetterGPT below for the high-level story →",
+      "My flagship project at Apple, on the Release Validation team: an agentic system that automatically repairs code. I built a custom in-house harness (built on LangGraph) that orchestrates a frontier model — Anthropic Claude — for the repair reasoning alongside a local Qwen model that handles tool calling to cut token costs, and I modeled code exploration as a partially observable Markov decision process so it acts on true divergences and ignores false error reports. Around it I built an in-house distributed task queue (replacing Celery) with IPC, state management, and episode tracking, an async probe manager that feeds live metrics into the agent without latency, and a RAG pipeline that marshals those metrics into the model's context. It's proprietary Apple work, so there's no public repo — ask LedbetterLM below for the high-level story →",
   };
 
   // LEO is my personal project (private repos, no public README to fetch), so this card
@@ -103,25 +103,25 @@ const MainPage = () => {
     title: "LEO — In-Browser AI Coding Tutor",
     url: "https://learnwleo.com",
     description:
-      "A browser-native learn-to-code platform I built, where students learn to code and prep for tech interviews with all code running on-device in WebAssembly at zero marginal cost. I built the AI layer end to end: an in-browser LLM tutor (WebNN/WebGPU), the learning-data instrumentation behind it, and an adaptive ELO that scores real skill from every attempt. Ask LedbetterGPT below to go deeper →",
+      "A browser-native learn-to-code platform I built, where students learn to code and prep for tech interviews with all code running on-device in WebAssembly at zero marginal cost. I built the AI layer end to end: an in-browser LLM tutor (WebNN/WebGPU), the learning-data instrumentation behind it, and an adaptive ELO that scores real skill from every attempt. Ask LedbetterLM below to go deeper →",
   };
 
   // SGST & Finsler carry inline descriptions (not the repo's README excerpt) so
-  // they can point readers to LedbetterGPT, which reads the full public repos
+  // they can point readers to LedbetterLM, which reads the full public repos
   // live and can go far deeper than the short public excerpt. Click still opens
   // the repo.
   const SgstProjectDetails = {
     title: "Sparse Geometric Signal Transport",
     githubUrl: "https://github.com/dledbetter123/SparseGeometricSignalTransport",
     description:
-      "A geometric theory of the transformer: attention as parallel transport on a fiber bundle, not an O(T²) tax, with tokens as sparse Fourier constellations. It never beat GPT outright, but it surfaced a performant, drop-in curvature-based positional encoding worth further study. The repo shows only an excerpt; ask LedbetterGPT below for the full story →",
+      "A geometric theory of the transformer: attention as parallel transport on a fiber bundle, not an O(T²) tax, with tokens as sparse Fourier constellations. It never beat GPT outright, but it surfaced a performant, drop-in curvature-based positional encoding worth further study. The repo shows only an excerpt; ask LedbetterLM below for the full story →",
   };
 
   const FinslerProjectDetails = {
     title: "The Finsler Transformer",
     githubUrl: "https://github.com/dledbetter123/LedbetterFinslerTransformer",
     description:
-      "What if attention isn't computed, but a curvature you move through? The Finsler Transformer swaps O(T²) attention for geodesic flow on a learned manifold, where a sentence is a geodesic and meaning is holonomy, aiming at O(T) generation grounded in differential geometry. The repo shows only an excerpt; ask LedbetterGPT below for the full story →",
+      "What if attention isn't computed, but a curvature you move through? The Finsler Transformer swaps O(T²) attention for geodesic flow on a learned manifold, where a sentence is a geodesic and meaning is holonomy, aiming at O(T) generation grounded in differential geometry. The repo shows only an excerpt; ask LedbetterLM below for the full story →",
   };
 
   // Publications & presentations — not repo-backed, so these use PublicationCard.

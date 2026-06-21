@@ -2,7 +2,7 @@
 
 My personal site and portfolio. It's a **fully serverless AWS application**: a React
 single-page app served as static files from S3 behind CloudFront, with a Go AWS Lambda
-backend that powers **LedbetterGPT** — an agentic chatbot that speaks as my digital
+backend that powers **LedbetterLM** — an agentic chatbot that speaks as my digital
 likeness and reads my GitHub repos live to answer questions about my work.
 
 Originally this ran as containers (Go + React images) on ECS/Fargate behind
@@ -24,7 +24,7 @@ Secrets Manager).
                        └──────────────────┘                  │
                                                    ┌──────────▼───────────┐
                                                    │ Lambda (Go, arm64)   │
-                                                   │  LedbetterGPT + /api  │
+                                                   │  LedbetterLM + /api  │
                                                    └──────────┬───────────┘
                                           ┌──────────────────┼───────────────────┐
                                           │                  │                   │
@@ -49,15 +49,15 @@ Secrets Manager).
   to `index.html`.
 - Backend URL is injected at runtime via `window.env.REACT_APP_BACKEND_URI` (empty =
   same-origin `/api/*`), so the same build works in any environment.
-- Editable content — the intro paragraph, the LedbetterGPT knowledge base, and my
+- Editable content — the intro paragraph, the LedbetterLM knowledge base, and my
   résumé — lives in a separate public-read S3 content bucket and is fetched at page load,
   so I can update copy without rebuilding or redeploying the site.
 
-### Backend — LedbetterGPT
+### Backend — LedbetterLM
 A single **Go Lambda** (arm64, `provided.al2023`) fronted by an **API Gateway HTTP API**
 at `/api/*`, so it's same-origin with the site. It exposes `/api/status` and `/api/chat`.
 
-LedbetterGPT is **agentic**. Rather than answering from a fixed prompt, it runs a
+LedbetterLM is **agentic**. Rather than answering from a fixed prompt, it runs a
 **Gemini function-calling loop** with read-only tools over my GitHub repositories:
 - `list_my_repos` — enumerate my repos,
 - `list_repo_files` — browse a repo's tree,
@@ -98,7 +98,7 @@ conversation catalog).
 ## Repository layout
 ```
 frontend/        React app (Create React App)
-backend-lambda/  Go Lambda — LedbetterGPT chat + status, agentic repo tools
+backend-lambda/  Go Lambda — LedbetterLM chat + status, agentic repo tools
 .github/         GitHub Actions CI/CD (deploy.yml)
 ```
 

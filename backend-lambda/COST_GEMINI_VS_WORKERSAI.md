@@ -1,7 +1,7 @@
-# LedbetterGPT inference cost: Gemini vs Cloudflare Workers AI
+# LedbetterLM inference cost: Gemini vs Cloudflare Workers AI
 
 Comparison of the current Gemini Pro endpoint against Cloudflare Workers AI for the
-LedbetterGPT chat backend. Methodology and numbers below are reproducible from
+LedbetterLM chat backend. Methodology and numbers below are reproducible from
 `/tmp/costcalc.py` (token model) and the S3 conversation logs (ground truth).
 
 ## Ground truth (actual Gemini spend)

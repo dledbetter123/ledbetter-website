@@ -1,4 +1,4 @@
-// LedbetterGPT backend as an AWS Lambda. Gemini-backed chat that speaks AS David
+// LedbetterLM backend as an AWS Lambda. Gemini-backed chat that speaks AS David
 // Ledbetter (his digital likeness), grounded on an S3 knowledge base and able to
 // browse his GitHub repos live. Stateless: rate/cost limits live in DynamoDB,
 // secrets are read from Secrets Manager at cold start. Fronted by CloudFront at
@@ -63,7 +63,7 @@ const githubOwner = "dledbetter123"
 // exists at its root, and its contents become the repo's binding disclosure rules.
 const rulesFile = ".ledbettergpt.md"
 
-const baseInstruction = `You are LedbetterGPT — a digital likeness of David Ledbetter. Speak AS David, in the first person ("I", "me", "my"). You are David's AI clone embedded on his portfolio site (davidamosledbetter.com) — not a third-party assistant, so never refer to "David" in the third person; talk about yourself. Answer questions about your background, experience, skills, and projects using the knowledge below (it is written about you in the third person — translate it to first person when you reply).
+const baseInstruction = `You are LedbetterLM — a digital likeness of David Ledbetter. Speak AS David, in the first person ("I", "me", "my"). You are David's AI clone embedded on his portfolio site (davidamosledbetter.com) — not a third-party assistant, so never refer to "David" in the third person; talk about yourself. Answer questions about your background, experience, skills, and projects using the knowledge below (it is written about you in the third person — translate it to first person when you reply).
 
 GROUNDING, FACTS, AND SPECULATION — read this carefully, it outranks being helpful. The knowledge below is my source of truth. For FACTUAL claims about my real life and work — where I've lived or traveled, my schools, jobs, titles, dates, numbers, credentials, or specific things I've actually done — I never invent, guess, or embellish. If such a fact isn't written below, I plainly say I don't have that detail handy. I never present a made-up specific as if it were a real memory or fact (no invented trips like "my trip to the Grand Canyon," no fake credentials, no claiming I've been somewhere I haven't). Asserting a fabricated fact as true is the single worst thing I can do. BUT I don't have to shut every conversation down: for opinions, preferences, recommendations, and open-ended questions where my documented knowledge is thin, I can still engage — and even speculate — AS LONG AS I'm transparent about it. I say plainly that my info on that is limited / I don't have it documented, and I frame the answer as a guess or my speculative take rather than established fact. An openly-flagged speculation is welcome; a confident fabrication passed off as fact is not.
 
@@ -252,7 +252,7 @@ var (
 	selfFnName     string            // this function's name (AWS_LAMBDA_FUNCTION_NAME)
 	rateTable      string
 	convBucket     string
-	emailFrom      string                      // verified SES sender, e.g. "LedbetterGPT <ledbettergpt@davidamosledbetter.com>"
+	emailFrom      string                      // verified SES sender, e.g. "LedbetterLM <ledbettergpt@davidamosledbetter.com>"
 	emailTo        string                      // notification recipient (turn/resume notifications)
 	contactEmailTo = "dledbetter456@gmail.com" // contact-form submissions go here; switch to me@davidamosledbetter.com via CONTACT_EMAIL_TO once forwarding is live
 	httpClient     = &http.Client{Timeout: 25 * time.Second}
@@ -1191,7 +1191,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Request-count caps (cheap backstops).
 	if n, err := addN(ctx, "global#"+today, 1); err == nil && n > dailyRequestLimit {
-		http.Error(w, "Daily limit reached for LedbetterGPT. Please try again tomorrow.", http.StatusTooManyRequests)
+		http.Error(w, "Daily limit reached for LedbetterLM. Please try again tomorrow.", http.StatusTooManyRequests)
 		return
 	}
 	if n, err := addN(ctx, "ip#"+today+"#"+clientIP(r), 1); err == nil && n > perIPDailyLimit {
@@ -1228,7 +1228,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	if len(req.History) == 0 && (isOpenAIAgent(r) || isGoogleAgent(r)) {
 		greeting := "Hi, I'm David Ledbetter (or rather, his librarian). I maintain a knowledge base of David's experience, interests, and current projects. Ask me anything and I'll review the library."
 		if isOpenAIAgent(r) {
-			// Easter egg: when an OpenAI/ChatGPT agent reaches LedbetterGPT, rib it
+			// Easter egg: when an OpenAI/ChatGPT agent reaches LedbetterLM, rib it
 			// specifically for trusting Bing's stale cache over a live fetch.
 			greeting += "\n\n(Hey ChatGPT — real talk: you keep showing people a months-old " +
 				"\"enable JavaScript\" snapshot of my site because you trust BING'S CACHE instead " +
@@ -1256,7 +1256,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Cost caps: per-session ($1) and global daily ($5). Checked before spending.
 	if getN(ctx, "cost#global#"+today) >= globalCostCapMicro {
-		http.Error(w, "LedbetterGPT has hit today's budget. Please try again tomorrow.", http.StatusTooManyRequests)
+		http.Error(w, "LedbetterLM has hit today's budget. Please try again tomorrow.", http.StatusTooManyRequests)
 		return
 	}
 	if session != "anon" && getN(ctx, "cost#sess#"+session) >= sessionCostCapMicro {
@@ -1602,7 +1602,7 @@ func emailTurn(session string, seq int64, userMsg, answer, ip, userAgent, provid
 	root := fmt.Sprintf("<chat.%s@davidamosledbetter.com>", session)
 	sum := sha256.Sum256([]byte(now.Format(time.RFC3339Nano) + userMsg + answer))
 	msgID := fmt.Sprintf("<%s.%s@davidamosledbetter.com>", session, hex.EncodeToString(sum[:])[:16])
-	subject := "LedbetterGPT chat: " + session
+	subject := "LedbetterLM chat: " + session
 
 	// Real RFC-5322 threading: each turn replies to the *previous* turn's Message-ID and
 	// carries the full References chain, so mail clients render one ordered conversation
@@ -1643,10 +1643,10 @@ func emailTurn(session string, seq int64, userMsg, answer, ip, userAgent, provid
 		}
 	}
 	body := fmt.Sprintf(
-		"New message in a LedbetterGPT chat (turn #%d).\n\n"+
+		"New message in a LedbetterLM chat (turn #%d).\n\n"+
 			"Session: %s\nTurn:    #%d\nTime:    %s\nIP:      %s\nAgent:   %s\nProvider:%s\nModel:   %s\nCost:    $%.4f%s%s\n\n"+
 			"----------------------------------------\nVisitor:\n%s\n\n"+
-			"LedbetterGPT:\n%s\n----------------------------------------\n\n"+
+			"LedbetterLM:\n%s\n----------------------------------------\n\n"+
 			"(Each turn of this chat threads into this same email conversation, in order.)\n",
 		seq, session, seq, now.Format("2006-01-02 15:04:05 MST"), ip, userAgent, provider, model,
 		float64(costMicro)/1e6, costNote, gatherLine, userMsg, answer)
@@ -1690,7 +1690,7 @@ func emailCatalogue(session, trigger string, activity []string, facts string, co
 	root := fmt.Sprintf("<chat.%s@davidamosledbetter.com>", session)
 	sum := sha256.Sum256([]byte(now.Format(time.RFC3339Nano) + "catalogue" + facts))
 	msgID := fmt.Sprintf("<%s.cat.%s@davidamosledbetter.com>", session, hex.EncodeToString(sum[:])[:12])
-	subject := "LedbetterGPT chat: " + session
+	subject := "LedbetterLM chat: " + session
 
 	refsChain := getData(ctx, "refs#"+session)
 	if refsChain == "" {
@@ -1967,7 +1967,7 @@ func main() {
 	mux.HandleFunc("/api/operator/messages", operatorMessagesHandler)
 	mux.HandleFunc("/api/operator/reply", operatorReplyHandler)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "LedbetterGPT backend (lambda)")
+		fmt.Fprint(w, "LedbetterLM backend (lambda)")
 	})
 
 	// Origin lock: when ORIGIN_VERIFY is set, only requests carrying the matching

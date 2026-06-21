@@ -43,7 +43,7 @@ const CONTENT = [
   {
     key: 'b5', type: 'body', sec: 4,
     text:
-      "I'm happiest where research curiosity meets shipping discipline: prototyping a bold idea, then doing the unglamorous work to make it correct, fast, and maintainable. Browse the projects and publications above, and feel free to ask LedbetterGPT, my agentic AI likeness in the corner, anything about my work.",
+      "I'm happiest where research curiosity meets shipping discipline: prototyping a bold idea, then doing the unglamorous work to make it correct, fast, and maintainable. Browse the projects and publications above, and feel free to ask LedbetterLM, my agentic AI likeness in the corner, anything about my work.",
   },
 ];
 

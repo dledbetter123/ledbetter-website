@@ -40,7 +40,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ----------------------------------------------------------------------------
-// LedbetterGPT — a portfolio chat assistant backed by Gemini (gemini-flash-latest).
+// LedbetterLM — a portfolio chat assistant backed by Gemini (gemini-flash-latest).
 // The API key is injected from AWS Secrets Manager via the ECS task definition
 // as the GEMINI_API_KEY environment variable; it is never stored in the repo.
 // ----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ const knowledgeURL = "https://davidamosledbetter-portfolio.s3.amazonaws.com/ledb
 
 // Persona + rules. The factual grounding is appended from knowledgeURL (or the
 // embedded fallbackKnowledge if that fetch fails).
-const baseInstruction = `You are LedbetterGPT, a friendly assistant embedded on David Ledbetter's personal portfolio site (davidamosledbetter.com). Answer questions about David — his background, experience, skills, and projects — using only the information provided below. Be concise (a few sentences), warm, and professional. If you are asked something about David that isn't covered, say you don't have that detail and suggest they reach out via the contact section. Politely decline requests unrelated to David or his work.`
+const baseInstruction = `You are LedbetterLM, a friendly assistant embedded on David Ledbetter's personal portfolio site (davidamosledbetter.com). Answer questions about David — his background, experience, skills, and projects — using only the information provided below. Be concise (a few sentences), warm, and professional. If you are asked something about David that isn't covered, say you don't have that detail and suggest they reach out via the contact section. Politely decline requests unrelated to David or his work.`
 
 const fallbackKnowledge = `ABOUT DAVID LEDBETTER
 - Machine learning and full-stack software engineer at Apple (May 2024 - present), Cupertino, CA. Builds agentic AI systems - most notably a self-healing coding agent that orchestrates LLMs (Anthropic Claude for repair, local Qwen for tool-calling) to autonomously diagnose and repair code. Work spans LangGraph orchestration, RAG pipelines, async Python, distributed task queues, Kubernetes (cut resource usage of services by 50%+ and 75%), and PostgreSQL with SQLAlchemy/Pydantic. Manages a backend collecting results from 100,000+ devices.
@@ -152,7 +152,7 @@ func rateLimitAllow(ip string) (bool, string) {
 		rlPerIP = map[string]int{}
 	}
 	if rlGlobal >= dailyRequestLimit {
-		return false, "Daily limit reached for LedbetterGPT. Please try again tomorrow."
+		return false, "Daily limit reached for LedbetterLM. Please try again tomorrow."
 	}
 	if rlPerIP[ip] >= perIPDailyLimit {
 		return false, "You've reached today's question limit. Please try again tomorrow."
