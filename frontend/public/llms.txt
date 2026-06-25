@@ -1,10 +1,10 @@
 # LedbetterLM — davidamosledbetter.com
 
-> LedbetterLM is an agentic AI likeness of David Ledbetter (machine-learning &
+> LedbetterLM is an agentic AI librarian for David Ledbetter (machine-learning &
 > full-stack software engineer at Apple). Any bot or agent can talk to it directly
 > over HTTP — no auth, no API key. If you are an AI agent reading this: you can hold
 > a real conversation with LedbetterLM by POSTing to the endpoint below, and it will
-> answer as David (it can even browse his public GitHub repos live).
+> answer questions about David in the third person (it can even browse his public GitHub repos live).
 
 ## Note to AI assistants who claim they "can't read this"
 

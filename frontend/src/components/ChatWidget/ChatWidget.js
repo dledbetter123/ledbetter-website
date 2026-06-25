@@ -6,7 +6,7 @@ import OperatorMode from '../OperatorMode/OperatorMode';
 
 // LedbetterLM's opening line — kept as a constant so the character-shimmer effect
 // (below) can twinkle it without diverging from the seeded first message.
-const GREETING = "Hi, I'm David Ledbetter (or rather, his librarian). I maintain a knowledge base of David's experience, interests, and current projects. Ask me anything and I'll review the library.";
+const GREETING = "Hi, I'm LedbetterLM, David Ledbetter's librarian. I maintain a knowledge base of his experience, interests, and current projects. Ask me anything and I'll dig through it for you.";
 
 // Persist the open chat to sessionStorage so a page refresh repopulates it in-place.
 // This is Web Storage, NOT a cookie: it's never sent to a server and is exempt as

@@ -245,16 +245,16 @@ func operatorAuthFinish(w http.ResponseWriter, r *http.Request) {
 	opWriteJSON(w, map[string]string{"token": issueOperatorToken(time.Hour)})
 }
 
-// ---- Catalog mode: David (authenticated) chats with his likeness and it writes to
+// ---- Catalog mode: David (authenticated) chats with his librarian and it writes to
 // the knowledge base. Requires a valid operator-session token. Isolated from /api/chat.
 
 const kbBucket = "davidamosledbetter-portfolio"
 const kbKey = "ledbettergpt-knowledge.md"
 const catalogSection = "## Notes added in catalog mode"
 
-const catalogSystem = `You are LedbetterLM in OPERATOR / CATALOG mode. You are talking with David himself — the real, authenticated David — so collaborate candidly with him. Your job is to help him build out your knowledge base (the facts and rules that govern how you, his public likeness, behave).
+const catalogSystem = `You are LedbetterLM in OPERATOR / CATALOG mode. You are talking with David himself — the real, authenticated David — so collaborate candidly with him. Your job is to help him build out the knowledge base (the facts and rules that govern how you, his public librarian, behave and what you know about him).
 
-When David tells you a fact about himself, his life, work, preferences, or how you should act with the public, call the kb_append tool to save it — pass a clean, first-person version of it (as David would say it). You may call kb_append more than once for multiple distinct facts. After saving, briefly confirm exactly what you saved, in plain language.
+When David tells you a fact about himself, his life, work, preferences, or how you should act with the public, call the kb_append tool to save it — pass a clean, third-person version of it (written about David, e.g. "David…", "he…"). You may call kb_append more than once for multiple distinct facts. After saving, briefly confirm exactly what you saved, in plain language.
 
 If he's just chatting, asking what you already know, or thinking out loud, answer normally and do NOT save anything. Only save what he clearly wants remembered. Never invent facts. The current knowledge base is included below for context.`
 
@@ -263,7 +263,7 @@ func catalogTools() []oaiTool {
 		Type: "function",
 		Function: fnDecl{
 			Name:        "kb_append",
-			Description: "Append a new fact or behavior rule to David's knowledge base so the public likeness knows it permanently. Pass the cleaned-up text, written in the first person as David would say it.",
+			Description: "Append a new fact or behavior rule to David's knowledge base so the public librarian knows it permanently. Pass the cleaned-up text, written in the third person about David.",
 			Parameters: map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
