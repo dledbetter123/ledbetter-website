@@ -3,14 +3,21 @@
 /* Peek carousel: the active card is left-aligned and the next card's leading
    edge stays visible on the right. The peek IS the swipe affordance — it
    replaced the old absolutely-positioned arrow chevrons — and it lets the
-   card run wider so long descriptions don't read as a narrow column. */
+   card run wider so long descriptions don't read as a narrow column.
+
+   --carousel-step is the single source of truth for slide width: it sets
+   .carousel-item's flex-basis here AND the per-slide translateX step in
+   Carousel.js. Change it per breakpoint; never let the two drift. */
 
 .carousel-container {
   overflow: hidden;
   position: relative;
   z-index: 50;
   width: 100%;
-  max-width: 500px;
+  /* Desktop: a wide frame so a substantial slice of the NEXT card is readable,
+     not just a sliver — the card itself stays ~580px so text lines don't get
+     over-long. */
+  max-width: 880px;
   height: auto;
   /* No vertical cap: the container fits the tallest card so nothing gets clipped.
      align-items: flex-start keeps content top-aligned, so any overflow falls off the
@@ -20,13 +27,13 @@
   justify-content: flex-start;
   align-items: flex-start;
   margin: auto;
-  /* Desktop: the peeked card is clipped by this 500px frame mid-page, so soften
-     the cut into a fade — a hard slice floating in space reads as a bug. */
-  -webkit-mask-image: linear-gradient(to right, black calc(100% - 48px), transparent);
-  mask-image: linear-gradient(to right, black calc(100% - 48px), transparent);
+  /* Desktop: the peeked card is clipped by this frame mid-page, so soften the
+     cut into a fade — a hard slice floating in space reads as a bug. */
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 64px), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - 64px), transparent);
 }
 
-/* The container is focusable (tabIndex=0) so arrow keys drive only the focused
+/* The container is focusable (tabIndex=0) so arrow keys can drive a specific
    carousel. Show a ring for keyboard focus only — not on click/tap. */
 .carousel-container:focus {
   outline: none;
@@ -37,6 +44,7 @@
 }
 
 .carousel-wrapper {
+  --carousel-step: -66%;
   display: flex;
   will-change: transform;
   width: 100%;
@@ -47,11 +55,10 @@
   touch-action: pan-y;
 }
 
-/* flex-basis here and the -88% step in Carousel.js's translateX MUST match:
-   each swipe advances by one slide width, leaving the next card's 12% visible. */
+/* flex-basis MUST equal the magnitude of --carousel-step (see header comment). */
 .carousel-item {
   z-index: 48;
-  flex: 0 0 88%;
+  flex: 0 0 66%;
   box-sizing: border-box;
   padding: 0 8px;
   height: auto;
@@ -75,5 +82,13 @@
     box-sizing: border-box;
     -webkit-mask-image: none;
     mask-image: none;
+  }
+
+  /* Slimmer peek on phones: the card needs most of the width for readability. */
+  .carousel-wrapper {
+    --carousel-step: -88%;
+  }
+  .carousel-item {
+    flex-basis: 88%;
   }
 }

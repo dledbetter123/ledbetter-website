@@ -58,6 +58,43 @@ const MainPage = () => {
     });
     return () => cleanups.forEach((c) => c());
   }, []);
+
+  useEffect(() => {
+    // Global arrow keys route to the MOST VISIBLE carousel, so keys "just work"
+    // without focusing anything — but only one carousel moves per press (a
+    // per-instance window listener used to advance both at once).
+    const handleArrowKeys = (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const t = e.target;
+      // Don't steal arrows from typing surfaces (chat input) — and a focused
+      // carousel already handles its own keys via the container's onKeyDown.
+      if (t instanceof Element) {
+        if (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable) return;
+        if (t.closest('.carousel-container')) return;
+      }
+      const pairs = [
+        { el: document.querySelector('.carousel-style'), ref: carouselRef },
+        { el: document.querySelector('.pub-carousel-style'), ref: pubCarouselRef },
+      ];
+      let best = null;
+      let bestVisible = 0;
+      pairs.forEach(({ el, ref }) => {
+        if (!el || !ref.current) return;
+        const r = el.getBoundingClientRect();
+        const visible = Math.max(0, Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0));
+        if (visible > bestVisible) {
+          bestVisible = visible;
+          best = ref;
+        }
+      });
+      if (!best || bestVisible <= 0) return;
+      e.preventDefault();
+      if (e.key === 'ArrowRight') best.current.goToNext();
+      else best.current.goToPrev();
+    };
+    window.addEventListener('keydown', handleArrowKeys);
+    return () => window.removeEventListener('keydown', handleArrowKeys);
+  }, []);
   // Other scroll functions...
 
   // Project descriptions are served directly from each repo's README_portfolio.md

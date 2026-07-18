@@ -116,9 +116,11 @@ const Carousel = forwardRef(({ items }, ref) => {
         onTouchEnd={handleTouchEnd}
         onTransitionEnd={handleTransitionEnd}
         style={{
-          /* -88% per slide, matching .carousel-item's flex-basis (see
-             Carousel.css) — the remaining 12% is the next card's peek. */
-          transform: `translateX(calc(${activeIndex} * -88%))`,
+          /* Step size comes from --carousel-step (Carousel.css), which also
+             sets .carousel-item's flex-basis per breakpoint — wider peek on
+             desktop, slimmer on mobile — so the transform stays in sync with
+             the slide width without duplicating breakpoints in JS. */
+          transform: `translateX(calc(var(--carousel-step, -88%) * ${activeIndex}))`,
           transition: isTransitioning ? 'transform 0.5s ease' : 'none',
         }}
       >
