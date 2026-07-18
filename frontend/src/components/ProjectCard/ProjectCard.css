@@ -36,8 +36,11 @@
 /* ProjectCard.css adjustment for mobile */
 @media (max-width: 600px) {
     .project-card {
-      margin: 20px auto;
-      width: 70%;
+      /* Fill the carousel slide: the next card's peek (see Carousel.css) is the
+         swipe cue now, so the card no longer needs side gutters — full width
+         keeps long descriptions from reading as a narrow column. */
+      margin: 20px 0;
+      width: 100%;
       box-sizing: border-box;
     }
   
