@@ -6,7 +6,7 @@ import { faLinkedin, faGithub, faInstagram } from '@fortawesome/free-brands-svg-
 import { faFileLines, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import TypingText from '../TypingText/TypingText';
 
-const RESUME_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/David_Ledbetter_Resume.pdf';
+const RESUME_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/resume';
 
 const label = { display: 'inline-block' };
 
