@@ -144,21 +144,21 @@ const MainPage = () => {
   };
 
   // SGST & Finsler carry inline descriptions (not the repo's README excerpt) so
-  // they can point readers to LedbetterLM, which reads the full public repos
-  // live and can go far deeper than the short public excerpt. Click still opens
-  // the repo.
+  // the card reads as a research summary rather than a README dump. Both repos
+  // are public and ungated — LedbetterLM reads their real code live, and a click
+  // still opens the repo.
   const SgstProjectDetails = {
     title: "Sparse Geometric Signal Transport",
     githubUrl: "https://github.com/dledbetter123/SparseGeometricSignalTransport",
     description:
-      "A geometric theory of the transformer: attention as parallel transport on a fiber bundle, not an O(T²) tax, with tokens as sparse Fourier constellations. It never beat GPT outright, but it surfaced a performant, drop-in curvature-based positional encoding worth further study. The repo shows only an excerpt; ask LedbetterLM below for the full story →",
+      "A geometric theory of the transformer: attention as parallel transport on a fiber bundle, not an O(T²) tax, with tokens as sparse Fourier constellations. It never beat GPT outright, but it surfaced a performant, drop-in curvature-based positional encoding worth further study. Open the repo for the code, or ask LedbetterLM below to walk you through it →",
   };
 
   const FinslerProjectDetails = {
     title: "The Finsler Transformer",
     githubUrl: "https://github.com/dledbetter123/LedbetterFinslerTransformer",
     description:
-      "What if attention isn't computed, but a curvature you move through? The Finsler Transformer swaps O(T²) attention for geodesic flow on a learned manifold, where a sentence is a geodesic and meaning is holonomy, aiming at O(T) generation grounded in differential geometry. The repo shows only an excerpt; ask LedbetterLM below for the full story →",
+      "What if attention isn't computed, but a curvature you move through? The Finsler Transformer swaps O(T²) attention for geodesic flow on a learned manifold, where a sentence is a geodesic and meaning is holonomy, aiming at O(T) generation grounded in differential geometry. Open the repo for the code, or ask LedbetterLM below to walk you through it →",
   };
 
   // Publications & presentations — not repo-backed, so these use PublicationCard.
