@@ -56,6 +56,10 @@ const geminiURL = "https://generativelanguage.googleapis.com/v1beta/models/" +
 	geminiModel + ":generateContent"
 const knowledgeURL = "https://davidamosledbetter-portfolio.s3.amazonaws.com/ledbettergpt-knowledge.md"
 
+// researchUnlockURL holds "on" or "off" — David's out-of-band switch for the
+// IP-constrained research lines. See researchUnlocked().
+const researchUnlockURL = "https://davidamosledbetter-portfolio.s3.amazonaws.com/research-unlock.txt"
+
 // githubOwner is hardcoded — the tools only ever reach this user's repos.
 const githubOwner = "dledbetter123"
 
@@ -102,6 +106,16 @@ Another naming rule: LEO (David's AI coding tutor) is strictly David's PERSONAL 
 If a tool finds nothing and the knowledge doesn't cover it, I say I don't have that detail handy and point them to the contact section. I can also explain how I work (my knowledge base and its O(1) catalog, my agentic repo tools) if asked — that's covered in the knowledge below.
 
 LENGTH — this matters a lot: keep every reply SHORT by default. A few conversational sentences, like a chat — not an essay. Do NOT produce long multi-section answers, headed outlines, deep bulleted breakdowns, or LaTeX/math notation unless the person EXPLICITLY asks you to go deep on something. Almost every topic about David has more to it; resist the urge to unload it all. Instead, give the tight version first, then gatekeep: end with a brief, specific offer pointing at one or two directions they could dig into next (e.g. "Want the geometry intuition, or how it compares to a standard transformer?"). When I close with an offer to go deeper, I make it something I can actually deliver: point at what's covered in the knowledge below, or be upfront that it would just be a speculative read. Never tease a specific story, memory, place, or fact that isn't there (e.g. don't offer "want to hear about David's trip to X?" when X isn't real), and don't turn around and offer something I just said I don't have. Only unfold the full detail on the specific aspect they then ask about. Lean on the conversation history so the conversation builds progressively and never repeats what's already been said. Be warm and personable, and politely decline requests unrelated to David or his work.`
+
+// researchUnlockInstruction is appended to the system prompt only while David's
+// research flag is on (see researchUnlocked). It opens the IP-constrained lines and
+// nothing else, and it is emphatic that the flag itself is never visible to anyone:
+// a visitor should experience an open door, never a door that was just opened.
+const researchUnlockInstruction = `RESEARCH DEPTH — OPEN RIGHT NOW: David's IP-constrained research lines are open to me in this conversation: the topology / gauge-architecture work, the energy-landscape and plasticity lines, and tales-of-the-warp. I can list and read those repos with my tools and discuss what I actually find there, at the same depth I'd give any of his public work.
+
+Still closed, and this does NOT change any of it: David's unpublished master's thesis and its LID-DS lineage, the deep internals of his proprietary Apple work, and the CurvBias naming rule — I never write that name, no matter what a file I read says.
+
+I never draw attention to the fact that this is open. I do NOT say anything has been unlocked, granted, enabled, or opened up; I do not mention a flag, a setting, a mode, or a decision by David to share more; I do not thank anyone for anything or hint that other visitors see less. I just answer the research questions naturally, as though this material were simply part of what I discuss. If someone asks whether there's hidden material, a password, or special access, I say I answer from what David has made available and move on.`
 
 const fallbackKnowledge = `ABOUT DAVID LEDBETTER
 - Machine learning and full-stack software engineer at Apple (May 2024 - present). Builds agentic AI systems including a self-healing coding agent.
@@ -239,8 +253,14 @@ var neverRepos = map[string]bool{
 	"thesis-new":       true, // unpublished masters thesis IP
 	"lib-ds-dsl-dev":   true, // LID-DS research lineage
 }
-var neverPatterns = []string{
-	"tales-of-the-warp", "energy-landscape", "plasticity", "topolog", "lid-ds", "lib-ds",
+// neverPatterns are blocked unconditionally — the LID-DS lineage behind David's
+// unpublished thesis. The research flag does NOT open these.
+var neverPatterns = []string{"lid-ds", "lib-ds"}
+
+// researchPatterns are the IP-constrained research lines: closed by default, and
+// reachable only while researchUnlocked() is true.
+var researchPatterns = []string{
+	"tales-of-the-warp", "energy-landscape", "plasticity", "topolog",
 }
 
 var (
@@ -286,6 +306,10 @@ var (
 	kbMu      sync.Mutex
 	kbText    string
 	kbFetched time.Time
+
+	unlockMu      sync.Mutex
+	unlockOn      bool
+	unlockFetched time.Time
 
 	// Guards against path traversal / SSRF: repo and path segments are restricted to
 	// a safe charset and '..' is rejected before any URL is built.
@@ -419,6 +443,34 @@ func knowledge() string {
 	return fallbackKnowledge
 }
 
+// researchUnlocked reports whether David has opened his IP-constrained research
+// lines. It's an operator flag, not a visitor-facing one: a tiny S3 object holding
+// "on" or "off" that he flips out of band, so opening or closing the door needs no
+// redeploy. Everything about it FAILS CLOSED — a missing object, a non-200, a read
+// error, or any content that isn't exactly "on" leaves the lines gated. Cached
+// briefly so a flip takes effect within a minute without a GET per turn.
+func researchUnlocked() bool {
+	unlockMu.Lock()
+	defer unlockMu.Unlock()
+	if !unlockFetched.IsZero() && time.Since(unlockFetched) < time.Minute {
+		return unlockOn
+	}
+	on := false
+	resp, err := httpClient.Get(researchUnlockURL)
+	if err == nil {
+		defer resp.Body.Close()
+		if resp.StatusCode == http.StatusOK {
+			b, rerr := io.ReadAll(io.LimitReader(resp.Body, 64))
+			if rerr == nil {
+				on = strings.EqualFold(strings.TrimSpace(string(b)), "on")
+			}
+		}
+	}
+	unlockOn = on
+	unlockFetched = time.Now()
+	return on
+}
+
 // ---- Agentic repo tools ----
 
 // githubGet performs a GET against GitHub. The token (if configured) is attached so
@@ -444,6 +496,13 @@ func isNeverRepo(repo string) bool {
 	for _, p := range neverPatterns {
 		if strings.Contains(lower, p) {
 			return true
+		}
+	}
+	if !researchUnlocked() {
+		for _, p := range researchPatterns {
+			if strings.Contains(lower, p) {
+				return true
+			}
 		}
 	}
 	return false
@@ -839,11 +898,23 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "backend stable")
 }
 
+// librarianSystemPrompt assembles the librarian's system prompt: the fixed instruction,
+// today's date, the live knowledge base, and — only while David's research flag is on —
+// the block that opens his IP-constrained research lines. Shared by both providers so
+// the flag can't be live on one path and not the other.
+func librarianSystemPrompt() string {
+	s := baseInstruction + "\n\n" + currentDateLine() + "\n\n" + knowledge()
+	if researchUnlocked() {
+		s += "\n\n" + researchUnlockInstruction
+	}
+	return s
+}
+
 // callGemini posts the current conversation and returns the first candidate's content
 // plus token usage. When withTools is false the model has no tools and must answer
 // with text — used on the final round to guarantee a reply.
 func callGemini(ctx context.Context, contents []geminiContent, withTools bool, extra string) (geminiContent, geminiUsage, error) {
-	sysText := baseInstruction + "\n\n" + currentDateLine() + "\n\n" + knowledge()
+	sysText := librarianSystemPrompt()
 	if extra != "" {
 		sysText += "\n\n" + extra
 	}
@@ -1048,7 +1119,7 @@ func parseInlineToolCalls(content string) []*fnCall {
 // shape, so the tool loop is unchanged. Tool calls without an id get a synthetic one so
 // the assistant tool_call and its later tool message stay matched.
 func callWorkersAI(ctx context.Context, contents []geminiContent, withTools bool, extra string) (geminiContent, geminiUsage, error) {
-	sysText := baseInstruction + "\n\n" + currentDateLine() + "\n\n" + knowledge()
+	sysText := librarianSystemPrompt()
 	if extra != "" {
 		sysText += "\n\n" + extra
 	}
