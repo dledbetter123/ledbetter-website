@@ -48,12 +48,23 @@ import (
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 )
 
-// gemini-pro-latest: the most advanced GA model. The tool loop is capped (see
-// maxToolRounds) so a multi-round turn still fits inside the 30s API Gateway limit.
-const geminiModel = "gemini-pro-latest"
+// geminiModel is used by BOTH the chat fallback and the cataloguer's tool loop. The tool
+// loop is capped (see maxToolRounds) so a multi-round turn still fits inside the 30s API
+// Gateway limit.
+//
+// NOT "gemini-pro-latest" any more: on 2026-09-09 that alias moved onto gemini-3.1-pro,
+// whose free-tier limit is 0 — not exhausted, nonexistent — so every call 429'd. That took
+// out the cold-start fallback AND, silently, the entire cataloguer. gemini-flash-lite-latest
+// has a working free tier and still emits functionCall parts, which the cataloguer requires.
+//
+// A var, not a const, so GEMINI_MODEL can override it: the next time an alias moves this is a
+// config flip instead of a deploy. Change the GEMINI_USD_* rates alongside it.
+var geminiModel = "gemini-flash-lite-latest"
 
-const geminiURL = "https://generativelanguage.googleapis.com/v1beta/models/" +
-	geminiModel + ":generateContent"
+func geminiEndpoint() string {
+	return "https://generativelanguage.googleapis.com/v1beta/models/" + geminiModel + ":generateContent"
+}
+
 const knowledgeURL = "https://davidamosledbetter-portfolio.s3.amazonaws.com/ledbettergpt-knowledge.md"
 
 // researchUnlockURL holds "on" or "off" — David's out-of-band switch for the
@@ -147,11 +158,17 @@ const (
 	// "functionally free" while the day's cumulative neuron usage stays under this.
 	freeTierNeuronsPerDay = 10_000
 
-	// Cost caps, in micro-USD (1 USD = 1_000_000). gemini-pro-latest pricing below.
+	// Cost caps, in micro-USD (1 USD = 1_000_000).
 	sessionCostCapMicro = 5_000_000  // $5.00 per browser session
 	globalCostCapMicro  = 25_000_000 // $25.00 per day across everyone (absolute backstop)
-	usdInputPerMTok     = 1.25       // $ / 1M input tokens
-	usdOutputPerMTok    = 10.0       // $ / 1M output tokens (includes thinking tokens)
+)
+
+// Gemini token rates, matched to geminiModel (flash-lite). These MUST move whenever the
+// model does or the cost caps silently stop meaning what they say — hence the env
+// overrides, so a model flip and its rates are one config change.
+var (
+	usdInputPerMTok  = 0.30 // $ / 1M input tokens
+	usdOutputPerMTok = 2.50 // $ / 1M output tokens (includes thinking tokens)
 )
 
 type chatTurn struct {
@@ -257,6 +274,7 @@ var neverRepos = map[string]bool{
 	"thesis-new":       true, // unpublished masters thesis IP
 	"lib-ds-dsl-dev":   true, // LID-DS research lineage
 }
+
 // neverPatterns are blocked unconditionally — the LID-DS lineage behind David's
 // unpublished thesis. The research flag does NOT open these.
 var neverPatterns = []string{"lid-ds", "lib-ds"}
@@ -353,6 +371,15 @@ func init() {
 	// the WAI rate envs let you switch models / keep cost accounting accurate per model.
 	if p := strings.ToLower(strings.TrimSpace(os.Getenv("LLM_PROVIDER"))); p != "" {
 		llmProvider = p
+	}
+	if m := strings.TrimSpace(os.Getenv("GEMINI_MODEL")); m != "" {
+		geminiModel = m
+	}
+	if v, err := strconv.ParseFloat(os.Getenv("GEMINI_USD_IN_PER_MTOK"), 64); err == nil && v > 0 {
+		usdInputPerMTok = v
+	}
+	if v, err := strconv.ParseFloat(os.Getenv("GEMINI_USD_OUT_PER_MTOK"), 64); err == nil && v > 0 {
+		usdOutputPerMTok = v
 	}
 	cfAccountID = os.Getenv("CF_ACCOUNT_ID")
 	if m := strings.TrimSpace(os.Getenv("WORKERS_AI_MODEL")); m != "" {
@@ -943,7 +970,7 @@ func geminiRaw(ctx context.Context, sysText string, contents []geminiContent, wi
 			// calls on this model. Default adaptive thinking is required.
 		},
 	})
-	greq, _ := http.NewRequestWithContext(ctx, "POST", geminiURL, bytes.NewReader(reqBody))
+	greq, _ := http.NewRequestWithContext(ctx, "POST", geminiEndpoint(), bytes.NewReader(reqBody))
 	greq.Header.Set("Content-Type", "application/json")
 	greq.Header.Set("X-goog-api-key", geminiKey)
 	resp, err := httpClient.Do(greq)

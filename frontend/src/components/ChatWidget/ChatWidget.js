@@ -48,10 +48,17 @@ const shuffled = (arr) => {
 };
 
 // One-line summary shown when a librarian gather collapses — derived from its log.
+// A gather that read nothing must NOT claim it "pulled the code details": when the
+// cataloguer's model was down, that line was the only thing the visitor saw, and it
+// reported success over an empty fact sheet. The backend marks a dead gather with
+// catalogFailedStatus (cataloguer.go); anything else with zero reads is an honest miss.
 const gatherSummary = (log = []) => {
   const reads = log.filter((l) => /^Reading /i.test(l)).length;
+  if (log.some((l) => /^Couldn't reach the code/i.test(l))) {
+    return "Couldn't reach the code this time — answering from the knowledge base.";
+  }
   if (reads > 0) return `Pulled the code details — read ${reads} file${reads > 1 ? 's' : ''} from the library.`;
-  return 'Pulled the code details from the library.';
+  return 'Checked the library — no code details to add.';
 };
 
 // LedbetterLM — a small chat assistant that streams answers about David from the

@@ -169,6 +169,7 @@ func runCataloguer(ctx context.Context, session, message string) {
 
 	start := time.Now()
 	var sheet strings.Builder
+	var gatherErr error   // a gather that DIED must never be served as a gather that found nothing
 	var costMicros int64  // Gemini cost of this gather, surfaced in the notification email
 	var activity []string // human-readable log of what the librarian explored (for the email)
 	logStep := func(step string) {
@@ -186,7 +187,8 @@ func runCataloguer(ctx context.Context, session, message string) {
 		mc, usage, err := geminiRaw(ctx, sys, contents, withTools)
 		costMicros += costMicro(usage)
 		if err != nil {
-			fmt.Printf("cataloguer gemini error (round %d): %v\n", round, err)
+			gatherErr = err
+			fmt.Printf("cataloguer FAILED (round %d, model %s): %v\n", round, geminiModel, err)
 			break
 		}
 		var calls []*fnCall
@@ -222,17 +224,44 @@ func runCataloguer(ctx context.Context, session, message string) {
 	if len(facts) > catalogMaxBytes {
 		facts = facts[:catalogMaxBytes] + "\n…(truncated)"
 	}
-	if facts == "" {
-		facts = "(the cataloguer found no specific code context for this topic)"
+	// A failed gather and an empty gather are NOT the same thing, and the old code served
+	// both as "found no specific code context" with a cheerful "Done" — so a dead Gemini key
+	// read to the visitor (and to the model) as "I looked at the code and there was nothing
+	// there". Keep them distinguishable all the way to the UI.
+	outcome := "Done — putting it together."
+	switch {
+	case gatherErr != nil:
+		facts = "(the cataloguer FAILED and read NO code this time: " + truncErr(gatherErr) +
+			". Answer from the knowledge base only, and tell the visitor you could not open the code on this turn.)"
+		outcome = catalogFailedStatus
+	case facts == "":
+		facts = "(the cataloguer ran but found no specific code context for this topic)"
 	}
 	putData(ctx, "catalog#"+session, facts, catalogTTLSec)
 	putData(ctx, "catalogstate#"+session, "ready", catalogTTLSec)
 	putData(ctx, "catalogcost#"+session, strconv.FormatInt(costMicros, 10), catalogTTLSec)
-	setCatalogStatus(ctx, session, "Done — putting it together.")
+	setCatalogStatus(ctx, session, outcome)
+	if gatherErr != nil {
+		fmt.Printf("cataloguer UNGROUNDED for session %s: served no code after %s (%v)\n", session, time.Since(start), gatherErr)
+	}
 	fmt.Printf("cataloguer done for session %s: %d bytes, $%.4f, in %s\n", session, len(facts), float64(costMicros)/1e6, time.Since(start))
 	// Surface the whole gather in the notification thread: what it explored, the fact
 	// sheet it compiled, cost, and time — threaded into the conversation's email.
 	emailCatalogue(session, message, activity, facts, costMicros, time.Since(start))
+}
+
+// catalogFailedStatus is the status the frontend keys on to say the gather came back
+// empty-handed instead of claiming it pulled code (see gatherSummary in ChatWidget.js).
+const catalogFailedStatus = "Couldn't reach the code this time."
+
+// truncErr keeps a provider's error readable in a status line and in the model's context —
+// a raw Gemini 429 body is a screenful of quota JSON.
+func truncErr(err error) string {
+	s := strings.ReplaceAll(err.Error(), "\n", " ")
+	if len(s) > 160 {
+		s = s[:160] + "…"
+	}
+	return s
 }
 
 // setCatalogStatus records the cataloguer's current human-readable activity, polled by the
