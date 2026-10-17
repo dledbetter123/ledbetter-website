@@ -1102,6 +1102,53 @@ var knownToolNames = map[string]bool{"list_my_repos": true, "list_repo_files": t
 // with the args under "arguments" or "parameters". Returns nil unless EVERY entry names
 // a known tool (so a normal JSON answer is left as prose).
 func parseInlineToolCalls(content string) []*fnCall {
+	if calls := parseJSONToolCalls(content); len(calls) > 0 {
+		return calls
+	}
+	return parsePythonicToolCalls(content)
+}
+
+// pythonicCallRe / funcNameRe match Llama 4's own tool-call text, which Scout sometimes puts
+// in the content field after a sentence of prose: "[list_my_repos()]",
+// "[read_repo_file(repo=\"x\", path=\"y\")]", or "[func_name=\"list_my_repos\", param1={}]".
+// Measured 2026-10-17: 4 of 6 replies to "What are David's GitHub projects?" did this, and the
+// visitor saw the raw text. Only the three known tool names match, so prose that merely
+// mentions a tool by name (no call syntax) is left alone.
+var (
+	pythonicCallRe = regexp.MustCompile(`\b(list_my_repos|list_repo_files|read_repo_file)\s*\(([^)]*)\)`)
+	funcNameRe     = regexp.MustCompile(`func_name\s*=\s*["'](list_my_repos|list_repo_files|read_repo_file)["']([^\]]*)`)
+	kwargRe        = regexp.MustCompile(`\b(repo|path)\s*=\s*(?:"([^"]*)"|'([^']*)')`)
+)
+
+func parsePythonicToolCalls(content string) []*fnCall {
+	var calls []*fnCall
+	add := func(name, argText string) {
+		args := map[string]interface{}{}
+		for _, m := range kwargRe.FindAllStringSubmatch(argText, -1) {
+			v := m[2]
+			if v == "" {
+				v = m[3]
+			}
+			args[m[1]] = v
+		}
+		for _, c := range calls {
+			if c.Name == name && fmt.Sprint(c.Args) == fmt.Sprint(args) {
+				return
+			}
+		}
+		calls = append(calls, &fnCall{Name: name, Args: args, ID: fmt.Sprintf("call_inline_%d", len(calls))})
+	}
+	for _, m := range pythonicCallRe.FindAllStringSubmatch(content, -1) {
+		add(m[1], m[2])
+	}
+	for _, m := range funcNameRe.FindAllStringSubmatch(content, -1) {
+		add(m[1], m[2])
+	}
+	return calls
+}
+
+// parseJSONToolCalls is the JSON half of parseInlineToolCalls.
+func parseJSONToolCalls(content string) []*fnCall {
 	s := strings.TrimSpace(content)
 	s = strings.TrimSpace(strings.TrimPrefix(s, "[TOOL_CALLS]"))
 	if strings.HasPrefix(s, "```") {

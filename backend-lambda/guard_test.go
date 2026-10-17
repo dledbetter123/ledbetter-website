@@ -79,3 +79,24 @@ func TestScrubResearchCode(t *testing.T) {
 		t.Errorf("unclosed research fence not scrubbed")
 	}
 }
+
+func TestParsePythonicToolCalls(t *testing.T) {
+	cases := map[string]string{
+		"I'll list David's GitHub projects. \n\n[func_name=\"list_my_repos\", param1={}, param2={}]": "list_my_repos",
+		"I'll list David's GitHub projects. \n\n[ \n    list_my_repos()\n]\n\nLet me summarize":      "list_my_repos",
+		"Let me read it: [read_repo_file(repo=\"trade-companion\", path=\"backend/base.py\")]":       "read_repo_file",
+	}
+	for in, want := range cases {
+		calls := parseInlineToolCalls(in)
+		if len(calls) != 1 || calls[0].Name != want {
+			t.Errorf("%q: got %+v, want one %s call", in, calls, want)
+		}
+	}
+	rc := parseInlineToolCalls("Let me read it: [read_repo_file(repo=\"trade-companion\", path=\"backend/base.py\")]")
+	if rc[0].Args["repo"] != "trade-companion" || rc[0].Args["path"] != "backend/base.py" {
+		t.Errorf("kwargs not parsed: %+v", rc[0].Args)
+	}
+	if calls := parseInlineToolCalls("I have read-only tools: list_my_repos, list_repo_files and read_repo_file."); len(calls) != 0 {
+		t.Errorf("prose mentioning tools parsed as calls: %+v", calls)
+	}
+}
