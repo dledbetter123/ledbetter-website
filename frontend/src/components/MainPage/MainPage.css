@@ -153,55 +153,21 @@
 }
 
 /* ── Background / content layering ──────────────────────────────────────────
-   The hero image is a single fixed full-screen layer at the BACK of the SPA
-   (z-index 0). Everything you scroll through lives inside .content-layer, which
-   is its own isolated stacking context one level above it (z-index 1). Because
-   the whole content tree is a single layer over the image, no individual section
-   needs to "lift" itself above the image and there are no seams a heading can
-   slip behind. The fixed-position overlays (menuIcon z-1999, NavBar z-2000,
-   ChatWidget z-3000) are siblings of .content-layer at the root, so they still
-   sit above everything. */
-.profilePic {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;   /* fallback for browsers without lvh */
-  height: 100lvh;  /* fill the large viewport with NO overscan: the photo (portrait,
-                      taller-aspect than the viewport) is shown at full height and only
-                      cropped on width — so it's NOT zoomed in. Overscan was removed
-                      because it zoomed the image without reliably covering the iOS
-                      status bar / floating pill (a fixed layer is held inside the
-                      safe-area inset regardless). */
-  object-fit: cover;
-  object-position: center; /* mobile portrait: vertical crop is ~none, so this just centers width */
-  z-index: 0; /* backmost background; content sits above via .content-layer (z-index 1) */
-  filter: brightness(75%); /* resting brightness; JS dims this to 0 (black) on scroll */
-  will-change: filter; /* keep this big layer GPU-promoted so the scroll fade is cheap */
-  pointer-events: none; /* purely decorative — never intercept clicks/scroll */
-}
-
-/* Desktop / widescreen: the viewport is landscape, so cover crops the portrait photo
-   top-and-bottom. Anchor that crop to the TOP so the face/head stay visible instead of
-   being cut off at the vertical center. Triggers once the viewport is wide enough that
-   vertical cropping actually happens (aspect ratio >= the photo's ~2:3). */
-@media (min-aspect-ratio: 3/4) {
-  .profilePic {
-    object-position: 50% top;
-  }
-}
-
-/* No hero vignette / tint strips: this is the full-bleed-photo design. The photo
-   fills the screen edge-to-edge under iOS 26's translucent Liquid Glass bars, and
-   the floating search pill tints dark on its own from <body>'s black background-color
-   (Safari 26 samples only solid background-color, never the hero <img>). See the
-   .profilePic overscan above for the edge-to-edge fill, and the reference memory
-   reference_ios26_safari_theme_color for the tinting mechanism. */
+   The background is a single fixed full-screen layer at the BACK of the SPA
+   (z-index 0): the GlyphWall canvas (see GlyphWall.css). Everything you scroll
+   through lives inside .content-layer, which is its own isolated stacking context
+   one level above it (z-index 1). Because the whole content tree is a single layer
+   over the wall, no individual section needs to "lift" itself above it and there
+   are no seams a heading can slip behind. The fixed-position overlays (menuIcon
+   z-1999, NavBar z-2000, ChatWidget z-3000) are siblings of .content-layer at the
+   root, so they still sit above everything. <body> stays solid black, which is
+   what Safari 26 samples to tint its floating bars (see the reference memory
+   reference_ios26_safari_theme_color). */
 
 .content-layer {
   position: relative;
-  z-index: 1;          /* whole content tree paints above the z-0 background image */
+  z-index: 1;          /* whole content tree paints above the z-0 background wall */
   isolation: isolate;  /* one self-contained stacking context — kills the iOS
-                          fixed+filter punch-through that let the image paint over
+                          fixed-layer punch-through that let the background paint over
                           content regardless of per-section z-index */
 }

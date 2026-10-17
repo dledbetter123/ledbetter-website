@@ -1,7 +1,7 @@
 // "Decode" shimmer: each character flickers through random Greek + Arabic glyphs
 // and settles (left-to-right, staggered) onto the real text within ~`duration` ms.
 
-const SCRAMBLE_CHARS =
+export const SCRAMBLE_CHARS =
   'αβγδεζηθικλμνξοπρστυφχψως' +        // full lowercase Greek (+ final sigma)
   'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ' +        // full uppercase Greek
   'ابتثجحخدذرزسشصضطظعغفقكلمنهوي';      // Arabic

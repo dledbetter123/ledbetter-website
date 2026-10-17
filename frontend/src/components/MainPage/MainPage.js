@@ -10,7 +10,7 @@ import ProjectCard from '../ProjectCard/ProjectCard';
 import PublicationCard from '../PublicationCard/PublicationCard';
 import NavBar from '../NavBar/NavBar'; // Adjust the import path as necessary
 import ChatWidget from '../ChatWidget/ChatWidget';
-import heroImg from '../IntroPage/images/hero.jpg';
+import GlyphWall from '../GlyphWall/GlyphWall';
 import "../MainPage/MainPage.css"
 
 const MainPage = () => {
@@ -131,14 +131,14 @@ const MainPage = () => {
   const SelfHealProjectDetails = {
     title: "Self-Healing Coding Agent (Apple)",
     description:
-      "My flagship project at Apple, on the Release Validation team: an agentic system that automatically repairs code. I built a custom in-house harness (built on LangGraph) that orchestrates a frontier model — Anthropic Claude — for the repair reasoning alongside a local Qwen model that handles tool calling to cut token costs, and I modeled code exploration as a partially observable Markov decision process so it acts on true divergences and ignores false error reports. Around it I built an in-house distributed task queue (replacing Celery) with IPC, state management, and episode tracking, an async probe manager that feeds live metrics into the agent without latency, and a RAG pipeline that marshals those metrics into the model's context. It's proprietary Apple work, so there's no public repo — ask LedbetterLM below for the high-level story →",
+      "My flagship project at Apple, on the Release Validation team: an agentic system that automatically repairs code. I built a custom in-house harness (built on LangGraph) that orchestrates a frontier model — Anthropic Claude — for the repair reasoning alongside a local Gemma 4 model that handles tool calling to cut token costs, and I modeled code exploration as a partially observable Markov decision process so it acts on true divergences and ignores false error reports. Around it I built an in-house distributed task queue (replacing Celery) with IPC, state management, and episode tracking, an async probe manager that feeds live metrics into the agent without latency, and a RAG pipeline that marshals those metrics into the model's context. It's proprietary Apple work, so there's no public repo — ask LedbetterLM below for the high-level story →",
   };
 
-  // LEO is my personal project (private repos, no public README to fetch), so this card
+  // Pathion is my personal project (private repos, no public README to fetch), so this card
   // carries its own description and links to the live product.
   const LeoProjectDetails = {
-    title: "LEO — In-Browser AI Coding Tutor",
-    url: "https://learnwleo.com",
+    title: "Pathion — In-Browser AI Coding Tutor",
+    url: "https://pathion.dev",
     description:
       "A browser-native learn-to-code platform I built, where students learn to code and prep for tech interviews with all code running on-device in WebAssembly at zero marginal cost. I built the AI layer end to end: an in-browser LLM tutor (WebNN/WebGPU), the learning-data instrumentation behind it, and an adaptive ELO that scores real skill from every attempt. Ask LedbetterLM below to go deeper →",
   };
@@ -287,19 +287,11 @@ const MainPage = () => {
 
   return (
     <div className='main-container'>
-      {/* Single full-screen background layer behind the entire SPA (z-index 0). All
+      {/* Single full-screen background layer behind the entire SPA (z-index 0): a
+          faint wall of flipping green glyphs, swept by a shimmer on scroll. All
           content lives in .content-layer (an isolated stacking context at z-index 1)
-          so the whole content tree is one solid layer above this image — no per-section
-          z-index lifts, no seams for a heading to fall through. IntroPage drives this
-          image's brightness/pan on scroll via document.querySelector('.profilePic'). */}
-      {/* Full-bleed hero: the photo lays out edge-to-edge under iOS 26's translucent
-          Liquid Glass bars (via viewport-fit=cover + the overscan in .profilePic), so
-          it fills the whole screen and shows through the floating search pill / behind
-          the status bar — no black bars, no seam. We deliberately do NOT add a vignette
-          or solid-color tint strips here: <body> is black, and since Safari 26 samples
-          only a solid background-color (never the hero <img>), the floating pill tints
-          to a dark translucent glass over the photo on its own. */}
-      <img src={heroImg} alt="" aria-hidden="true" className="profilePic" />
+          so the whole content tree is one solid layer above it. */}
+      <GlyphWall />
       <NavBar
         ref={navBarRef}
         isOpen={isNavbarOpen}

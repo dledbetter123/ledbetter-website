@@ -3,11 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import './IntroPage.css';
 
-// The fixed hero image now lives in MainPage as a single full-screen background
-// layer behind the whole SPA (see MainPage's .profilePic / .content-layer). This
-// component still drives the image's brightness/pan on scroll via
-// document.querySelector('.profilePic').
-
 // The intro paragraph is hosted in S3 so it can be edited without redeploying the
 // site. Update s3://davidamosledbetter-portfolio/intro.txt and the change shows on
 // the next page load. The constant below is the offline fallback if the fetch fails.
@@ -91,99 +86,6 @@ const IntroPage = () => {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [welcomeDone, introParagraph]);
-
-  useEffect(() => {
-    const profilePic = document.querySelector('.profilePic');
-    if (!profilePic) return;
-
-    // Coalesce scroll work to one update per animation frame. The hero is a large
-    // fixed layer with a brightness filter (and, on widescreen, a panning
-    // object-position); writing those on every raw scroll event repaints the whole
-    // layer and drops frames on mobile Safari. rAF-throttling + skipping redundant
-    // writes keeps it smooth.
-    let ticking = false;
-    let lastBrightness = -1;
-    let lastPan = -1;
-
-    // How far through the image you scroll before it's fully gone, as a fraction of
-    // the image's pannable length (the part that overflows the viewport on widescreen).
-    const VISIBLE_FRACTION = 0.75; // "scroll up ~75% of its length before disappearing"
-
-    const update = () => {
-      ticking = false;
-
-      const s = window.scrollY;
-      const W = window.innerWidth;
-      const H = window.innerHeight;
-      // Natural dimensions of the hero image (fallback to known size before load).
-      const natW = profilePic.naturalWidth || 2001;
-      const natH = profilePic.naturalHeight || 3000;
-
-      // With object-fit: cover, how much taller than the viewport the scaled image is
-      // — i.e. the vertical length we can pan through. ~0 on a portrait phone (the
-      // image is only cropped on width); large on a landscape/desktop viewport.
-      const scale = Math.max(W / natW, H / natH);
-      const overflowY = Math.max(0, natH * scale - H);
-
-      const base = 0.75; // resting brightness
-      let brightness = base;
-      let panPct = -1; // -1 = don't touch object-position (let CSS own it, mobile)
-
-      if (overflowY > 1) {
-        // Widescreen / desktop: scroll THROUGH the photo. Start at the top (face/head
-        // visible) and pan object-position downward as you scroll; stay visible until
-        // you've panned ~VISIBLE_FRACTION of the image, then fade to black over the
-        // remainder. This is the desktop "scroll up ~75% before it disappears" feel.
-        panPct = Math.min(100, (s / overflowY) * 100);
-        const fadeStart = VISIBLE_FRACTION * overflowY;
-        const fadeEnd = overflowY;
-        if (s >= fadeEnd) {
-          brightness = 0;
-        } else if (s > fadeStart) {
-          brightness = base * (1 - (s - fadeStart) / (fadeEnd - fadeStart));
-        }
-      } else {
-        // Mobile portrait: no vertical overflow to pan (object-position owned by CSS).
-        // Fade relative to total page scroll, as before — show through the top 8% of
-        // the scroll range, fade over the next 5%, fully black past 13%.
-        const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-        const showUntil = 0.08 * maxScroll;
-        const blackBy = 0.13 * maxScroll;
-        if (s >= blackBy) {
-          brightness = 0;
-        } else if (s > showUntil) {
-          brightness = base * (1 - (s - showUntil) / (blackBy - showUntil));
-        }
-      }
-
-      // Only touch the DOM when a value actually changed — avoids redundant repaints
-      // of the large fixed hero layer on frames where nothing moved.
-      if (panPct !== -1 && panPct !== lastPan) {
-        profilePic.style.objectPosition = `50% ${panPct}%`;
-        lastPan = panPct;
-      }
-      if (brightness !== lastBrightness) {
-        profilePic.style.filter = `brightness(${brightness})`;
-        lastBrightness = brightness;
-      }
-    };
-
-    const onScroll = () => {
-      if (!ticking) {
-        ticking = true;
-        window.requestAnimationFrame(update);
-      }
-    };
-
-    update(); // set the initial resting state
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll); // re-evaluate on rotate / window resize
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-    };
-  }, []);
 
   useEffect(() => {
     // will need to use the actual IP address or domain of backend service when in production

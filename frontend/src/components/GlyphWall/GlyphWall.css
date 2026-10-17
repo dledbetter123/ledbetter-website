@@ -1,0 +1,16 @@
+/* ledbetter-website/frontend/src/components/GlyphWall/GlyphWall.css */
+
+/* Fixed full-screen canvas at the BACK of the SPA (z-index 0). Content scrolls above
+   it inside .content-layer (z-index 1); see MainPage.css. Sized to the large viewport
+   so iOS URL-bar show/hide never resizes (and so never rebuilds) the wall. */
+.glyphWall {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100vw;
+  height: 100vh;   /* fallback for browsers without lvh */
+  height: 100lvh;
+  z-index: 0;
+  pointer-events: none; /* purely decorative: never intercept clicks/scroll */
+}

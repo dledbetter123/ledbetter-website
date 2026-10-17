@@ -6,7 +6,7 @@
     align-items: stretch; /* let .content span the full height */
     height: 100vh; /* Full viewport height */
     color: white; /* White text */
-    background-color: transparent; /* the fixed hero + black body are the backdrop */
+    background-color: transparent; /* the fixed glyph wall + black body are the backdrop */
     /* image fills to the bezels (viewport-fit=cover); keep the TEXT out of the safe areas */
     padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
              max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
@@ -74,17 +74,11 @@
 }
 
 
-/* .profilePic (the fixed full-screen hero) now lives in MainPage.css, since the
-   image is rendered by MainPage as the SPA-wide background layer rather than by
-   this section. */
-
 @media (max-width: 600px) {
   .introPage {
     justify-content: center; /* Align content to the top for mobile */
     align-items: center;
   }
-
-  /* .profilePic inherits the overscan base rule (fixed, bleeds past every edge). */
 
   .introPage .content {
     max-width: 600px; /* Maximum width of the content */
