@@ -123,7 +123,7 @@ const MainPage = () => {
     title: "This Website!",
     githubUrl: "https://github.com/dledbetter123/ledbetter-website",
     description:
-      "The site you're on, and the AI you're talking to. It's a fully serverless AWS build: a React front end on S3 behind CloudFront, with one Go Lambda behind API Gateway powering LedbetterLM, my AI librarian, grounded on a knowledge base I maintain. It runs a two-model design — a fast, cheap worker model (Cloudflare Workers AI, with Gemini as a warm-start fallback) carries the conversation, and when you ask something that needs real code it hands off to a \"cataloguer\": an agentic pass that explores my GitHub repos live, compiles the actual code into context, and hands it back so answers are grounded, not guessed (you'll watch the handoff happen). Every message is decoupled onto an SQS FIFO queue and processed by an async worker that durably logs the turn and threads a notification — idempotent and strictly ordered per conversation. Ask LedbetterLM below how any of it works →",
+      "The site you're on, and the AI you're talking to. It's serverless AWS: React on S3 behind CloudFront, and one Go Lambda running LedbetterLM, my AI librarian. A fast model chats, and code questions go to an agent that reads my GitHub repos live. Ask it how it works below →",
   };
 
   // Proprietary Apple work — no public repo, so the card carries its own description and
@@ -131,7 +131,7 @@ const MainPage = () => {
   const SelfHealProjectDetails = {
     title: "Self-Healing Coding Agent (Apple)",
     description:
-      "My flagship project at Apple, on the Release Validation team: an agentic system that automatically repairs code. I built a custom in-house harness modeled after LangGraph that orchestrates a frontier model — Anthropic Claude — for the repair reasoning alongside a local Gemma 4 model that handles tool calling to cut token costs, and I modeled code exploration as a partially observable Markov decision process so it acts on true divergences and ignores false error reports. Around it I built an in-house distributed task queue (replacing Celery) with IPC, state management, and episode tracking, an async probe manager that feeds live metrics into the agent without latency, and a RAG pipeline that marshals those metrics into the model's context. It's proprietary Apple work, so there's no public repo — ask LedbetterLM below for the high-level story →",
+      "My flagship project at Apple, on Release Validation: an agent that repairs code on its own. Claude does the repair reasoning, a local Gemma 4 model handles tool calls to cut token cost, and an in-house harness and task queue run it all. It's proprietary, so ask LedbetterLM below →",
   };
 
   // Pathion is my personal project (private repos, no public README to fetch), so this card
@@ -140,7 +140,7 @@ const MainPage = () => {
     title: "Pathion — In-Browser AI Coding Tutor",
     url: "https://pathion.dev",
     description:
-      "A browser-native learn-to-code platform I built, where students learn to code and prep for tech interviews with all code running on-device in WebAssembly at zero marginal cost. I built the AI layer end to end: an in-browser LLM tutor (WebNN/WebGPU), the learning-data instrumentation behind it, and an adaptive ELO that scores real skill from every attempt. Ask LedbetterLM below to go deeper →",
+      "A learn-to-code and interview-prep platform where all code runs on-device in WebAssembly. I built the AI layer end to end: an in-browser LLM tutor (WebNN/WebGPU), the learning-data pipeline, and an adaptive Elo that rates skill from every attempt. Ask LedbetterLM below →",
   };
 
   // SGST & Finsler carry inline descriptions (not the repo's README excerpt) so
@@ -151,14 +151,14 @@ const MainPage = () => {
     title: "Sparse Geometric Signal Transport",
     githubUrl: "https://github.com/dledbetter123/SparseGeometricSignalTransport",
     description:
-      "A geometric theory of the transformer: attention as parallel transport on a fiber bundle, not an O(T²) tax, with tokens as sparse Fourier constellations. It never beat GPT outright, but it surfaced a performant, drop-in curvature-based positional encoding worth further study. Open the repo for the code, or ask LedbetterLM below to walk you through it →",
+      "A geometric theory of the transformer: attention as parallel transport on a fiber bundle, with tokens as sparse Fourier constellations. It never beat GPT outright, but it produced a drop-in, curvature-based positional encoding worth more study. Open the repo, or ask LedbetterLM below →",
   };
 
   const FinslerProjectDetails = {
     title: "The Finsler Transformer",
     githubUrl: "https://github.com/dledbetter123/LedbetterFinslerTransformer",
     description:
-      "What if attention isn't computed, but a curvature you move through? The Finsler Transformer swaps O(T²) attention for geodesic flow on a learned manifold, where a sentence is a geodesic and meaning is holonomy, aiming at O(T) generation grounded in differential geometry. Open the repo for the code, or ask LedbetterLM below to walk you through it →",
+      "What if attention isn't computed, but a curvature you move through? The Finsler Transformer swaps O(T²) attention for geodesic flow on a learned manifold, where a sentence is a geodesic, aiming at O(T) generation. Open the repo, or ask LedbetterLM below →",
   };
 
   // Publications & presentations — not repo-backed, so these use PublicationCard.
