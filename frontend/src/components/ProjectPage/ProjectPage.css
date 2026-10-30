@@ -89,3 +89,15 @@
   max-height: none;
   margin: 0;
 }
+
+/* Pages with a detail section (the thesis) scroll as a document; the chat sits at the end
+   at a fixed height instead of filling what's left of the viewport. */
+.projectPage.projectPage--long {
+  height: auto;
+  min-height: 100vh;
+}
+.projectPage--long .chatWidget.chatWidget--embedded {
+  flex: 0 0 auto;
+  height: min(80vh, 760px);
+  height: min(80dvh, 760px);
+}

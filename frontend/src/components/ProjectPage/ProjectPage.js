@@ -6,8 +6,13 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import GlyphWall from '../GlyphWall/GlyphWall';
 import ChatWidget from '../ChatWidget/ChatWidget';
 import usePortfolioDescription from '../../hooks/usePortfolioDescription';
+import ThesisDetail from './ThesisDetail';
 import { projectBySlug } from '../../data/projects';
 import './ProjectPage.css';
+import './ThesisDetail.css';
+
+// Extra page sections, keyed by a project's `detail` field (data/projects.js).
+const DETAILS = { thesis: ThesisDetail };
 
 const ProjectPage = () => {
   const { slug } = useParams();
@@ -26,12 +31,15 @@ const ProjectPage = () => {
 
   if (!project) return <Navigate to="/" replace />;
 
+  const Detail = DETAILS[project.detail];
   const greeting = `Hi, I'm LedbetterLM, David Ledbetter's librarian. Ask me anything about ${project.title}: how it works, why he built it, what he learned.`;
 
   return (
     <div className="main-container">
       <GlyphWall />
-      <div className="content-layer projectPage">
+      {/* A page with a detail section is long and scrolls; the chat then gets a fixed
+          height at the end instead of filling the viewport. */}
+      <div className={`content-layer projectPage${Detail ? ' projectPage--long' : ''}`}>
         <Link className="projectPageBack" to="/#portfolio">← All projects</Link>
         <header className="projectPageHeader">
           <h1>{project.title}</h1>
@@ -45,6 +53,7 @@ const ProjectPage = () => {
             )}
           </div>
         </header>
+        {Detail && <Detail />}
         {/* Keyed by slug so moving between projects starts a fresh chat instance. */}
         <ChatWidget
           key={project.slug}

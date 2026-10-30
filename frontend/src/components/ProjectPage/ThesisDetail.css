@@ -1,0 +1,85 @@
+/* Thesis section: abstract, contributions, figures. Same glass panels as the header. */
+
+.thesisDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.thesisBlock {
+  /* These are <section>s; App.css styles every section as a full-height flex row. */
+  display: block;
+  height: auto;
+  background-color: rgba(10, 10, 10, 0.42);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  padding: 20px;
+  color: #fff;
+  line-height: 1.55;
+  overflow-wrap: break-word;
+}
+.thesisBlock h2 {
+  margin: 0 0 12px;
+  color: #0f0;
+  font-size: 20px;
+}
+.thesisBlock p { margin: 0 0 12px; }
+.thesisBlock p:last-child { margin-bottom: 0; }
+
+.thesisMeta {
+  color: rgba(0, 255, 0, 0.7);
+  font-size: 13px;
+}
+.thesisBlock h2.thesisTitle {
+  color: #fff;
+  font-size: clamp(17px, 2.6vw, 22px);
+  line-height: 1.35;
+}
+
+.thesisContribs {
+  margin: 0;
+  padding-left: 22px;
+}
+.thesisContribs li { margin-bottom: 16px; }
+.thesisContribs li:last-child { margin-bottom: 0; }
+.thesisContribs li::marker { color: #0f0; font-weight: bold; }
+.thesisContribs h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: #b6ffb6;
+}
+
+.thesisFigures {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.thesisFigure { margin: 0; }
+/* The figures are print figures on white; a white mat keeps them legible on the dark page. */
+.thesisFigure a {
+  display: block;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px;
+}
+.thesisFigure img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.thesisFigure figcaption {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+}
+.thesisFigure figcaption strong { color: #b6ffb6; }
+
+.thesisChatHeading {
+  margin: 8px 0 0;
+  color: #0f0;
+  font-size: 18px;
+}
+

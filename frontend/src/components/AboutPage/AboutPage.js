@@ -37,7 +37,7 @@ const CONTENT = [
   {
     key: 'b4', type: 'body', sec: 3,
     text:
-      'Before Apple I interned at Cisco Meraki, building dashboard policy-management features with React/Redux and Ruby on Rails, and at Northrop Grumman Space, writing satellite operating-system software in C++ with an agile team. I earned my BS (December 2023, 3.75 GPA) and MS (December 2024) in Computer Science from UMBC, where I was a Meyerhoff Scholar, UMBC Cyber Scholar, and GEM Fellow.',
+      'Before Apple I interned at Cisco Meraki, building dashboard policy-management features with React/Redux and Ruby on Rails, and at Northrop Grumman Space, writing satellite operating-system software in C++ with an agile team. I earned my BS (December 2023, 3.75 GPA) and MS (2026) in Computer Science from UMBC, where I was a Meyerhoff Scholar, UMBC Cyber Scholar, and GEM Fellow.',
   },
   { key: 'h4', type: 'heading', tag: 'h2', sec: 4, text: 'How I work' },
   {

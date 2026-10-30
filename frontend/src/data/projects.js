@@ -12,7 +12,17 @@
 //   description  Inline text, for cards that shouldn't read as a README excerpt or have
 //                no public repo to fetch from.
 //   opener       The question the project page sends to LedbetterLM to start the chat.
+//   detail       Optional extra page section rendered by ProjectPage ('thesis').
 const projects = [
+  {
+    // The full abstract, contributions and figures live in data/thesis.js.
+    slug: 'thesis',
+    title: "Master's Thesis: Lingual-First Host Intrusion Detection",
+    description:
+      'Can a language model catch an attack from a host\'s audit log? I serialize system provenance into a compact, readable language and measure what the representation gives versus what learning adds. The result: frequency counts go surprisingly far, they stop where entities interact, and SENTINEL, a model over named relations, picks up there.',
+    detail: 'thesis',
+    opener: "What is David's master's thesis about, and what did he find?",
+  },
   {
     slug: 'this-website',
     title: 'This Website!',
