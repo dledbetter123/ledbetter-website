@@ -1,7 +1,7 @@
 // frontend/src/components/MainPage/MainPage.js
 
 import React, { useRef, useEffect, useState} from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import IntroPage from '../IntroPage/IntroPage';
 import Carousel from '../SwipeableGridPage/Carousel';
 import AboutPage from '../AboutPage/AboutPage';
@@ -11,10 +11,12 @@ import PublicationCard from '../PublicationCard/PublicationCard';
 import NavBar from '../NavBar/NavBar'; // Adjust the import path as necessary
 import ChatWidget from '../ChatWidget/ChatWidget';
 import GlyphWall from '../GlyphWall/GlyphWall';
+import projects from '../../data/projects';
 import "../MainPage/MainPage.css"
 
 const MainPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isNavbarOpen, setIsNavbarOpen] = useState(false);
   const homeRef = useRef(null);
   const aboutRef = useRef(null);
@@ -95,71 +97,10 @@ const MainPage = () => {
     window.addEventListener('keydown', handleArrowKeys);
     return () => window.removeEventListener('keydown', handleArrowKeys);
   }, []);
-  // Other scroll functions...
-
-  // Project descriptions are served directly from each repo's README_portfolio.md
-  // on GitHub (see ProjectCard). MainPage only needs the title and the repo URL.
-  const CharProjectDetails = {
-    title: "Character Aware Neural Language Model",
-    githubUrl: "https://github.com/dledbetter123/Grad-Assessment",
-  };
-
-  const KernelProjectDetails = {
-    title: "Kernel Mailbox Simulation",
-    githubUrl: "https://github.com/dledbetter123/kernel-bst",
-  };
-
-  const StockProjectDetails = {
-    title: "Algorithmic Trading Companion",
-    githubUrl: "https://github.com/dledbetter123/trade-companion",
-  };
-
-  const NSBEProjectDetails = {
-    title: "NSBE Chapter Website",
-    githubUrl: "https://github.com/dledbetter123/nsbe-website",
-  };
-
-  const LedbetterProjectDetails = {
-    title: "This Website!",
-    githubUrl: "https://github.com/dledbetter123/ledbetter-website",
-    description:
-      "The site you're on, and the AI you're talking to. It's serverless AWS: React on S3 behind CloudFront, and one Go Lambda running LedbetterLM, my AI librarian. A fast model chats, and code questions go to an agent that reads my GitHub repos live. Ask it how it works below →",
-  };
-
-  // Proprietary Apple work — no public repo, so the card carries its own description and
-  // isn't clickable (it points readers to LedbetterLM for the high-level story).
-  const SelfHealProjectDetails = {
-    title: "Self-Healing Coding Agent (Apple)",
-    description:
-      "My flagship project at Apple, on Release Validation: an agent that repairs code on its own. Claude does the repair reasoning, a local Gemma 4 model handles tool calls to cut token cost, and an in-house harness and task queue run it all. It's proprietary, so ask LedbetterLM below →",
-  };
-
-  // Pathion is my personal project (private repos, no public README to fetch), so this card
-  // carries its own description and links to the live product.
-  const LeoProjectDetails = {
-    title: "Pathion — In-Browser AI Coding Tutor",
-    url: "https://pathion.dev",
-    description:
-      "A learn-to-code and interview-prep platform where all code runs on-device in WebAssembly. I built the AI layer end to end: an in-browser LLM tutor (WebNN/WebGPU), the learning-data pipeline, and an adaptive Elo that rates skill from every attempt. Ask LedbetterLM below →",
-  };
-
-  // SGST & Finsler carry inline descriptions (not the repo's README excerpt) so
-  // the card reads as a research summary rather than a README dump. Both repos
-  // are public and ungated — LedbetterLM reads their real code live, and a click
-  // still opens the repo.
-  const SgstProjectDetails = {
-    title: "Sparse Geometric Signal Transport",
-    githubUrl: "https://github.com/dledbetter123/SparseGeometricSignalTransport",
-    description:
-      "A geometric theory of the transformer: attention as parallel transport on a fiber bundle, with tokens as sparse Fourier constellations. It never beat GPT outright, but it produced a drop-in, curvature-based positional encoding worth more study. Open the repo, or ask LedbetterLM below →",
-  };
-
-  const FinslerProjectDetails = {
-    title: "The Finsler Transformer",
-    githubUrl: "https://github.com/dledbetter123/LedbetterFinslerTransformer",
-    description:
-      "What if attention isn't computed, but a curvature you move through? The Finsler Transformer swaps O(T²) attention for geodesic flow on a learned manifold, where a sentence is a geodesic, aiming at O(T) generation. Open the repo, or ask LedbetterLM below →",
-  };
+  // A project page's "back" link returns to /#portfolio; land on the cards, not the intro.
+  useEffect(() => {
+    if (location.hash === '#portfolio') portfolioRef.current?.scrollIntoView();
+  }, [location.hash]);
 
   // Publications & presentations — not repo-backed, so these use PublicationCard.
   const ImpostorsPublication = {
@@ -178,84 +119,10 @@ const MainPage = () => {
     footer: "URCAD 2022 · poster",
   };
 
-  const carouselItems = [
-    {
-      content: (
-        <ProjectCard
-          title={LedbetterProjectDetails.title}
-          githubUrl={LedbetterProjectDetails.githubUrl}
-          description={LedbetterProjectDetails.description}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={SelfHealProjectDetails.title}
-          description={SelfHealProjectDetails.description}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={LeoProjectDetails.title}
-          linkUrl={LeoProjectDetails.url}
-          description={LeoProjectDetails.description}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={SgstProjectDetails.title}
-          githubUrl={SgstProjectDetails.githubUrl}
-          description={SgstProjectDetails.description}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={FinslerProjectDetails.title}
-          githubUrl={FinslerProjectDetails.githubUrl}
-          description={FinslerProjectDetails.description}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={CharProjectDetails.title}
-          githubUrl={CharProjectDetails.githubUrl}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={KernelProjectDetails.title}
-          githubUrl={KernelProjectDetails.githubUrl}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={StockProjectDetails.title}
-          githubUrl={StockProjectDetails.githubUrl}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={NSBEProjectDetails.title}
-          githubUrl={NSBEProjectDetails.githubUrl}
-        />
-      )
-    },
-  ];
+  // Project cards come from data/projects.js; each opens its own chat page.
+  const carouselItems = projects.map((project) => ({
+    content: <ProjectCard project={project} />,
+  }));
 
   // Publications get their own carousel, directly under the project (GitHub) cards.
   const publicationItems = [

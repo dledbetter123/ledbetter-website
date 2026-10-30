@@ -17,9 +17,9 @@ const GREETING = "Hi, I'm LedbetterLM, David Ledbetter's librarian. I maintain a
 const CHAT_STORE_KEY = 'ledbettergpt_chat';
 const FLUSH_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
-const loadSavedChat = () => {
+const loadSavedChat = (storeKey) => {
   try {
-    const saved = JSON.parse(sessionStorage.getItem(CHAT_STORE_KEY) || 'null');
+    const saved = JSON.parse(sessionStorage.getItem(storeKey) || 'null');
     if (!saved || !Array.isArray(saved.messages)) return null;
     if (Date.now() - saved.savedAt > FLUSH_WINDOW_MS) return null;
     if (saved.messages.length <= 1) return null; // nothing beyond the greeting to restore
@@ -64,16 +64,28 @@ const gatherSummary = (log = []) => {
 // LedbetterLM — a small chat assistant that streams answers about David from the
 // backend's /api/chat endpoint (Gemini-backed). The backend URL is injected at
 // runtime via window.env.REACT_APP_BACKEND_URI (see config.js / IntroPage).
-const ChatWidget = () => {
+//
+// Two modes. By default it's the floating toggle + panel on the homepage. `embedded`
+// renders the panel inline and always open (a project page's chat): it keeps its own
+// conversation under `storeKey`, opens with `greeting`, and on a fresh visit sends
+// `starter` itself so the conversation is already underway.
+const ChatWidget = ({
+  embedded = false,
+  storeKey = CHAT_STORE_KEY,
+  greeting = GREETING,
+  starter = '',
+  placeholder = 'Ask David…',
+}) => {
   // Restore a recent conversation (and its open/closed state) on refresh, else greet.
   // Read once; loadSavedChat already enforces the idle flush window.
   const savedRef = useRef(undefined);
-  if (savedRef.current === undefined) savedRef.current = loadSavedChat();
+  if (savedRef.current === undefined) savedRef.current = loadSavedChat(storeKey);
   const saved = savedRef.current;
 
-  const [isOpen, setIsOpen] = useState(() => !!saved?.isOpen);
+  const [isOpenState, setIsOpen] = useState(() => !!saved?.isOpen);
+  const isOpen = embedded || isOpenState;
   const [messages, setMessages] = useState(
-    () => saved?.messages || [{ role: 'assistant', text: GREETING }],
+    () => saved?.messages || [{ role: 'assistant', text: greeting }],
   );
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
@@ -118,7 +130,7 @@ const ChatWidget = () => {
     if (streaming) return;
     try {
       sessionStorage.setItem(
-        CHAT_STORE_KEY,
+        storeKey,
         JSON.stringify({
           savedAt: lastActivityRef.current,
           isOpen,
@@ -129,7 +141,7 @@ const ChatWidget = () => {
     } catch (e) {
       /* storage disabled/full — restoration just won't happen, non-fatal */
     }
-  }, [messages, isOpen, streaming]);
+  }, [messages, isOpen, streaming, storeKey]);
 
   // Character shimmer on the greeting: a one-shot glyph decode each time the panel
   // opens, settling onto the real text and then stopping. Skipped under reduced-motion.
@@ -141,9 +153,9 @@ const ChatWidget = () => {
     const reduce = window.matchMedia
       && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return undefined;
-    const cancel = runScramble(GREETING, 900, setGreetingShimmer, () => setGreetingShimmer(null));
+    const cancel = runScramble(greeting, 900, setGreetingShimmer, () => setGreetingShimmer(null));
     return cancel;
-  }, [isOpen]);
+  }, [isOpen, greeting]);
 
   // Clear the gather poll if the widget unmounts mid-gather.
   useEffect(() => () => {
@@ -281,6 +293,16 @@ const ChatWidget = () => {
     }
   };
 
+  // Embedded chats open mid-conversation: on a fresh visit (nothing restored), ask the
+  // starter question once. The ref survives StrictMode's double effect run.
+  const starterSentRef = useRef(false);
+  useEffect(() => {
+    if (!embedded || !starter || saved || starterSentRef.current) return;
+    starterSentRef.current = true;
+    send({ messageOverride: starter });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -320,14 +342,16 @@ const ChatWidget = () => {
   }, [showLoading]);
 
   return (
-    <div className="chatWidget">
+    <div className={`chatWidget${embedded ? ' chatWidget--embedded' : ''}`}>
       {isOpen && (
         <div className="chatPanel">
           <div className="chatHeader">
             <span>LedbetterLM</span>
             <span className="chatHeaderRight">
               <OperatorMode onAuthed={setOperatorToken} />
-              <button className="chatClose" onClick={() => setIsOpen(false)} aria-label="Close chat">×</button>
+              {!embedded && (
+                <button className="chatClose" onClick={() => setIsOpen(false)} aria-label="Close chat">×</button>
+              )}
             </span>
           </div>
           <div className={`chatNotice${operatorToken ? ' chatNotice--operator' : ''}`}>
@@ -379,7 +403,7 @@ const ChatWidget = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Ask David…"
+              placeholder={placeholder}
               disabled={streaming}
               rows={1}
             />
@@ -389,14 +413,16 @@ const ChatWidget = () => {
           </div>
         </div>
       )}
-      <div className="chatBar">
-        <button
-          className={`chatToggle${isOpen ? ' open' : ''}`}
-          onClick={() => setIsOpen((o) => !o)}
-        >
-          {isOpen ? 'Close' : 'Ask LedbetterLM'}
-        </button>
-      </div>
+      {!embedded && (
+        <div className="chatBar">
+          <button
+            className={`chatToggle${isOpen ? ' open' : ''}`}
+            onClick={() => setIsOpen((o) => !o)}
+          >
+            {isOpen ? 'Close' : 'Ask LedbetterLM'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
