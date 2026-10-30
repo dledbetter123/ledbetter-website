@@ -99,6 +99,16 @@ const Carousel = forwardRef(({ items }, ref) => {
     },
     goToNext,
     goToPrev,
+    // Absolute addressing, for callers that know WHICH card they want rather
+    // than a direction — the WebMCP show_project tool (src/webmcp/tools.js).
+    goToIndex: (index) => {
+      if (index < 0 || index >= items.length) return false;
+      setActiveIndex(index);
+      setIsTransitioning(true);
+      return true;
+    },
+    getActiveIndex: () => activeIndex,
+    getCount: () => items.length,
   }));
 
   return (

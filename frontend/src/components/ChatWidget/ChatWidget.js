@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { publishHandle, revokeHandle } from '../../webmcp/siteBridge';
 import './ChatWidget.css';
 import { runScramble } from '../../lib/scramble';
 import { mdToHtml } from '../../lib/markdown';
@@ -85,6 +86,16 @@ const ChatWidget = () => {
   const [operatorToken, setOperatorToken] = useState(null);
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
+  // Live mirrors of the state the WebMCP handle reads. The handle is invoked from
+  // outside React (an agent calling document.modelContext), so it can't rely on a
+  // closure captured at effect time — it has to see the CURRENT conversation.
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+  const streamingRef = useRef(streaming);
+  streamingRef.current = streaming;
+  const isOpenRef = useRef(isOpen);
+  isOpenRef.current = isOpen;
+  const sendRef = useRef(null);
   const sessionIdRef = useRef(null);
   // The cataloguer ("librarian") gather lives as a message of role 'gather' in the flow:
   // an inline orange pulsing log while it runs, collapsing to a one-line summary when done.
@@ -287,6 +298,66 @@ const ChatWidget = () => {
       send();
     }
   };
+
+  sendRef.current = send;
+
+  // WebMCP: let an agent hold a real conversation with LedbetterLM through the
+  // widget the human is looking at, rather than posting to /api/chat behind their
+  // back. See src/webmcp/tools.js -> ask_ledbetterlm.
+  useEffect(() => {
+    const lastAnswer = () =>
+      [...messagesRef.current].reverse().find((m) => m.role === 'assistant');
+
+    publishHandle('chat', {
+      ask: async (question, { signal, timeoutMs = 45000 } = {}) => {
+        const text = String(question || '').trim();
+        if (!text) throw new Error('ask_ledbetterlm needs a non-empty question.');
+        if (streamingRef.current) {
+          throw new Error('LedbetterLM is still answering the previous question.');
+        }
+        setIsOpen(true);
+        const before = messagesRef.current.length;
+        await sendRef.current({ messageOverride: text });
+
+        // send() resolves when the FIRST reply finishes typing. When the question
+        // needs real code, the backend hands off to the cataloguer and the grounded
+        // answer lands seconds later; wait for the exchange to settle so the agent
+        // gets the real answer instead of the handoff line.
+        const deadline = Date.now() + timeoutMs;
+        while (Date.now() < deadline) {
+          if (signal?.aborted) throw new Error('Cancelled while waiting for LedbetterLM.');
+          const settled =
+            !streamingRef.current && !gatherTimerRef.current && lastAnswer()?.text;
+          if (settled) break;
+          await new Promise((resolve) => setTimeout(resolve, 250));
+        }
+
+        const answers = messagesRef.current
+          .slice(before)
+          .filter((m) => m.role === 'assistant' && m.text)
+          .map((m) => m.text);
+        if (!answers.length) throw new Error('LedbetterLM did not answer within the time limit.');
+        return answers.join('\n\n--- (grounded follow-up from the cataloguer) ---\n\n');
+      },
+
+      getTranscript: () =>
+        messagesRef.current.map((m) => ({
+          role: m.role,
+          text: m.role === 'gather' ? (m.log || []).join(' → ') : m.text,
+        })),
+
+      getState: () => ({
+        open: isOpenRef.current,
+        answering: streamingRef.current,
+        cataloguerRunning: !!gatherTimerRef.current,
+        messageCount: messagesRef.current.length,
+      }),
+    });
+
+    return () => revokeHandle('chat');
+    // Everything the handle touches is a ref, so this binds once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-grow the input as lines wrap, capped so it never eats the chat. Resets when the
   // field is cleared (e.g. after sending).

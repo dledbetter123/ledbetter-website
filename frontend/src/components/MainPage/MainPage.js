@@ -11,6 +11,8 @@ import PublicationCard from '../PublicationCard/PublicationCard';
 import NavBar from '../NavBar/NavBar'; // Adjust the import path as necessary
 import ChatWidget from '../ChatWidget/ChatWidget';
 import GlyphWall from '../GlyphWall/GlyphWall';
+import { publishHandle, revokeHandle } from '../../webmcp/siteBridge';
+import { installWebMCPTools } from '../../webmcp/tools';
 import "../MainPage/MainPage.css"
 
 const MainPage = () => {
@@ -178,121 +180,146 @@ const MainPage = () => {
     footer: "URCAD 2022 · poster",
   };
 
-  const carouselItems = [
-    {
-      content: (
-        <ProjectCard
-          title={LedbetterProjectDetails.title}
-          githubUrl={LedbetterProjectDetails.githubUrl}
-          description={LedbetterProjectDetails.description}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={SelfHealProjectDetails.title}
-          description={SelfHealProjectDetails.description}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={LeoProjectDetails.title}
-          linkUrl={LeoProjectDetails.url}
-          description={LeoProjectDetails.description}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={SgstProjectDetails.title}
-          githubUrl={SgstProjectDetails.githubUrl}
-          description={SgstProjectDetails.description}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={FinslerProjectDetails.title}
-          githubUrl={FinslerProjectDetails.githubUrl}
-          description={FinslerProjectDetails.description}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={CharProjectDetails.title}
-          githubUrl={CharProjectDetails.githubUrl}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={KernelProjectDetails.title}
-          githubUrl={KernelProjectDetails.githubUrl}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={StockProjectDetails.title}
-          githubUrl={StockProjectDetails.githubUrl}
-        />
-      )
-    },
-    {
-      content: (
-        <ProjectCard
-          title={NSBEProjectDetails.title}
-          githubUrl={NSBEProjectDetails.githubUrl}
-        />
-      )
-    },
+  // Ordered exactly as the carousel renders them. The cards are MAPPED from this
+  // list rather than written out one by one, so the WebMCP layer's "card N" and the
+  // carousel's card N can never drift apart (src/webmcp/tools.js -> show_project).
+  const projectDetails = [
+    LedbetterProjectDetails,
+    SelfHealProjectDetails,
+    LeoProjectDetails,
+    SgstProjectDetails,
+    FinslerProjectDetails,
+    CharProjectDetails,
+    KernelProjectDetails,
+    StockProjectDetails,
+    NSBEProjectDetails,
   ];
 
+  const carouselItems = projectDetails.map((project) => ({
+    content: (
+      <ProjectCard
+        title={project.title}
+        githubUrl={project.githubUrl}
+        linkUrl={project.url}
+        description={project.description}
+      />
+    ),
+  }));
+
   // Publications get their own carousel, directly under the project (GitHub) cards.
-  const publicationItems = [
-    {
-      content: (
-        <PublicationCard
-          title={ImpostorsPublication.title}
-          citation={ImpostorsPublication.citation}
-          url={ImpostorsPublication.url}
-          footer={ImpostorsPublication.footer}
-        />
-      )
-    },
-    {
-      content: (
-        <PublicationCard
-          title={DronePublication.title}
-          citation={DronePublication.citation}
-          url={DronePublication.url}
-          footer={DronePublication.footer}
-        />
-      )
-    },
-  ];
+  const publicationDetails = [ImpostorsPublication, DronePublication];
+
+  const publicationItems = publicationDetails.map((publication) => ({
+    content: (
+      <PublicationCard
+        title={publication.title}
+        citation={publication.citation}
+        url={publication.url}
+        footer={publication.footer}
+      />
+    ),
+  }));
 
   const scrollToSection = (ref) => {
     ref.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // --- WebMCP -------------------------------------------------------------
+  // Publish the page's imperative handles, then register the site's tools on
+  // document.modelContext. An AI agent gets named functions ("show_project",
+  // "ask_ledbetterlm") instead of having to scrape the DOM and guess at click
+  // targets — and because the tools drive the SAME refs the UI does, whatever
+  // the agent does is visible on screen to the human sitting here.
+  // No-op in browsers without WebMCP, which is currently all of them unless
+  // Chrome is started with --enable-features=WebMCPTesting.
+  useEffect(() => {
+    const sections = () => ({
+      home: homeRef.current,
+      portfolio: portfolioRef.current,
+      publications: document.querySelector('.pub-carousel-style'),
+      about: aboutRef.current,
+      contact: contactRef.current,
+    });
+
+    const cardAt = (ref, list) => {
+      const index = ref.current?.getActiveIndex?.();
+      if (index === undefined || index === null) return null;
+      return { index, total: list.length, ...list[index] };
+    };
+
+    publishHandle('portfolio', {
+      getProjects: () =>
+        projectDetails.map((project, index) => ({
+          index,
+          title: project.title,
+          link: project.url || project.githubUrl || null,
+          description: project.description || '(card text is fetched live from the repo README)',
+        })),
+
+      getPublications: () =>
+        publicationDetails.map((publication, index) => ({ index, ...publication })),
+
+      showProject: (title) => {
+        const needle = String(title).toLowerCase().trim();
+        const index = projectDetails.findIndex((project) =>
+          project.title.toLowerCase().includes(needle),
+        );
+        if (index === -1) {
+          throw new Error(
+            `No project matches "${title}". Known titles: ` +
+              projectDetails.map((project) => project.title).join(', '),
+          );
+        }
+        if (!carouselRef.current?.goToIndex(index)) {
+          throw new Error('The project carousel is not mounted.');
+        }
+        portfolioRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return { index, total: projectDetails.length, title: projectDetails[index].title };
+      },
+
+      goToSection: (name) => {
+        const el = sections()[name];
+        if (!el) throw new Error(`Unknown section "${name}".`);
+        el.scrollIntoView({ behavior: 'smooth' });
+      },
+
+      // Which section owns the most vertical pixels of the viewport right now.
+      getSectionInView: () => {
+        let best = null;
+        let bestVisible = 0;
+        Object.entries(sections()).forEach(([name, el]) => {
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          const visible = Math.max(0, Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0));
+          if (visible > bestVisible) {
+            bestVisible = visible;
+            best = name;
+          }
+        });
+        return best;
+      },
+
+      getActiveProject: () => cardAt(carouselRef, projectDetails),
+      getActivePublication: () => cardAt(pubCarouselRef, publicationDetails),
+    });
+
+    const uninstall = installWebMCPTools();
+    return () => {
+      uninstall();
+      revokeHandle('portfolio');
+    };
+    // Handles read live refs; the detail lists are static content.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className='main-container'>
-      {/* Single full-screen background layer behind the entire SPA (z-index 0): a
+          {/* Single full-screen background layer behind the entire SPA (z-index 0): a
           faint wall of flipping green glyphs, swept by a shimmer on scroll. All
           content lives in .content-layer (an isolated stacking context at z-index 1)
           so the whole content tree is one solid layer above it. */}
       <GlyphWall />
-      <NavBar
+  <NavBar
         ref={navBarRef}
         isOpen={isNavbarOpen}
         setIsNavbarOpen={setIsNavbarOpen}
