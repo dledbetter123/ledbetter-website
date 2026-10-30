@@ -119,8 +119,8 @@ var mcpTools = []map[string]interface{}{
 		"name":  "ask_ledbetterlm",
 		"title": "Ask LedbetterLM",
 		"description": "Ask LedbetterLM, David's AI librarian, anything about David: his experience, " +
-			"projects, research, or how something he built works. It speaks for David and can read his " +
-			"public GitHub repos. Pass the conversation_id from an earlier answer to continue that " +
+			"projects, research, or how something he built works. It answers about David in the third " +
+			"person and can read his public GitHub repos. Pass the conversation_id from an earlier answer to continue that " +
 			"conversation. A code-level question may be handed to the librarian, who needs 20-90 seconds " +
 			"to read the repos: the reply then says so, and get_ledbetterlm_answer collects the full answer.",
 		"inputSchema": map[string]interface{}{
