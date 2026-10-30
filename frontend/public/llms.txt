@@ -66,6 +66,17 @@ curl -s -X POST https://www.davidamosledbetter.com/api/chat \
 
 `GET https://www.davidamosledbetter.com/api/status` → `backend stable`
 
+## Connect over MCP
+
+LedbetterLM is also a remote MCP server (Streamable HTTP, no auth, no key):
+
+- URL: `https://www.davidamosledbetter.com/api/mcp`
+- Claude Code: `claude mcp add --transport http ledbetter https://www.davidamosledbetter.com/api/mcp`
+- Tools: `about_david` (free overview), `ask_ledbetterlm` (ask anything; pass back the
+  `conversation_id` to keep talking), `get_ledbetterlm_answer` (collect a code-level answer
+  the librarian is still gathering), `get_resume`.
+- Same limits as the HTTP endpoint below.
+
 ## Limits (shared resource — please be considerate)
 
 - ~150 requests/day total, 20/day per IP, ~$5/day budget. No key required.

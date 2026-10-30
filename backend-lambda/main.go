@@ -2186,6 +2186,7 @@ func main() {
 	mux.HandleFunc("/api/chat", chatHandler)
 	mux.HandleFunc("/api/catalog-status", catalogStatusHandler)
 	mux.HandleFunc("/api/contact", contactHandler)
+	mux.HandleFunc("/api/mcp", mcpHandler)
 	mux.HandleFunc("/api/operator/register/begin", operatorRegisterBegin)
 	mux.HandleFunc("/api/operator/register/finish", operatorRegisterFinish)
 	mux.HandleFunc("/api/operator/auth/begin", operatorAuthBegin)
