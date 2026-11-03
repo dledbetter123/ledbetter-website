@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 // opts.start (a boolean) to drive it externally instead (e.g. an orchestrated sequence).
 // opts.onDone fires once when the text has fully typed. `speed` is ms per character
 // (capped so very long text still finishes in a reasonable time).
+// Site-wide typing speed-up: every caller's ms-per-character (and the long-text cap)
+// is divided by this, so all typewriter text runs at the same relative pace.
+export const TYPE_SPEEDUP = 1.5;
+
 export default function useTypeOnVisible(text, speed = 30, opts = {}) {
   const { start, onDone } = opts;
   const controlled = start !== undefined;
@@ -37,8 +41,8 @@ export default function useTypeOnVisible(text, speed = 30, opts = {}) {
     if (!started || text == null) return;
     setTyped('');
     const len = text.length;
-    const TICK = Math.max(8, speed || 30); // ms per character
-    const MAXDUR = 2500; // cap so long strings don't crawl
+    const TICK = Math.max(8, (speed || 30) / TYPE_SPEEDUP); // ms per character
+    const MAXDUR = 2500 / TYPE_SPEEDUP; // cap so long strings don't crawl
     const step = Math.max(1, Math.ceil(len / (MAXDUR / TICK)));
     let i = 0;
     const id = setInterval(() => {

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import './IntroPage.css';
+import { TYPE_SPEEDUP } from '../../hooks/useTypeOnVisible';
 
 // The intro paragraph is hosted in S3 so it can be edited without redeploying the
 // site. Update s3://davidamosledbetter-portfolio/intro.txt and the change shows on
@@ -42,7 +43,7 @@ const IntroPage = () => {
   // device instead of being throttled by per-frame render cost on slower phones.
   useEffect(() => {
     const welcomeString = 'Welcome. ';
-    const duration = 225; // ms, total
+    const duration = 225 / TYPE_SPEEDUP; // ms, total
     let raf;
     let start = null;
     const tick = (now) => {
@@ -69,7 +70,7 @@ const IntroPage = () => {
     setParagraphCursorVisible(true);
     setParagraphText('');
     const len = introParagraph.length;
-    const duration = 953; // ms, total (~30% slower than the prior 733ms)
+    const duration = 953 / TYPE_SPEEDUP; // ms, total
     let raf;
     let start = null;
     const tick = (now) => {
