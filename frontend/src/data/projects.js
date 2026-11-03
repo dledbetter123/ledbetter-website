@@ -56,7 +56,7 @@ const projects = [
     title: 'Sparse Geometric Signal Transport',
     githubUrl: 'https://github.com/dledbetter123/SparseGeometricSignalTransport',
     description:
-      'A geometric theory of the transformer: attention as parallel transport on a fiber bundle, with tokens as sparse Fourier constellations. It never beat GPT outright, but it produced a drop-in, curvature-based positional encoding worth more study.',
+      'A geometric theory of the transformer: attention as parallel transport on a fiber bundle, with tokens as sparse Fourier constellations. Its spectral model beat a parameter-matched GPT-Nano on Tiny Shakespeare, and it produced a drop-in, curvature-based positional encoding that beats RoPE.',
     opener: 'What is Sparse Geometric Signal Transport, and what did it find?',
   },
   {
