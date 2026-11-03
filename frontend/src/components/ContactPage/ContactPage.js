@@ -3,10 +3,12 @@ import React, { useState } from 'react';
 import './ContactPage.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLinkedin, faGithub, faInstagram } from '@fortawesome/free-brands-svg-icons';
-import { faFileLines, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import { faFileLines, faEnvelope, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import TypingText from '../TypingText/TypingText';
 
 const RESUME_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/resume';
+// The full CV (every role, research result and publication); the résumé is the one-page cut.
+const CV_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv';
 
 const label = { display: 'inline-block' };
 
@@ -118,6 +120,12 @@ const ContactPage = () => {
             <FontAwesomeIcon icon={faFileLines} className="icon" />
             <a href={RESUME_URL} className="contactLink" target="_blank" rel="noopener noreferrer" onClick={onResumeClick}>
               <TypingText as="span" speed={40} text="Resume" style={label} />
+            </a>
+          </li>
+          <li>
+            <FontAwesomeIcon icon={faGraduationCap} className="icon" />
+            <a href={CV_URL} className="contactLink" target="_blank" rel="noopener noreferrer">
+              <TypingText as="span" speed={40} text="CV" style={label} />
             </a>
           </li>
           <li>
