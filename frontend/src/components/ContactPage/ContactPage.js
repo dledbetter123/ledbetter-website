@@ -7,8 +7,10 @@ import { faFileLines, faEnvelope, faGraduationCap } from '@fortawesome/free-soli
 import TypingText from '../TypingText/TypingText';
 
 const RESUME_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/resume';
-// The full CV (every role, research result and publication); the résumé is the one-page cut.
-const CV_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv';
+// Two CVs beside the one-page résumé: a two-page short CV and the full standard CV
+// (every role, research result and publication).
+const CV_SHORT_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short';
+const CV_STANDARD_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard';
 
 const label = { display: 'inline-block' };
 
@@ -124,8 +126,14 @@ const ContactPage = () => {
           </li>
           <li>
             <FontAwesomeIcon icon={faGraduationCap} className="icon" />
-            <a href={CV_URL} className="contactLink" target="_blank" rel="noopener noreferrer">
-              <TypingText as="span" speed={40} text="CV" style={label} />
+            <a href={CV_SHORT_URL} className="contactLink" target="_blank" rel="noopener noreferrer">
+              <TypingText as="span" speed={40} text="CV (short)" style={label} />
+            </a>
+          </li>
+          <li>
+            <FontAwesomeIcon icon={faGraduationCap} className="icon" />
+            <a href={CV_STANDARD_URL} className="contactLink" target="_blank" rel="noopener noreferrer">
+              <TypingText as="span" speed={40} text="CV (standard)" style={label} />
             </a>
           </li>
           <li>
