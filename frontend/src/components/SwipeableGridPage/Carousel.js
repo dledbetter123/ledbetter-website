@@ -1,74 +1,65 @@
 // frontend/src/components/SwipeableGridPage/Carousel.js
 
-import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import './Carousel.css';
 
+// A native scroll-snap carousel. The browser owns the gesture: a swipe tracks the
+// finger 1:1 with real momentum, horizontal trackpad scrolling just works, and nothing
+// re-renders React while it moves. (The old version translated a track on touchend,
+// so a swipe did nothing until the finger lifted, then animated under a 0.5s lock
+// that swallowed quick repeat swipes.)
+//
+// On top of native scrolling: mouse drag (desktop has no swipe), arrow keys, and
+// goToNext/goToPrev for the page-level arrow-key routing in MainPage.
+const DRAG_SLOP = 5;   // px of mouse travel before a press becomes a drag
+const FLICK = 40;      // px of drag that advances a card even if it didn't cross halfway
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 const Carousel = forwardRef(({ items }, ref) => {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false); // Lock to prevent bouncing
+  const scrollerRef = useRef(null);
+  const dragRef = useRef(null);
+  const suppressClickRef = useRef(false);
+  const settleTimerRef = useRef(null);
 
-  // Gesture state lives in refs, not useState: it mutates on every touchmove /
-  // wheel tick and must neither re-render the component nor reset between
-  // renders. (As state, touchmove re-rendered per frame mid-swipe, and the
-  // wheel accumulator — a plain `let` — silently zeroed on every render.)
-  const touchStartXRef = useRef(0);
-  const touchEndXRef = useRef(0);
-  const touchMovedRef = useRef(false);
-  const accumulatedDeltaXRef = useRef(0);
-  const deltaXThreshold = 200; // wheel travel needed to trigger a slide change
-  const swipeThreshold = 50;
+  const offsets = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el || !el.children.length) return [];
+    const first = el.children[0].offsetLeft;
+    return Array.from(el.children, (c) => c.offsetLeft - first);
+  }, []);
 
-  const handleTransitionEnd = () => {
-    setIsTransitioning(false); // Reset transition state when transition completes
-  };
+  const nearestIndex = useCallback(() => {
+    const el = scrollerRef.current;
+    const offs = offsets();
+    if (!el || !offs.length) return 0;
+    let best = 0;
+    offs.forEach((o, i) => {
+      if (Math.abs(o - el.scrollLeft) < Math.abs(offs[best] - el.scrollLeft)) best = i;
+    });
+    return best;
+  }, [offsets]);
 
-  // Safety valve: if transitionend never fires (hidden tab, interrupted
-  // animation), the lock would wedge and freeze navigation. The transition is
-  // 0.5s; clear the lock shortly after regardless.
-  useEffect(() => {
-    if (!isTransitioning) return undefined;
-    const t = setTimeout(() => setIsTransitioning(false), 700);
-    return () => clearTimeout(t);
-  }, [isTransitioning]);
+  const goTo = useCallback((i) => {
+    const el = scrollerRef.current;
+    const offs = offsets();
+    if (!el || !offs.length) return;
+    const n = offs.length;
+    const target = offs[((i % n) + n) % n];
+    el.scrollTo({ left: target, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  }, [offsets]);
 
-  const goToNext = () => {
-    if (isTransitioning) return;
-    setActiveIndex((current) => (current + 1) % items.length);
-    setIsTransitioning(true);
-  };
+  const goToNext = useCallback(() => goTo(nearestIndex() + 1), [goTo, nearestIndex]);
+  const goToPrev = useCallback(() => goTo(nearestIndex() - 1), [goTo, nearestIndex]);
 
-  const goToPrev = () => {
-    if (isTransitioning) return;
-    setActiveIndex((current) => (current === 0 ? items.length - 1 : current - 1));
-    setIsTransitioning(true);
-  };
+  useImperativeHandle(ref, () => ({
+    // Kept for callers that still forward wheel events; native scrolling handles them.
+    handleWheel: () => {},
+    goToNext,
+    goToPrev,
+  }), [goToNext, goToPrev]);
 
-  const handleTouchStart = (e) => {
-    touchStartXRef.current = e.touches[0].clientX;
-    touchEndXRef.current = e.touches[0].clientX;
-    touchMovedRef.current = false;
-  };
-
-  const handleTouchMove = (e) => {
-    touchEndXRef.current = e.touches[0].clientX;
-    touchMovedRef.current = true;
-  };
-
-  const handleTouchEnd = () => {
-    // A tap fires touchstart→touchend with no touchmove; without this guard the
-    // stale/zero end-coordinate read as a giant swipe and taps changed slides.
-    if (!touchMovedRef.current) return;
-    const delta = touchStartXRef.current - touchEndXRef.current;
-    if (delta > swipeThreshold) {
-      goToNext();
-    } else if (delta < -swipeThreshold) {
-      goToPrev();
-    }
-  };
-
-  // Keyboard is scoped to the focused carousel instance. A window-level
-  // listener looks convenient, but with two carousels mounted (projects +
-  // publications) every arrow press advanced BOTH at once.
   const handleKeyDown = (e) => {
     if (e.key === 'ArrowRight') {
       e.preventDefault();
@@ -79,27 +70,57 @@ const Carousel = forwardRef(({ items }, ref) => {
     }
   };
 
-  useImperativeHandle(ref, () => ({
-    handleWheel: (e) => {
-      // Only hijack predominantly-HORIZONTAL wheel gestures for slide navigation.
-      // Vertical-dominant scrolling must pass through to the page — don't
-      // preventDefault it — so the cursor isn't "captured" over the carousel.
-      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
-      e.preventDefault();
-      accumulatedDeltaXRef.current += e.deltaX;
+  // Mouse drag. Touch and pen use native scrolling, so only a mouse gets here.
+  const handlePointerDown = (e) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    const el = scrollerRef.current;
+    dragRef.current = { id: e.pointerId, x: e.clientX, left: el.scrollLeft, start: nearestIndex(), moved: false };
+  };
 
-      if (Math.abs(accumulatedDeltaXRef.current) > deltaXThreshold) {
-        if (accumulatedDeltaXRef.current > 0) {
-          goToNext();
-        } else {
-          goToPrev();
-        }
-        accumulatedDeltaXRef.current = 0;
-      }
-    },
-    goToNext,
-    goToPrev,
-  }));
+  const handlePointerMove = (e) => {
+    const d = dragRef.current;
+    if (!d || d.id !== e.pointerId) return;
+    const el = scrollerRef.current;
+    const dx = e.clientX - d.x;
+    if (!d.moved) {
+      if (Math.abs(dx) < DRAG_SLOP) return;
+      d.moved = true;
+      clearTimeout(settleTimerRef.current);
+      el.classList.add('is-dragging');   // snapping off while the mouse holds the track
+      el.setPointerCapture(e.pointerId);
+    }
+    el.scrollLeft = d.left - dx;
+  };
+
+  const endDrag = (e) => {
+    const d = dragRef.current;
+    if (!d || d.id !== e.pointerId) return;
+    dragRef.current = null;
+    if (!d.moved) return;
+    const el = scrollerRef.current;
+    suppressClickRef.current = true;   // the release must not open the card under it
+    const dx = e.clientX - d.x;
+    let target = nearestIndex();
+    if (target === d.start && Math.abs(dx) > FLICK) target = d.start + (dx < 0 ? 1 : -1);
+    target = Math.max(0, Math.min(items.length - 1, target));
+    goTo(target);
+    // Turn snapping back on once the glide lands, so re-enabling it can't jump.
+    // scrollend where supported; the timer covers browsers without it.
+    const settle = () => {
+      clearTimeout(settleTimerRef.current);
+      el.removeEventListener('scrollend', settle);
+      el.classList.remove('is-dragging');
+    };
+    el.addEventListener('scrollend', settle);
+    settleTimerRef.current = setTimeout(settle, 800);
+  };
+
+  const handleClickCapture = (e) => {
+    if (!suppressClickRef.current) return;
+    suppressClickRef.current = false;
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   return (
     <div
@@ -110,19 +131,14 @@ const Carousel = forwardRef(({ items }, ref) => {
       onKeyDown={handleKeyDown}
     >
       <div
+        ref={scrollerRef}
         className="carousel-wrapper"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onTransitionEnd={handleTransitionEnd}
-        style={{
-          /* Step size comes from --carousel-step (Carousel.css), which also
-             sets .carousel-item's flex-basis per breakpoint — wider peek on
-             desktop, slimmer on mobile — so the transform stays in sync with
-             the slide width without duplicating breakpoints in JS. */
-          transform: `translateX(calc(var(--carousel-step, -88%) * ${activeIndex}))`,
-          transition: isTransitioning ? 'transform 0.5s ease' : 'none',
-        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onClickCapture={handleClickCapture}
+        onDragStart={(e) => e.preventDefault()}
       >
         {items.map((item, index) => (
           <div key={index} className="carousel-item">

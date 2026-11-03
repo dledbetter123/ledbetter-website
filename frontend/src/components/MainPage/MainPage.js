@@ -10,7 +10,6 @@ import ProjectCard from '../ProjectCard/ProjectCard';
 import PublicationCard from '../PublicationCard/PublicationCard';
 import NavBar from '../NavBar/NavBar'; // Adjust the import path as necessary
 import ChatWidget from '../ChatWidget/ChatWidget';
-import GlyphWall from '../GlyphWall/GlyphWall';
 import projects from '../../data/projects';
 import "../MainPage/MainPage.css"
 
@@ -41,24 +40,6 @@ const MainPage = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
-
-  useEffect(() => {
-    // Wire horizontal-wheel scrolling to each carousel's own container/ref.
-    const pairs = [
-      { el: document.querySelector('.carousel-style'), ref: carouselRef },
-      { el: document.querySelector('.pub-carousel-style'), ref: pubCarouselRef },
-    ];
-    const cleanups = [];
-    pairs.forEach(({ el, ref }) => {
-      if (!el) return;
-      const handleWheel = (e) => {
-        if (ref.current) ref.current.handleWheel(e);
-      };
-      el.addEventListener('wheel', handleWheel, { passive: false });
-      cleanups.push(() => el.removeEventListener('wheel', handleWheel));
-    });
-    return () => cleanups.forEach((c) => c());
   }, []);
 
   useEffect(() => {
@@ -154,11 +135,6 @@ const MainPage = () => {
 
   return (
     <div className='main-container'>
-      {/* Single full-screen background layer behind the entire SPA (z-index 0): a
-          faint wall of flipping green glyphs, swept by a shimmer on scroll. All
-          content lives in .content-layer (an isolated stacking context at z-index 1)
-          so the whole content tree is one solid layer above it. */}
-      <GlyphWall />
       <NavBar
         ref={navBarRef}
         isOpen={isNavbarOpen}

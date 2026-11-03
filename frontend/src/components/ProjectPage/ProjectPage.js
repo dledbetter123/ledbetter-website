@@ -3,7 +3,6 @@
 // clicking a card in the homepage carousel.
 import React, { useEffect } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import GlyphWall from '../GlyphWall/GlyphWall';
 import ChatWidget from '../ChatWidget/ChatWidget';
 import usePortfolioDescription from '../../hooks/usePortfolioDescription';
 import ThesisDetail from './ThesisDetail';
@@ -36,7 +35,6 @@ const ProjectPage = () => {
 
   return (
     <div className="main-container">
-      <GlyphWall />
       {/* A page with a detail section is long and scrolls; the chat then gets a fixed
           height at the end instead of filling the viewport. */}
       <div className={`content-layer projectPage${Detail ? ' projectPage--long' : ''}`}>

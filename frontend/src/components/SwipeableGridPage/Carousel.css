@@ -5,9 +5,8 @@
    replaced the old absolutely-positioned arrow chevrons — and it lets the
    card run wider so long descriptions don't read as a narrow column.
 
-   --carousel-step is the single source of truth for slide width: it sets
-   .carousel-item's flex-basis here AND the per-slide translateX step in
-   Carousel.js. Change it per breakpoint; never let the two drift. */
+   Slide width is .carousel-item's flex-basis, per breakpoint; Carousel.js reads
+   the rendered offsets, so there is no step value to keep in sync. */
 
 .carousel-container {
   overflow: hidden;
@@ -43,19 +42,29 @@
   outline-offset: 2px;
 }
 
+/* The scroller. Native horizontal scrolling with mandatory snap: the browser runs the
+   gesture (1:1 finger tracking, momentum, trackpad), so a swipe never waits on JS. */
 .carousel-wrapper {
-  --carousel-step: -66%;
+  position: relative;          /* offsetParent for the slide offsets Carousel.js reads */
   display: flex;
-  will-change: transform;
   width: 100%;
   z-index: 49;
-  /* Let the browser own vertical panning (page scroll) on touch; only horizontal
-     gestures are handed to the swipe handlers, so a finger never gets captured when
-     scrolling the page vertically through the carousel. */
-  touch-action: pan-y;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;   /* a hard flick at the ends never triggers back-navigation */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  cursor: grab;
+}
+.carousel-wrapper::-webkit-scrollbar { display: none; }
+/* Mouse drag (Carousel.js): snapping pauses while the track is held, then glides to a card. */
+.carousel-wrapper.is-dragging {
+  scroll-snap-type: none;
+  cursor: grabbing;
+  user-select: none;
 }
 
-/* flex-basis MUST equal the magnitude of --carousel-step (see header comment). */
 .carousel-item {
   z-index: 48;
   flex: 0 0 66%;
@@ -66,29 +75,35 @@
   justify-content: center;
   align-items: flex-start;
   text-align: center;
+  scroll-snap-align: start;
 }
 
 @media (max-width: 600px) {
   /* Mobile: full-bleed. The clip edge must COINCIDE with the screen edge so the
      peeked card reads as "continuing off-screen" instead of being cut mid-air.
      calc(50% - 50vw) breaks out of .main-content's padding regardless of its
-     value; padding-left keeps the active card indented from the screen edge. */
+     value. The indent lives on the scroller (with a matching scroll-padding) so a
+     card scrolling away runs all the way to the screen edge. */
   .carousel-container {
     width: 100vw;
     max-width: none;
     margin-left: calc(50% - 50vw);
     border-radius: 0;
-    padding-left: 5vw;
-    box-sizing: border-box;
     -webkit-mask-image: none;
     mask-image: none;
   }
 
-  /* Slimmer peek on phones: the card needs most of the width for readability. */
   .carousel-wrapper {
-    --carousel-step: -88%;
+    padding: 0 5vw;
+    scroll-padding: 0 5vw;
+    box-sizing: border-box;
   }
+  /* Slimmer peek on phones: the card needs most of the width for readability. */
   .carousel-item {
     flex-basis: 88%;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-wrapper { scroll-behavior: auto; }
 }

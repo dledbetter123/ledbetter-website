@@ -15,6 +15,14 @@
 //   detail       Optional extra page section rendered by ProjectPage ('thesis').
 const projects = [
   {
+    // Proprietary Apple work: no public repo, so the card carries its own description.
+    slug: 'self-healing-agent',
+    title: 'Self-Healing Coding Agent (Apple)',
+    description:
+      "My flagship project at Apple, on Release Validation: an agent that repairs code on its own. Claude does the repair reasoning, a local Gemma 4 model handles tool calls to cut token cost, and an in-house harness and task queue run it all.",
+    opener: "Tell me about David's self-healing coding agent at Apple.",
+  },
+  {
     // The full abstract, contributions and figures live in data/thesis.js.
     slug: 'thesis',
     title: "Master's Thesis: Lingual-First Host Intrusion Detection",
@@ -30,14 +38,6 @@ const projects = [
     description:
       "The site you're on, and the AI you're talking to. It's serverless AWS: React on S3 behind CloudFront, and one Go Lambda running LedbetterLM, my AI librarian. A fast model chats, and code questions go to an agent that reads my GitHub repos live.",
     opener: 'How is this website and LedbetterLM built?',
-  },
-  {
-    // Proprietary Apple work: no public repo, so the card carries its own description.
-    slug: 'self-healing-agent',
-    title: 'Self-Healing Coding Agent (Apple)',
-    description:
-      "My flagship project at Apple, on Release Validation: an agent that repairs code on its own. Claude does the repair reasoning, a local Gemma 4 model handles tool calls to cut token cost, and an in-house harness and task queue run it all.",
-    opener: "Tell me about David's self-healing coding agent at Apple.",
   },
   {
     // Personal project with private repos: inline description, links to the live product.
