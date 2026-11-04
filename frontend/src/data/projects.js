@@ -108,6 +108,6 @@ const projects = [
 ];
 
 export const projectBySlug = (slug) => projects.find((p) => p.slug === slug) || null;
-export const portfolioUrl = (project) => `/portfolio/${project.slug}.html`;
+export const portfolioUrl = (project) => `/portfolio/${project.slug}`;
 
 export default projects;

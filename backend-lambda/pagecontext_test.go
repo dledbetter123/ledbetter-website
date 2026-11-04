@@ -9,7 +9,7 @@ import (
 	"unicode/utf8"
 )
 
-const testPageJSON = `{"slug":"crazyflie-aideck","title":"Crazyflie AI-Deck","url":"https://davidamosledbetter.com/portfolio/crazyflie-aideck.html",
+const testPageJSON = `{"slug":"crazyflie-aideck","title":"Crazyflie AI-Deck","url":"https://davidamosledbetter.com/portfolio/crazyflie-aideck",
 "sections":[
  {"id":"overview","heading":"Crazyflie AI-Deck","text":"Autonomous nano-drones built on the Bitcraze Crazyflie 2.1."},
  {"id":"where-the-ports-run-out","heading":"Where the ports run out","text":"UART TX from the GAP8 to the Crazyflie does not work while the HyperFlash is in use."},

@@ -123,7 +123,7 @@ def build():
         for url in re.findall(r'href="(https://github\.com/dledbetter123/[A-Za-z0-9._-]+)/?"', raw):
             if url not in repos:
                 repos.append(url)
-        doc = {'slug': slug, 'title': p.title, 'url': f'https://davidamosledbetter.com/portfolio/{name}',
+        doc = {'slug': slug, 'title': p.title, 'url': f'https://davidamosledbetter.com/portfolio/{slug}',
                'repos': repos, 'sections': sections}
         with open(os.path.join(OUT, f'{slug}.json'), 'w', encoding='utf-8') as f:
             json.dump(doc, f, ensure_ascii=False, indent=1)

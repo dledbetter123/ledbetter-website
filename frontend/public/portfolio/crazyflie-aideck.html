@@ -33,6 +33,7 @@
 figure { margin: 0; display: grid; gap: 14px; min-width: 0; }
 figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; border-top: 1px solid var(--line); padding-top: 14px; }
 figcaption .note { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+figure .era { margin: 8px 0 0; font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--copper); }
 .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .scroll svg { display: block; width: 100%; height: auto; }
 #fig-side svg { min-width: 760px; }
@@ -173,8 +174,9 @@ table.speed td:nth-child(2) { font-family: var(--f-mono); font-size: 13px; color
       <h2>Side by side</h2>
       <span class="note">Top view, front up. Pin 1 of each header is at the front.</span>
     </figcaption>
+    <p class="era">The Crazyflie 2.1 and AI-deck as they were in 2021&ndash;2022, when David worked on them</p>
     <p class="sr-only">Crazyflie 2.1 deck connector, left header pins 1 to 10: VCC, RX1 (STM32 PC11), TX1 (PC10), SDA (PB7), SCL (PB6), IO_1 (PB8), IO_2 (PB5), IO_3 (PB4), IO_4 (PC12), GND. Right header pins 1 to 10: TX2 (PA2), RX2 (PA3), SCK (PA5), MISO (PA6), MOSI (PA7), N_IO_1 (nRF51 P0.11), N_IO_2 or WKUP (P0.12), OW 1-wire deck ID (P0.08), VCOM, VUSB. On the Crazyflie, the STM32F405 (Cortex-M4, 168 MHz) drives UART1, I2C1, IO_1 to IO_4, UART2 and SPI; the nRF51822 radio and power MCU drives N_IO_1, N_IO_2 and OW and talks to the STM32 over the syslink UART; the I2C1 bus on SDA and SCL is shared with the onboard EEPROM. On the AI-deck: the GAP8 UART connects to RX1 and TX1, with GAP8 TX going through a 1.8 V to 3 V level shifter; the GAP8's spare I2C pads connect to SDA and SCL; the ESP32 (NINA-W102) UART connects to TX2 and RX2; IO_1 drives the ESP32 boot pin; IO_4 resets the GAP8 and the ESP32; the GAP8 and ESP32 are linked by SPI plus two GPIO lines; the GAP8 reaches the HyperFlash (512 Mbit) and HyperRAM (64 Mbit) over HyperBus; the HM01B0 camera (320 by 320) connects to the GAP8 over its CPI camera interface, configured over the GAP8's own I2C. The AI-deck does not use IO_2, IO_3, SCK, MISO, MOSI, N_IO_1 or N_IO_2.</p>
-    <div class="scroll"><svg id="svg-side" viewBox="0 0 1080 640" role="img" aria-label="Crazyflie 2.1 and AI-deck drawn side by side with their chips and deck-connector wiring"></svg></div>
+    <div class="scroll"><svg id="svg-side" viewBox="0 0 1080 640" role="img" aria-label="Crazyflie 2.1 and AI-deck, 2021 to 2022 hardware, drawn side by side with their chips and deck-connector wiring"></svg></div>
   </figure>
 
   <figure id="fig-stack">
@@ -182,8 +184,9 @@ table.speed td:nth-child(2) { font-family: var(--f-mono); font-size: 13px; color
       <h2>Stacked</h2>
       <label class="slider" for="deck-opacity">AI-deck opacity <input id="deck-opacity" type="range" min="0" max="100" value="62"></label>
     </figcaption>
+    <p class="era">The Crazyflie 2.1 and AI-deck as they were in 2021&ndash;2022, when David worked on them</p>
     <p class="sr-only">Stacked view: the AI-deck mounted on top, its header pins on the Crazyflie's, so each route runs chip to pin to chip: GAP8 to STM32 over UART1 (RX1/TX1, PC11/PC10); ESP32 to STM32 over UART2 (TX2/RX2, PA2/PA3); GAP8 spare I2C pads to the STM32's I2C1 on SDA/SCL (PB7/PB6), shared with the EEPROM, which is the path the custom link uses; STM32 IO_1 to the ESP32 boot pin and IO_4 to the deck reset.</p>
-    <div class="scroll"><svg id="svg-stack" viewBox="0 0 760 660" role="img" aria-label="AI-deck stacked over the Crazyflie with routes running chip to pin to chip"></svg></div>
+    <div class="scroll"><svg id="svg-stack" viewBox="0 0 760 660" role="img" aria-label="AI-deck stacked over the Crazyflie, 2021 to 2022 hardware, with routes running chip to pin to chip"></svg></div>
     <div class="legend">
       <span style="--c: var(--uart1)"><i></i>UART1: GAP8 to STM32</span>
       <span style="--c: var(--uart2)"><i></i>UART2: ESP32 to STM32</span>
@@ -260,7 +263,7 @@ table.speed td:nth-child(2) { font-family: var(--f-mono); font-size: 13px; color
   </section>
 
   <section class="sources">
-    <span>Chip placement is schematic, not to PCB scale. Pin order and wiring come from:</span>
+    <span>The diagrams show the boards as they were in 2021&ndash;2022, when David worked on them. Chip placement is schematic, not to PCB scale. Pin order and wiring come from:</span>
     <a href="https://github.com/bitcraze/crazyflie2-exp-template-electronics">Bitcraze expansion-deck KiCad template (pin order, STM32 and nRF51 pin names)</a>
     <a href="https://www.bitcraze.io/documentation/hardware/ai_deck/ai_deck-datasheet.pdf">AI-deck datasheet (connections and errata)</a>
     <a href="https://www.bitcraze.io/documentation/hardware/ai_deck/ai-deck-revc.pdf">AI-deck Rev C schematic (level shifter, spare I2C, camera and HyperBus nets)</a>
