@@ -16,6 +16,8 @@
   --line: #1e1e1e;
   --outline: #d9d9d9;
   --copper: #ffb000;
+  --lm: #00aa00;        /* LedbetterLM buttons: Linux console green on black */
+  --lm-hover: #00cc00;
   --red: #ff3b30;
   --yellow: #ffd60a;
   --blue: #0a9bff;
@@ -45,7 +47,8 @@ img, svg { max-width: 100%; }
 .btn { font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
        color: var(--ink); border: 1px solid var(--dim); padding: 9px 14px; display: inline-flex; align-items: center; gap: 8px; }
 .btn:hover { border-color: var(--ink); }
-.btn.primary { color: #000; background: var(--copper); border-color: var(--copper); font-weight: 600; }
+.btn.primary { color: #000; background: var(--lm); border-color: var(--lm); font-weight: 600; }
+.btn.primary:hover { background: var(--lm-hover); border-color: var(--lm-hover); }
 .btn.primary:hover { background: #ffc233; border-color: #ffc233; }
 a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 
@@ -125,11 +128,12 @@ body { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   display: inline-flex; align-items: center; gap: 10px; white-space: nowrap;
   font-family: var(--f-mono); font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
-  color: #000; background: var(--copper); padding: 14px 24px;
-  box-shadow: 0 0 0 1px #000, 0 0 28px rgba(255, 176, 0, .45);
+  color: #000; background: rgba(0, 170, 0, .82); padding: 14px 24px;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  box-shadow: 0 0 0 1px #000, 0 0 28px rgba(0, 170, 0, .45);
 }
 .ask-fab::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #000; animation: ask-pulse 1.6s ease-in-out infinite; }
-.ask-fab:hover { background: #ffc233; }
+.ask-fab:hover { background: rgba(0, 204, 0, .9); }
 @keyframes ask-pulse { 50% { opacity: .25; } }
 .cta { gap: 14px; padding-block: 24px 8px; }
 .cta h2 { font-size: clamp(24px, 4vw, 34px); }

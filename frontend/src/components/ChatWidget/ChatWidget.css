@@ -21,88 +21,53 @@
   pointer-events: none;
 }
 
+/* The "Ask LedbetterLM" button, the same design as the portfolio pages' .ask-fab:
+   a solid Linux-console green block, black mono caps, a pulsing dot and a soft glow.
+   JetBrains Mono is declared in public/index.html from the portfolio's font file. */
 .chatToggle {
   pointer-events: auto;
-  position: relative;
-  overflow: hidden; /* clips the sweep sheen to the rounded rect (own box-shadow is unaffected) */
-  /* Stays translucent: a faint fill plus a backdrop blur+saturate pulls the colour
-     behind the button through, so the glow and sheen read off the under-colour. */
-  background-color: rgba(0, 12, 0, 0.26);
-  -webkit-backdrop-filter: blur(6px) saturate(1.7);
-  backdrop-filter: blur(6px) saturate(1.7);
-  color: #0f0;
-  border: 2px solid rgba(0, 255, 0, 0.6);
-  padding: 14px 28px;
-  font-family: 'Courier New', monospace;
-  font-size: 16px;
-  font-weight: bold;
-  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #000;
+  background: rgba(0, 170, 0, 0.82); /* slightly translucent, with a blur behind it */
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 0;
+  border-radius: 0;
+  padding: 14px 24px;
   cursor: pointer;
-  border-radius: 6px;
-  /* radiant border glow; the keyframes pulse it so it reads as actively radiating */
-  box-shadow: 0 0 10px rgba(57, 255, 20, 0.5), 0 0 22px rgba(57, 255, 20, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  animation: chatToggleGlow 2.8s ease-in-out infinite;
-  transition: color 0.2s, background-color 0.2s;
+  box-shadow: 0 0 0 1px #000, 0 0 28px rgba(0, 170, 0, 0.45);
+  transition: background-color 0.2s, color 0.2s;
 }
-
-/* The light-sweep ("literal shimmer") — a translucent highlight band travels across
-   the face. plus-lighter makes it brighten relative to the colour showing through
-   the translucent button, so the sheen takes on the under-colour, not flat white. */
 .chatToggle::before {
   content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(115deg, transparent 35%, rgba(190, 255, 205, 0.55) 50%, transparent 65%);
-  background-size: 250% 100%;
-  background-repeat: no-repeat;
-  background-position: 110% 0;
-  mix-blend-mode: plus-lighter;
-  /* linear so the band crosses at an even speed (ease-in-out crawled while the band
-     was off-screen, making the sheen look like it flashed once then stopped). */
-  animation: chatToggleSheen 3.2s linear infinite;
-  pointer-events: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: chatTogglePulse 1.6s ease-in-out infinite;
 }
+.chatToggle:hover { background: rgba(0, 204, 0, 0.9); }
 
-.chatToggle:hover {
-  background-color: rgba(0, 255, 0, 0.85);
-  color: #000;
-  box-shadow: 0 0 18px rgba(57, 255, 20, 0.85), 0 0 36px rgba(57, 255, 20, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-/* While the chat panel is open, the toggle is just a quiet "Close" — kill the sheen
-   and the glow pulse so nothing shimmers behind the open window. */
+/* While the chat panel is open, the button is a quiet "Close": green on black, no glow or pulse. */
 .chatToggle.open {
-  animation: none;
-  box-shadow: 0 0 6px rgba(57, 255, 20, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  border-color: rgba(0, 255, 0, 0.45);
+  color: #00aa00;
+  background: rgba(0, 0, 0, 0.82);
+  box-shadow: 0 0 0 1px #00aa00;
 }
-.chatToggle.open::before {
-  animation: none;
-  opacity: 0;
-}
+.chatToggle.open::before { animation: none; }
+.chatToggle.open:hover { color: #00cc00; background: rgba(0, 0, 0, 0.82); }
 
-@keyframes chatToggleGlow {
-  0%, 100% {
-    box-shadow: 0 0 8px rgba(57, 255, 20, 0.4), 0 0 18px rgba(57, 255, 20, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    border-color: rgba(0, 255, 0, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 16px rgba(57, 255, 20, 0.75), 0 0 38px rgba(57, 255, 20, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    border-color: rgba(120, 255, 140, 0.95);
-  }
-}
-@keyframes chatToggleSheen {
-  0%   { background-position: 110% 0; }   /* band just off the left */
-  85%  { background-position: -30% 0; }   /* swept fully across to off the right */
-  100% { background-position: -30% 0; }   /* brief rest, then repeat */
-}
+@keyframes chatTogglePulse { 50% { opacity: 0.25; } }
 @media (prefers-reduced-motion: reduce) {
-  .chatToggle { animation: none; }
-  .chatToggle::before { animation: none; opacity: 0; }
+  .chatToggle::before { animation: none; }
 }
 
 .chatBar {
