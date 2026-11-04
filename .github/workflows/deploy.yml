@@ -45,8 +45,14 @@ jobs:
       - name: Sync to S3 + invalidate CloudFront
         working-directory: frontend
         run: |
-          aws s3 sync build "s3://$SITE_BUCKET" --delete \
-            --cache-control "public,max-age=31536000,immutable" \
+          # Hashed build output (static/) never changes under the same name: cache it for a year.
+          aws s3 sync build/static "s3://$SITE_BUCKET/static" --delete \
+            --cache-control "public,max-age=31536000,immutable"
+          # Everything else keeps its name across deploys (the portfolio pages, ask.js,
+          # portfolio.css, images): browsers must re-check it, or a returning visitor keeps an
+          # old copy for a year (on 2026-11-04 Safari kept a stale ask.js that way).
+          aws s3 sync build "s3://$SITE_BUCKET" --delete --exclude "static/*" \
+            --cache-control no-cache \
             --exclude index.html --exclude config.js --exclude asset-manifest.json --exclude llms.txt
           aws s3 cp build/index.html "s3://$SITE_BUCKET/index.html" \
             --cache-control no-cache --content-type "text/html"

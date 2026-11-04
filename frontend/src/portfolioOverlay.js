@@ -70,11 +70,19 @@ export const mountOverlay = ({ slug, cssHref }) => new Promise((resolve, reject)
   const mount = document.createElement('div');
   shadow.append(link, mount);
   const inbox = makeInbox();
-  link.onload = () => {
+  let started = false;
+  const start = () => {
+    if (started) return;
+    started = true;
     createRoot(mount).render(<Overlay project={project} inbox={inbox} />);
     resolve({ ask: (ctx) => inbox.post(ctx) });
   };
+  link.onload = start;
+  // If a browser never reports the shadow-root stylesheet as loaded, show the chat anyway.
+  setTimeout(start, 2500);
   link.onerror = () => {
+    if (started) return;
+    started = true;
     host.remove();
     reject(new Error('chat stylesheet failed to load'));
   };
