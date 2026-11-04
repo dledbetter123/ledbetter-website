@@ -39,7 +39,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #2bff2b;
-  text-shadow: 0 0 10px rgba(0, 255, 0, 0.35);
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 255, 0, 0.35);
   background: none;
   border: 0;
   border-radius: 0;
@@ -53,9 +53,9 @@
   inset: -12px -34px;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(ellipse at center, rgba(0, 190, 0, 0.4) 0%, rgba(0, 170, 0, 0.18) 55%, rgba(0, 170, 0, 0) 80%);
-  -webkit-backdrop-filter: blur(10px) saturate(1.5);
-  backdrop-filter: blur(10px) saturate(1.5);
+  background: radial-gradient(ellipse at center, rgba(0, 200, 0, 0.15) 0%, rgba(0, 180, 0, 0.06) 55%, rgba(0, 180, 0, 0) 80%);
+  -webkit-backdrop-filter: blur(3px) saturate(1.4) brightness(1.08);
+  backdrop-filter: blur(3px) saturate(1.4) brightness(1.08);
   -webkit-mask-image: radial-gradient(ellipse at center, #000 52%, transparent 80%);
   mask-image: radial-gradient(ellipse at center, #000 52%, transparent 80%);
 }
@@ -68,12 +68,12 @@
   animation: chatTogglePulse 1.6s ease-in-out infinite;
 }
 .chatToggle:hover::after {
-  background: radial-gradient(ellipse at center, rgba(0, 210, 0, 0.55) 0%, rgba(0, 190, 0, 0.26) 55%, rgba(0, 190, 0, 0) 80%);
+  background: radial-gradient(ellipse at center, rgba(0, 210, 0, 0.26) 0%, rgba(0, 190, 0, 0.11) 55%, rgba(0, 190, 0, 0) 80%);
 }
 
 /* While the chat panel is open, the button is a quiet "Close": the same emerging glass, dark. */
 .chatToggle.open::after {
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.3) 55%, rgba(0, 0, 0, 0) 80%);
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.15) 55%, rgba(0, 0, 0, 0) 80%);
 }
 .chatToggle.open::before { animation: none; }
 
