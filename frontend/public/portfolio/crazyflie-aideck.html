@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Crazyflie AI-Deck &middot; David Ledbetter</title>
-<meta name="description" content="Autonomous Crazyflie nano-drones with the AI-deck: camera streaming into YOLO detection, GAP8 RISC-V firmware, and a serial link carried over the deck's I2C lines, re-created and verified in simulation.">
+<meta name="description" content="Autonomous Crazyflie nano-drones with the AI-deck: YOLO detection running onboard on the GAP8, camera streaming to a ground station, GAP8 RISC-V firmware, and a serial link carried over the deck's I2C lines, re-created and verified in simulation.">
 <link rel="icon" href="/favicon.ico">
 <link rel="stylesheet" href="portfolio.css">
 <style>
@@ -123,7 +123,7 @@ table.speed td:nth-child(2) { font-family: var(--f-mono); font-size: 13px; color
   <header class="hero">
     <div class="eyebrow">CARDS and EEHPC Labs, UMBC &middot; 2021&ndash;2022</div>
     <h1>Crazyflie AI-Deck</h1>
-    <p class="lede">Autonomous nano-drones built on the Bitcraze Crazyflie 2.1 and its AI-deck. David streamed the deck's camera into YOLO detection, wrote RISC-V firmware for its GAP8 processor, and moved the GAP8-to-STM32 link onto the deck's I2C lines when the stacked decks used up the serial ports.</p>
+    <p class="lede">Autonomous nano-drones built on the Bitcraze Crazyflie 2.1 and its AI-deck. David ran YOLO detection onboard the drone on the deck's GAP8 processor, wrote the GAP8's RISC-V firmware, streamed the camera to a ground station, and moved the GAP8-to-STM32 link onto the deck's I2C lines when the stacked decks used up the serial ports.</p>
     <div class="meta"><span><b>Role</b> Research Assistant, Autonomous Vehicles</span><span><b>Dates</b> October 2021 &ndash; September 2022</span></div>
     <div class="tags"><span>GAP8 RISC-V</span><span>PMSIS SDK</span><span>C / C++</span><span>STM32F405</span><span>Python</span><span>OpenCV</span><span>YOLOv3</span></div>
   </header>
@@ -131,7 +131,8 @@ table.speed td:nth-child(2) { font-family: var(--f-mono); font-size: 13px; color
   <section>
     <h2>What David built</h2>
     <ul class="points">
-      <li>Streamed the AI-deck camera over its ESP32 WiFi link to a ground station running YOLO object detection through OpenCV. <span>The viewer code is in <a href="https://github.com/dledbetter123/CF2-Computervision" target="_blank" rel="noopener noreferrer">CF2-Computervision</a> on GitHub.</span></li>
+      <li>Ran YOLO object detection onboard the drone, on the AI-deck's GAP8 processor.</li>
+      <li>Also streamed the AI-deck camera over its ESP32 WiFi link to a ground station running YOLO through OpenCV, so teams could work on any graphics platform. <span>The viewer code is in <a href="https://github.com/dledbetter123/CF2-Computervision" target="_blank" rel="noopener noreferrer">CF2-Computervision</a> on GitHub.</span></li>
       <li>Cut swarm reaction time 40% with a C/C++ state machine.</li>
       <li>Built odometry-based maps of the drones' flight trajectories.</li>
       <li>Wrote RISC-V firmware for the GAP8 on GreenWaves' PMSIS SDK: dispatching work across its 8-core cluster, sending data over UART, and driving the status LED.</li>

@@ -42,7 +42,7 @@ const projects = [
     title: 'Crazyflie AI-Deck',
     githubUrl: 'https://github.com/dledbetter123/aideck-bitbang-link',
     description:
-      "Autonomous nano-drones at UMBC's CARDS and EEHPC labs. I streamed the AI-deck's camera into YOLO detection, wrote RISC-V firmware for its GAP8 processor, and carried the GAP8-to-STM32 link over the deck's I2C lines when the decks ran out of serial ports. That link is re-created and verified in simulation.",
+      "Autonomous nano-drones at UMBC's CARDS and EEHPC labs. I ran YOLO detection onboard on the AI-deck's GAP8 processor, wrote its RISC-V firmware, streamed the camera to a ground station, and carried the GAP8-to-STM32 link over the deck's I2C lines when the decks ran out of serial ports. That link is re-created and verified in simulation.",
     opener: "Tell me about David's Crazyflie AI-deck drone work and the link he ran over the I2C lines.",
   },
   {
