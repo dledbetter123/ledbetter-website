@@ -113,3 +113,23 @@ func TestCutKeepsUTF8Whole(t *testing.T) {
 		}
 	}
 }
+
+func TestPortfolioQuestionsSkipTheLibrarianUnlessCodeIsAsked(t *testing.T) {
+	section := `I'm on the Crazyflie AI-Deck page, looking at "The custom link, in simulation", with the I2C bus lines highlighted. Can you walk me through it?`
+	if !catalogLikely(section) {
+		t.Fatalf("precondition: this question trips a catalog trigger")
+	}
+	if asksForCode(section) {
+		t.Fatalf("a walk-through of a page section is not a request for code")
+	}
+	for _, q := range []string{"Can you show me the code for the receiver?", "Where is that implemented in the repo?"} {
+		if !asksForCode(q) {
+			t.Fatalf("%q asks for code", q)
+		}
+	}
+	for _, q := range []string{"Tell me about David's self-healing coding agent at Apple.", "What is Sparse Geometric Signal Transport, and what did it find?"} {
+		if asksForCode(q) {
+			t.Fatalf("%q is a project question, not a code request", q)
+		}
+	}
+}

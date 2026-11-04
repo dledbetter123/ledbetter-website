@@ -119,6 +119,24 @@ func gatherPrompt(message string, history []chatTurn) string {
 	return message
 }
 
+// codeAsks are the catalogTriggers that ask for code itself, as opposed to how a project
+// works. A chat opened from a portfolio page already carries the page's text, so only
+// these send the librarian to the repos there.
+var codeAsks = []string{
+	"code", "implement", "show me", "source", "repo", "in the code", "function", "snippet",
+	"data structure", "line by line", "the file",
+}
+
+func asksForCode(msg string) bool {
+	m := strings.ToLower(msg)
+	for _, t := range codeAsks {
+		if strings.Contains(m, t) {
+			return true
+		}
+	}
+	return false
+}
+
 func catalogLikely(msg string) bool {
 	m := strings.ToLower(msg)
 	for _, t := range catalogTriggers {

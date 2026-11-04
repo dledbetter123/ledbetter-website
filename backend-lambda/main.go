@@ -1489,8 +1489,9 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 			"make it feel natural rather than an ad, and never repeat the ask on later turns."
 	}
 	// A chat opened from a portfolio page answers from that page's published text.
-	if pc := portfolioContextBlock(ctx, req.Page); pc != "" {
-		extra += "\n\n" + pc
+	pageBlock := portfolioContextBlock(ctx, req.Page)
+	if pageBlock != "" {
+		extra += "\n\n" + pageBlock
 	}
 
 	// Cataloguer: a Gemini agentic pass gathers real code context from my repos for
@@ -1521,7 +1522,9 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	if session != "anon" && guardReason == "" {
 		facts := getData(ctx, "catalog#"+session)
 		state := getData(ctx, "catalogstate#"+session)
-		likely := catalogLikely(req.Message)
+		// With the portfolio page's text in hand, answer right away; send the librarian
+		// to the repos only when the visitor actually asks for code.
+		likely := catalogLikely(req.Message) && (pageBlock == "" || asksForCode(req.Message))
 		topic := detectTopic(req.Message, req.History)
 		storedTopic := getData(ctx, "catalogtopic#"+session)
 		// Re-gather when the code topic shifts to a DIFFERENT project than the cached fact
