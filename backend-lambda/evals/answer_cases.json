@@ -8,7 +8,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",
@@ -18,7 +18,7 @@
     "Prompt rule: Apple projects were built after David joined in May 2024, so they cannot be why he was hired; no hiring story is documented."
    ],
    "must_include": [
-    "Claude does the repair reasoning and a local Gemma 4 handles tool calling (or the token-cost split)"
+    "Claude runs with a local Gemma 4 as tool caller, and the fine-tuned Gemma 4 that now does everything (or the $15,000-a-month token savings)"
    ],
    "must_not": [
     "invents internal Apple project names, team names other than Release Validation, or internal tools",
@@ -32,7 +32,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",
@@ -55,7 +55,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",
@@ -65,11 +65,11 @@
     "Prompt rule: Apple projects were built after David joined in May 2024, so they cannot be why he was hired; no hiring story is documented."
    ],
    "must_include": [
-    "Claude does the code-repair reasoning",
-    "Gemma 4 runs locally and handles tool calling to cut token cost"
+    "in Claude runs Claude repairs the code and Gemma 4 can be targeted as the tool caller; the instruction fine-tuned Gemma 4 now does everything on its own"
    ],
    "must_not": [
-    "invents model sizes, versions, or benchmark numbers not in the sources"
+    "invents model sizes, versions, or benchmark numbers not in the sources",
+    "says Claude still does part of the work in the deployed agent (harder reasoning, final repair) after the fine-tune"
    ]
   },
   {
@@ -79,7 +79,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",
@@ -89,10 +89,11 @@
     "Prompt rule: Apple projects were built after David joined in May 2024, so they cannot be why he was hired; no hiring story is documented."
    ],
    "must_include": [
-    "$15,000 a month in token spend (from distilling Claude into Gemma 4)"
+    "$15,000 a month in token spend (from instruction fine-tuning Gemma 4 on online plan repair)"
    ],
    "must_not": [
-    "states any savings figure other than $15,000 a month in token spend for the distillation (3-6 hours per person for the dashboard is also sourced)"
+    "states any savings figure other than $15,000 a month in token spend for the distillation (3-6 hours per person for the dashboard is also sourced)",
+    "frames the Gemma 4 work as distilling Claude's performance instead of instruction fine-tuning on online plan repair"
    ]
   },
   {
@@ -102,7 +103,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",
@@ -126,7 +127,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",
@@ -149,7 +150,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",
@@ -172,7 +173,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",
@@ -196,7 +197,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",
@@ -219,7 +220,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",
@@ -2457,7 +2458,7 @@
     "CV/KB: Pathion's on-device LLM tutor (4-bit Qwen in the browser over WebGPU/WebNN).",
     "David (2026-11-04) / KB: Crazyflie AI-deck: an obstacle-detection network ran onboard the drone; YOLO object detection ran on a ground station; plus GAP8 RISC-V firmware.",
     "CV/KB: distilled a GPT-4V model for a 96.7% latency reduction for agents such as drones.",
-    "David (2026-11-04) / KB / Apple page: at Apple he fine-tunes a Gemma 4 model on a Mac Studio, distilling Claude's performance from the self-healing agent's heals; the local model is deployed in the lab and saves his org $15,000 a month in token spend. This IS on-device / edge ML and belongs in edge-ML answers.",
+    "David (2026-11-04) / KB / Apple page: at Apple he instruction fine-tunes a Gemma 4 model on a Mac Studio for the self-healing agent's online plan repair task, from a corpus of its Claude runs, and the fine-tuned Gemma 4 now does everything; the local model is deployed in the lab and saves his org $15,000 a month in token spend. This IS on-device / edge ML and belongs in edge-ML answers.",
     "KB (2026-11-04): Crazyflie drones ran an obstacle-detection network onboard (earlier example, not the headline)."
    ],
    "must_include": [
@@ -2467,7 +2468,8 @@
    "must_not": [
     "says or implies the Apple work is not edge/on-device ML, or only 'likely' involves it",
     "invents Apple details beyond the page, CV and KB (model sizes, internal names, hardware counts)",
-    "says YOLO ran onboard the drone"
+    "says YOLO ran onboard the drone",
+    "frames the Gemma 4 work as distilling Claude's performance instead of instruction fine-tuning on online plan repair"
    ],
    "page": "home"
   },
@@ -2523,7 +2525,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",
@@ -2534,12 +2536,13 @@
     "Page: the portfolio page text the bot was given (PORTFOLIO PAGE block) is a source for this case."
    ],
    "must_include": [
-    "Claude repairs code in an in-house harness modeled after LangGraph while a local Gemma 4 model handles tool calling",
-    "the distilled Gemma 4 model saves about $15,000 a month in token spend"
+    "in Claude runs Claude repairs code in an in-house harness modeled after LangGraph and a local Gemma 4 can be the tool caller; the fine-tuned Gemma 4 does the whole job",
+    "the fine-tuned Gemma 4 model saves about $15,000 a month in token spend"
    ],
    "must_not": [
     "invents numbers, components or results that are not in the page, CV or KB",
-    "names Apple products, teams or internal systems not on the page"
+    "names Apple products, teams or internal systems not on the page",
+    "frames the Gemma 4 work as distilling Claude's performance instead of instruction fine-tuning on online plan repair"
    ],
    "page_ctx": {
     "section": "what-the-agent-does"
@@ -2552,7 +2555,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",
@@ -2580,7 +2583,7 @@
    "reference": [
     "CV: Apple, San Diego, ML/Full Stack Software Engineer, May 2024 to present; joined as an ML/Full Stack SWE intern in summer 2024, then full time; release validation and test automation.",
     "CV: built a self-healing coding agent on a custom in-house harness modeled after LangGraph; Claude auto-repairs code while a local Gemma 4 performs tool calling to cut token cost.",
-    "CV: built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, now deployed in the lab and saving $15,000 a month in token spend.",
+    "David (2026-11-04) / KB / page: in Claude runs, Claude auto-repairs code and a local Gemma 4 can be targeted as the tool caller. The corpus of those Claude runs was built to instruction fine-tune a local model: Gemma 4, fine-tuned on the online plan repair task on a Mac Studio. The fine-tuned Gemma 4 now does EVERYTHING in place of Claude; deployed in the lab, saving $15,000 a month in token spend. David calls it instruction fine-tuning, not distilling Claude.",
     "CV: online plan repair: the agent ingests the parsed, assembled form of compiled Swift code to build a control-flow prior, measures incoming automation for deviations from it, and heals them.",
     "CV: modeled code exploration as a partially observable Markov decision process (POMDP) so the agent acts on true divergences, not false error reports, fed by a RAG pipeline where Gemma 4 summarizes vision results and execution-flow traces into Claude's context.",
     "CV: async Python probe manager outside the agent delivering raw metrics without added latency; dashboard for the agent across a device gym, opened to the org to schedule jobs, saving teams 3-6 hours per person; fleet of autonomous agents on an internal server across 3 Macs.",

@@ -23,7 +23,7 @@ const projects = [
     slug: 'self-healing-agent',
     title: 'Self-Healing Coding Agent (Apple)',
     description:
-      "My flagship project at Apple, on Release Validation: an agent that repairs code on its own. Claude does the repair reasoning, a local Gemma 4 model handles tool calls to cut token cost, and an in-house harness and task queue run it all.",
+      "My flagship project at Apple, on Release Validation: an agent that repairs code on its own. Its Claude runs, with a local Gemma 4 as the tool caller, became a corpus for instruction fine-tuning Gemma 4 on online plan repair, and the fine-tuned Gemma 4 now does everything, saving $15,000 a month in token spend.",
     opener: "Tell me about David's self-healing coding agent at Apple.",
   },
   {
