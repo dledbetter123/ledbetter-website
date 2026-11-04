@@ -245,6 +245,9 @@
 .contactTile .tileSub {
   font-size: 0.6em;
   letter-spacing: -0.02em;
+  /* A monospace space is a full digit wide, so a phone number's groups read as
+     separate pieces. Pull them together. */
+  word-spacing: -0.3em;
 }
 @media (max-width: 600px) {
   .contactCarousel .carousel-item {
