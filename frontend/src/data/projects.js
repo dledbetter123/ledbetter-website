@@ -32,14 +32,6 @@ const projects = [
     opener: "What is David's master's thesis about, and what did he find?",
   },
   {
-    slug: 'this-website',
-    title: 'This Website!',
-    githubUrl: 'https://github.com/dledbetter123/ledbetter-website',
-    description:
-      "The site you're on, and the AI you're talking to. It's serverless AWS: React on S3 behind CloudFront, and one Go Lambda running LedbetterLM, my AI librarian. A fast model chats, and code questions go to an agent that reads my GitHub repos live.",
-    opener: 'How is this website and LedbetterLM built?',
-  },
-  {
     // Personal project with private repos: inline description, links to the live product.
     slug: 'pathion',
     title: 'Pathion — In-Browser AI Coding Tutor',
@@ -90,6 +82,14 @@ const projects = [
     title: 'NSBE Chapter Website',
     githubUrl: 'https://github.com/dledbetter123/nsbe-website',
     opener: 'Tell me about the NSBE chapter website David built.',
+  },
+  {
+    slug: 'this-website',
+    title: 'This Website!',
+    githubUrl: 'https://github.com/dledbetter123/ledbetter-website',
+    description:
+      "The site you're on, and the AI you're talking to. It's serverless AWS: React on S3 behind CloudFront, and one Go Lambda running LedbetterLM, my AI librarian. A fast model chats, and code questions go to an agent that reads my GitHub repos live.",
+    opener: 'How is this website and LedbetterLM built?',
   },
 ];
 
