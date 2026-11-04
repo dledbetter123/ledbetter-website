@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pathion &middot; David Ledbetter</title>
+<meta name="description" content="Pathion is a browser-native platform that teaches kids to code, with every program running on-device in WebAssembly. David Ledbetter built its AI layer: an in-browser LLM tutor, a hint model trained with SFT and RL, and the learning-data pipeline behind an adaptive Elo.">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="portfolio.css">
+<style>
+/* Pathion page: two diagrams, results tables, and the Elo numbers. */
+figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+figcaption .note { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+#fig-runtime svg, #fig-pipeline svg { min-width: 760px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { display: inline-block; width: 18px; height: 2px; background: var(--c); }
+.stats { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.stats.small { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.cols.four { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.stats.small .stat b { font-size: 30px; }
+.cols h3 { color: var(--c, var(--ink)); }
+td { color: var(--muted); }
+td:first-child { color: var(--ink); }
+table.three { min-width: 680px; table-layout: fixed; }
+table.three th:nth-child(1) { width: 36%; } table.three th:nth-child(2) { width: 32%; }
+@media (max-width: 640px) {
+  table.three { min-width: 0; table-layout: auto; }
+  table.three thead { display: none; }
+  table.three tr { display: grid; gap: 6px; padding-block: 12px; border-bottom: 1px solid var(--line); }
+  table.three td { display: block; border: 0; padding: 0; }
+  table.three td:nth-child(2)::before { content: "Fix: "; color: var(--ink); }
+  table.three td:nth-child(3)::before { content: "Result: "; color: var(--ink); }
+}
+table.two td:first-child { width: 46%; }
+table.bench { max-width: 560px; }
+table.bench td.num { color: var(--ink); }
+code { font-family: var(--f-mono); font-size: .88em; color: var(--ink); }
+.sources { border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="Page">
+    <a class="back" href="/#portfolio">&larr; All projects</a>
+    <div class="actions">
+      <a class="btn primary" href="/projects/pathion">Ask LedbetterLM about this</a>
+      <a class="btn" href="https://pathion.dev" target="_blank" rel="noopener noreferrer">Visit pathion.dev &#8599;</a>
+      <a class="btn" href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">Pathion &middot; pathion.dev &middot; 2025&ndash;present</div>
+    <h1>Pathion</h1>
+    <p class="lede">A browser-native platform that teaches kids to code, with every program running on-device in WebAssembly. As a developer there, David built the AI layer: an in-browser LLM tutor over WebNN and WebGPU, a hint model trained with SFT and RL, and the learning-data pipeline behind an adaptive Elo that rates skill from every attempt.</p>
+    <p class="lede" style="font-size:15px">Pathion (formerly LILO) runs every program on the student's own device at zero marginal cost, and has 1,500 users.</p>
+    <div class="meta"><span><b>Role</b> Developer</span><span><b>Dates</b> May 2025 &ndash; Present</span></div>
+    <div class="tags"><span>PyTorch</span><span>RLVR / GRPO</span><span>SFT / LoRA</span><span>4-bit quantization</span><span>ONNX Runtime</span><span>WebNN / WebGPU</span><span>transformers.js</span><span>Go</span><span>AWS Lambda</span><span>MongoDB</span><span>WebAssembly</span></div>
+  </header>
+
+  <section>
+    <h2>Headline numbers</h2>
+    <div class="stats">
+      <div class="stat" style="--c: var(--green)"><b>1,500</b><span>users on a platform where all code execution happens on-device in WebAssembly</span></div>
+      <div class="stat" style="--c: var(--blue)"><b>17.8 s &rarr; 2&ndash;3 s</b><span>hint latency on the site after distilling GPT-5-mini hints into Qwen3.5-0.8B and shipping it to staging as a 4-bit on-device model</span></div>
+      <div class="stat" style="--c: var(--violet)"><b>0.62 &rarr; 0.83</b><span>verified fixes on held-out student code (pass@8) after GRPO with a sandbox-executed reward, replicated on 3 of 3 seeds</span></div>
+      <div class="stat" style="--c: var(--yellow)"><b>~34&times;</b><span>faster prefill from an optimized ONNX export, ~47.8 to ~1.41 ms per token</span></div>
+      <div class="stat" style="--c: var(--orange)"><b>46</b><span>pre-registered ML iterations, August&ndash;October 2026; every failed iteration is logged as a falsification</span></div>
+      <div class="stat" style="--c: var(--pink)"><b>119 PRs</b><span>merged, with 108 completed Jira tickets, as of November 2026</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What David owns</h2>
+    <div class="cols four">
+      <div style="--c: var(--violet)"><h3>Model training</h3><p>Distillation and an RLVR campaign that trained the tutor's hint model, measured by placebo-subtracted reader lift with paired-bootstrap confidence intervals.</p></div>
+      <div style="--c: var(--blue)"><h3>On-device inference</h3><p>The in-browser tutor: quantized Qwen over WebNN/WebGPU in a non-blocking Web Worker, with OPFS model caching, SHA-256 integrity checks and a Go service issuing versioned model manifests.</p></div>
+      <div style="--c: var(--green)"><h3>Learning analytics and Elo</h3><p>The telemetry spine that compiles each session into one Session Artifact, and the adaptive Elo that rates skill from it.</p></div>
+      <div style="--c: var(--orange)"><h3>Platform</h3><p>A 32,000-line Go backend on AWS Lambda behind API Gateway, the serverless migration off App Runner, and the CI that ships it.</p></div>
+    </div>
+  </section>
+
+  <figure id="fig-runtime">
+    <figcaption>
+      <h2>Where a hint comes from</h2>
+      <span class="note">Schematic drawn from the public CV. AI cost is tiered by device: work too heavy to run locally goes to the cloud lane.</span>
+    </figcaption>
+    <div class="scroll"><svg viewBox="0 0 1000 430" role="img" aria-label="Pathion runtime diagram. In the student's browser, the problem IDE runs all code in WebAssembly, an on-device tutor runs 4-bit Qwen in a Web Worker over WebNN and WebGPU, client events are captured per session, and the Ask the TA panel gives 3 hints per attempt. Work too heavy to run locally passes through FERPA de-identification at the AI egress boundary to a cloud AI lane, where Cloudflare Workers AI is hedged against a Gemini warm-start and a cloud hint writer runs. A Go backend on AWS Lambda sends versioned model manifests to the tutor and compiles session events into a Session Artifact that drives the adaptive Elo.">
+      <defs>
+        <marker id="rt-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--orange)"/></marker>
+        <marker id="rt-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--green)"/></marker>
+        <marker id="rt-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--blue)"/></marker>
+      </defs>
+
+      <!-- browser -->
+      <rect class="d-box soft" x="16" y="16" width="360" height="398" style="stroke-dasharray: 4 4"/>
+      <text class="d-title" x="36" y="42">Student's browser</text>
+
+      <rect class="d-box" x="36" y="60" width="320" height="64"/>
+      <text class="d-title" x="196" y="84" text-anchor="middle">Problem IDE</text>
+      <text class="d-sub" x="196" y="102" text-anchor="middle">all code runs on-device in WebAssembly</text>
+      <text class="d-sub" x="196" y="115" text-anchor="middle">at zero marginal cost</text>
+
+      <rect class="d-box" x="36" y="148" width="320" height="80"/>
+      <text class="d-title" x="196" y="172" text-anchor="middle">On-device tutor</text>
+      <text class="d-sub" x="196" y="190" text-anchor="middle">4-bit Qwen in a non-blocking Web Worker</text>
+      <text class="d-sub" x="196" y="203" text-anchor="middle">WebNN / WebGPU, OPFS model cache</text>
+      <text class="d-sub" x="196" y="216" text-anchor="middle">SHA-256 integrity checks</text>
+
+      <rect class="d-box" x="36" y="252" width="320" height="64"/>
+      <text class="d-title" x="196" y="276" text-anchor="middle">Client events</text>
+      <text class="d-sub" x="196" y="294" text-anchor="middle">event taxonomy over each session</text>
+
+      <rect class="d-box" x="36" y="340" width="320" height="56"/>
+      <text class="d-title" x="196" y="364" text-anchor="middle">Ask the TA panel</text>
+      <text class="d-sub" x="196" y="382" text-anchor="middle">3 interactive hints per attempt</text>
+
+      <!-- egress -->
+      <text class="d-note" x="425" y="86">too heavy to run locally</text>
+      <rect class="d-box" x="420" y="96" width="150" height="64"/>
+      <text class="d-title" x="495" y="120" text-anchor="middle">AI egress</text>
+      <text class="d-sub" x="495" y="138" text-anchor="middle">FERPA de-identification</text>
+
+      <!-- cloud lane -->
+      <rect class="d-box soft" x="616" y="16" width="368" height="196" style="stroke-dasharray: 4 4"/>
+      <text class="d-title" x="636" y="42">Cloud AI lane</text>
+
+      <rect class="d-box" x="636" y="56" width="328" height="66"/>
+      <text class="d-title" x="800" y="80" text-anchor="middle">Hedged inference</text>
+      <text class="d-sub" x="800" y="98" text-anchor="middle">Cloudflare Workers AI against a</text>
+      <text class="d-sub" x="800" y="111" text-anchor="middle">Gemini warm-start, first valid wins</text>
+
+      <rect class="d-box" x="636" y="134" width="328" height="66"/>
+      <text class="d-title" x="800" y="158" text-anchor="middle">Cloud hint writer</text>
+      <text class="d-sub" x="800" y="176" text-anchor="middle">+4 pts solver pass over placebo</text>
+      <text class="d-sub" x="800" y="189" text-anchor="middle">$0.0025 per hint; Java in production</text>
+
+      <!-- backend -->
+      <rect class="d-box soft" x="616" y="240" width="368" height="174" style="stroke-dasharray: 4 4"/>
+      <text class="d-title" x="636" y="266">Go backend on AWS Lambda</text>
+      <text class="d-sub" x="636" y="282">32,000 lines: API Gateway, SQS, DynamoDB, MongoDB</text>
+
+      <rect class="d-box" x="636" y="300" width="150" height="96"/>
+      <text class="d-title" x="711" y="324" text-anchor="middle">Session Artifact</text>
+      <text class="d-sub" x="711" y="342" text-anchor="middle">one canonical record</text>
+      <text class="d-sub" x="711" y="355" text-anchor="middle">per session</text>
+
+      <rect class="d-box" x="814" y="300" width="150" height="96"/>
+      <text class="d-title" x="889" y="324" text-anchor="middle">Adaptive Elo</text>
+      <text class="d-sub" x="889" y="342" text-anchor="middle">Bayesian anti-farming</text>
+      <text class="d-sub" x="889" y="355" text-anchor="middle">blend, r &#8776; 0.96</text>
+      <text class="d-sub" x="889" y="368" text-anchor="middle">in simulation</text>
+
+      <!-- flows -->
+      <path class="d-line" style="--c: var(--orange)" d="M356,188 H396 V128 H418" marker-end="url(#rt-orange)"/>
+      <path class="d-line" style="--c: var(--orange)" d="M570,128 H614" marker-end="url(#rt-orange)"/>
+      <path class="d-line" style="--c: var(--blue)" d="M616,262 H420 V208 H358" marker-end="url(#rt-blue)"/>
+      <text class="d-note" x="430" y="254">versioned model manifests</text>
+      <path class="d-line" style="--c: var(--green)" d="M356,284 H396 V348 H634" marker-end="url(#rt-green)"/>
+      <text class="d-note" x="420" y="340">session events</text>
+      <path class="d-line" style="--c: var(--green)" d="M786,348 H812" marker-end="url(#rt-green)"/>
+    </svg></div>
+    <div class="legend">
+      <span style="--c: var(--orange)"><i></i>Cloud inference</span>
+      <span style="--c: var(--blue)"><i></i>Model delivery</span>
+      <span style="--c: var(--green)"><i></i>Learning data</span>
+    </div>
+  </figure>
+
+  <section>
+    <h2>Training the hint model</h2>
+    <p class="lede" style="font-size:15px">46 pre-registered iterations between August and October 2026. Each one stated its hypothesis before training, and every failed iteration is logged as a falsification.</p>
+    <div class="scroll"><table class="two">
+      <thead><tr><th>Experiment</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>SFT-distilled 5,194 GPT-5-mini hints into Qwen3.5-0.8B, shipped to staging as a 4-bit on-device model</td><td>Hint latency on the site cut from 17.8 s to 2.0&ndash;3.0 s</td></tr>
+        <tr><td>RLVR campaign: GRPO (LoRA) with a sandbox-executed reward</td><td>Verified fixes on held-out student code 0.62 &rarr; 0.83 (pass@8). The gain replicated on 3 of 3 seeds, survived 4-bit quantization and transferred to a second corpus. The exported model is encrypted and active on staging, with an on-device opening hint at p50 1.0 s on WebGPU.</td></tr>
+        <tr><td>Placebo control on the reward</td><td>A content-free hint scored 0.89 against a real hint's 0.74, exposing a gameable reward. David redesigned it as a two-head reward: the model's own fix is executed, and the hint is judged only on a verified fix. Placebo-subtracted reader lift with paired-bootstrap CIs became the program's standard metric.</td></tr>
+        <tr><td>GRPO with a cheap veto judge in the loss</td><td>Hints on failed repairs 0.296 &rarr; 0.449, at $0.31 per step against $2.47 for a frontier judge panel</td></tr>
+        <tr><td>Prompt-optimization loop on that reward: a frontier model rewrites the writer prompt from failures</td><td>Held-out first-draft pass 0.81 &rarr; 0.86</td></tr>
+        <tr><td>Cloud hint writer</td><td>Solver pass rate +4 pts over placebo at $0.0025 per hint (median 3.3 s). Its Java version reached production, cutting wrong diagnoses from 5/40 to 1/40.</td></tr>
+        <tr><td>SFT recipe scaled to Qwen3.5-4B on an A100</td><td>Matched the fix-informed teacher on reader lift (+0.049, one seed)</td></tr>
+        <tr><td>Training loop speed-up</td><td>2.38&times; faster, 122.7 &rarr; 51.5 s per step</td></tr>
+      </tbody>
+    </table></div>
+    <ul class="points">
+      <li style="--c: var(--violet)">Training data David built: planted-bug corpora of up to 44,004 programs, 25,861 de-identified real session windows (8,142 with the student's own fix), and a multi-language case generator of 15,806 cases across Python, Java and C++ at $0.006 per kept case.</li>
+      <li style="--c: var(--violet)">Compute: rented RTX 4090, A100 80GB, A40 and RTX PRO 6000 GPUs, with teachers and judges on Azure AI Foundry.</li>
+    </ul>
+  </section>
+
+  <figure id="fig-pipeline">
+    <figcaption>
+      <h2>From training run to browser</h2>
+      <span class="note">The on-device model is live on staging.</span>
+    </figcaption>
+    <div class="scroll"><svg viewBox="0 0 1000 322" role="img" aria-label="Pipeline diagram. Training: training data of planted-bug corpora, de-identified session windows and generated cases feeds SFT distillation into Qwen3.5-0.8B, then GRPO with LoRA and a sandbox-executed reward, then a 4-bit ONNX export, then LQM1 encryption. Delivery to the browser: a Go service issues versioned model manifests, a progressive install downloads hash-verified chunks, the OPFS cache stores the model with SHA-256 integrity checks, a Web Worker runs quantized Qwen over WebNN and WebGPU, and the hint appears in the IDE.">
+      <defs>
+        <marker id="pl-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--violet)"/></marker>
+        <marker id="pl-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--blue)"/></marker>
+        <marker id="pl-copper" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--copper)"/></marker>
+      </defs>
+      <text class="d-note" x="16" y="22">TRAINING</text>
+      <text class="d-note" x="984" y="190" text-anchor="end">DELIVERY TO THE BROWSER</text>
+
+      <!-- row 1 -->
+      <rect class="d-box" x="16" y="34" width="174" height="104"/>
+      <text class="d-title" x="103" y="58" text-anchor="middle">Training data</text>
+      <text class="d-sub" x="103" y="76" text-anchor="middle">planted-bug corpora of</text>
+      <text class="d-sub" x="103" y="89" text-anchor="middle">up to 44,004 programs</text>
+      <text class="d-sub" x="103" y="102" text-anchor="middle">25,861 session windows</text>
+      <text class="d-sub" x="103" y="115" text-anchor="middle">15,806 multi-language cases</text>
+
+      <rect class="d-box" x="214" y="34" width="174" height="104"/>
+      <text class="d-title" x="301" y="58" text-anchor="middle">SFT distillation</text>
+      <text class="d-sub" x="301" y="76" text-anchor="middle">5,194 GPT-5-mini hints</text>
+      <text class="d-sub" x="301" y="89" text-anchor="middle">into Qwen3.5-0.8B</text>
+      <text class="d-sub" x="301" y="102" text-anchor="middle">hint latency on the site</text>
+      <text class="d-sub" x="301" y="115" text-anchor="middle">17.8 s &#8594; 2&#8211;3 s</text>
+
+      <rect class="d-box" x="412" y="34" width="174" height="104"/>
+      <text class="d-title" x="499" y="58" text-anchor="middle">GRPO with LoRA</text>
+      <text class="d-sub" x="499" y="76" text-anchor="middle">sandbox-executed reward</text>
+      <text class="d-sub" x="499" y="89" text-anchor="middle">verified fixes</text>
+      <text class="d-sub" x="499" y="102" text-anchor="middle">0.62 &#8594; 0.83 (pass@8)</text>
+      <text class="d-sub" x="499" y="115" text-anchor="middle">3 of 3 seeds</text>
+
+      <rect class="d-box" x="610" y="34" width="174" height="104"/>
+      <text class="d-title" x="697" y="58" text-anchor="middle">4-bit ONNX export</text>
+      <text class="d-sub" x="697" y="76" text-anchor="middle">prefill ~47.8 &#8594; ~1.41</text>
+      <text class="d-sub" x="697" y="89" text-anchor="middle">ms per token (~34&#215;)</text>
+      <text class="d-sub" x="697" y="102" text-anchor="middle">num_logits_to_keep</text>
+      <text class="d-sub" x="697" y="115" text-anchor="middle">pinned in the graph</text>
+
+      <rect class="d-box" x="808" y="34" width="174" height="104"/>
+      <text class="d-title" x="895" y="58" text-anchor="middle">LQM1 encryption</text>
+      <text class="d-sub" x="895" y="76" text-anchor="middle">AES-256-GCM, 8 MiB chunks</text>
+      <text class="d-sub" x="895" y="89" text-anchor="middle">per-user keys over</text>
+      <text class="d-sub" x="895" y="102" text-anchor="middle">ECDH-P256 + HKDF</text>
+      <text class="d-sub" x="895" y="115" text-anchor="middle">audited key issuance</text>
+
+      <!-- row 2 -->
+      <rect class="d-box" x="16" y="202" width="174" height="104"/>
+      <text class="d-title" x="103" y="226" text-anchor="middle">Go service</text>
+      <text class="d-sub" x="103" y="244" text-anchor="middle">issues versioned</text>
+      <text class="d-sub" x="103" y="257" text-anchor="middle">model manifests</text>
+
+      <rect class="d-box" x="214" y="202" width="174" height="104"/>
+      <text class="d-title" x="301" y="226" text-anchor="middle">Progressive install</text>
+      <text class="d-sub" x="301" y="244" text-anchor="middle">resumable, 1&#8211;32 MB</text>
+      <text class="d-sub" x="301" y="257" text-anchor="middle">hash-verified chunks</text>
+      <text class="d-sub" x="301" y="270" text-anchor="middle">619 MB in 75 s</text>
+      <text class="d-sub" x="301" y="283" text-anchor="middle">~8&#215; a single stream</text>
+
+      <rect class="d-box" x="412" y="202" width="174" height="104"/>
+      <text class="d-title" x="499" y="226" text-anchor="middle">OPFS cache</text>
+      <text class="d-sub" x="499" y="244" text-anchor="middle">model cached in</text>
+      <text class="d-sub" x="499" y="257" text-anchor="middle">the browser</text>
+      <text class="d-sub" x="499" y="270" text-anchor="middle">SHA-256 integrity checks</text>
+
+      <rect class="d-box" x="610" y="202" width="174" height="104"/>
+      <text class="d-title" x="697" y="226" text-anchor="middle">Web Worker</text>
+      <text class="d-sub" x="697" y="244" text-anchor="middle">quantized Qwen over</text>
+      <text class="d-sub" x="697" y="257" text-anchor="middle">WebNN / WebGPU</text>
+      <text class="d-sub" x="697" y="270" text-anchor="middle">non-blocking</text>
+
+      <rect class="d-box" x="808" y="202" width="174" height="104"/>
+      <text class="d-title" x="895" y="226" text-anchor="middle">Hint in the IDE</text>
+      <text class="d-sub" x="895" y="244" text-anchor="middle">opening hint p50 1.0 s</text>
+      <text class="d-sub" x="895" y="257" text-anchor="middle">on WebGPU, staging</text>
+
+      <!-- flows -->
+      <path class="d-line" style="--c: var(--violet)" d="M190,86 H212" marker-end="url(#pl-violet)"/>
+      <path class="d-line" style="--c: var(--violet)" d="M388,86 H410" marker-end="url(#pl-violet)"/>
+      <path class="d-line" style="--c: var(--violet)" d="M586,86 H608" marker-end="url(#pl-violet)"/>
+      <path class="d-line" style="--c: var(--violet)" d="M784,86 H806" marker-end="url(#pl-violet)"/>
+      <path class="d-line" style="--c: var(--copper)" d="M895,138 V166 H103 V200" marker-end="url(#pl-copper)"/>
+      <path class="d-line" style="--c: var(--blue)" d="M190,254 H212" marker-end="url(#pl-blue)"/>
+      <path class="d-line" style="--c: var(--blue)" d="M388,254 H410" marker-end="url(#pl-blue)"/>
+      <path class="d-line" style="--c: var(--blue)" d="M586,254 H608" marker-end="url(#pl-blue)"/>
+      <path class="d-line" style="--c: var(--blue)" d="M784,254 H806" marker-end="url(#pl-blue)"/>
+    </svg></div>
+  </figure>
+
+  <section>
+    <h2>Running the tutor in the browser</h2>
+    <p class="lede" style="font-size:15px">David owns the AI layer: an on-device LLM tutor running quantized Qwen in the browser over WebNN/WebGPU, in a non-blocking Web Worker. Each row is a problem David found, the fix, and the measured result.</p>
+    <div class="scroll"><table class="three">
+      <thead><tr><th>Problem</th><th>Fix</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>Slow prefill</td><td>An optimized ONNX export</td><td>~47.8 &rarr; ~1.41 ms per token (~34&times;); a typical hint went from 23.65 s to 4.60 s at 53.7 tok/s</td></tr>
+        <tr><td>The browser model read back logits for every prompt token (~1 MB each), so long prompts hit WebGPU's 2 GiB buffer ceiling at ~2.1K tokens</td><td>Pinned <code>num_logits_to_keep</code> in the ONNX graph</td><td>Real prompts 20/40 &rarr; 40/40, and double the speed at ~1K tokens</td></tr>
+        <tr><td>Degenerate outputs and timeouts</td><td>Fixed decoding: chat template, tuned repetition penalty</td><td>Degenerate outputs 6/11 &rarr; 0/11; timeouts 2/11 &rarr; 0/11</td></tr>
+        <tr><td>A large model download</td><td>A progressive, resumable install in connection-sized 1&ndash;32 MB chunks, each hash-verified</td><td>619 MB in 75 s, ~8&times; a single stream</td></tr>
+        <tr><td>Model weights at rest</td><td>LQM1 encryption: AES-256-GCM in 8 MiB chunks, per-user key delivery over ECDH-P256 + HKDF, audited key issuance, byte-compatible Go and JS implementations</td><td>Live on staging</td></tr>
+      </tbody>
+    </table></div>
+    <div class="cols">
+      <div>
+        <h3>Inference engines, 40 production prompts</h3>
+        <div class="scroll"><table class="bench">
+          <thead><tr><th>Engine</th><th class="num">Median</th></tr></thead>
+          <tbody>
+            <tr><td>Native M1 GPU</td><td class="num">949 ms</td></tr>
+            <tr><td>ORT-WebGPU</td><td class="num">2,453 ms</td></tr>
+            <tr><td>wllama</td><td class="num">5,775 ms</td></tr>
+            <tr><td>Raspberry Pi 5</td><td class="num">39,523 ms</td></tr>
+          </tbody>
+        </table></div>
+        <p>The benchmark found no significant quality loss from 4-bit quantization.</p>
+      </div>
+      <div>
+        <h3>The cloud lane</h3>
+        <p>AI cost is tiered by device. Work too heavy to run locally is hedged onto Cloudflare Workers AI against a Gemini warm-start, and the first valid response wins. David moved the hint model to a ~16&times; cheaper model and put the narrative lane (Llama 4 Scout) in production.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Learning analytics and Elo</h2>
+    <div class="stats small">
+      <div class="stat" style="--c: var(--green)"><b>r &asymp; 0.96</b><span>hidden skill recovered in simulation by the Elo's Bayesian anti-farming blend</span></div>
+      <div class="stat" style="--c: var(--red)"><b>227 of 228</b><span>active users whose production Elo was frozen at 1200, found and fixed</span></div>
+      <div class="stat" style="--c: var(--blue)"><b>0 violations</b><span>in a property test over 5,000 random learners and a 300-way concurrency test</span></div>
+      <div class="stat" style="--c: var(--yellow)"><b>29 clusters</b><span>problem types from an NPMI term graph, at 98.3% coverage, for per-type ratings</span></div>
+    </div>
+    <ul class="points">
+      <li style="--c: var(--green)">Built the telemetry spine: a client event taxonomy collapses each session into a canonical Session Artifact, which drives an adaptive Elo.</li>
+      <li style="--c: var(--green)">Designed Pathion's Record data model: one typed envelope (event, log, error, audit) instrumenting every facet of user interaction across 7 once-unjoinable client pipelines and the backend logs, so issues surface before a bug is filed.</li>
+      <li style="--c: var(--green)">Found production Elo frozen at 1200 for 227 of 228 active users, caused by email-keyed writes with no upsert, and fixed it with userId-keyed ratings. <span>Then closed rating-farming holes, verified by the property and concurrency tests above.</span></li>
+      <li style="--c: var(--green)">Built Elo replay and repair tooling: deterministic replay, a byte-identical backup and restore rehearsal, and compare-and-swap gated apply.</li>
+      <li style="--c: var(--green)">Designed Glicko-1 confidence against a production backtest, and built a placement warm-up of 18 animated puzzles.</li>
+      <li style="--c: var(--green)">Built a production data heartbeat whose first run caught a dark rating table, and later found and fixed production action logs that had gone dark for two months.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Platform and infrastructure</h2>
+    <ul class="points">
+      <li style="--c: var(--orange)">Owns a 32,000-line Go backend on AWS Lambda behind API Gateway, with SQS workers, a DynamoDB rate limiter and MongoDB.</li>
+      <li style="--c: var(--orange)">Led the monorepo and serverless migration off App Runner (prod, June 2026) for a ~95% hosting cut, and rebuilt staging as an idempotent mirror of prod.</li>
+      <li style="--c: var(--orange)">Added ETag/304 caching and cursor pagination to read routes after staging replay moved 9.5 GB in 3 days, and made end-to-end CI hermetic with its own Go backend and Mongo container.</li>
+      <li style="--c: var(--orange)">Deployed the Python TA hint service on Lambda to production in October 2026, with GitHub Actions deploys.</li>
+      <li style="--c: var(--orange)">Built self-hosted CI on a company workstation while GitHub-hosted Actions were blocked: five Docker-in-Docker runners under an admission controller, running the full frontend gate green in ~30&ndash;35 min. <span>Root-caused two silent hangs along the way: an MTU mismatch and stale runner sessions.</span></li>
+      <li style="--c: var(--orange)">Built eng.pathion.dev, the company engineering-directives site (S3, CloudFront, Lambda, DynamoDB), rebuilt hourly from Jira with comment threads and gated by Cloudflare Access. Also runs the company file server and WireGuard VPN.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Security, privacy and product</h2>
+    <ul class="points">
+      <li style="--c: var(--pink)">Built FERPA de-identification at the AI egress boundary (a field allow-list rebuild, comment scrubbing and a hard-off switch), in production, and closed an anonymous-access hole in the narrative fallback.</li>
+      <li style="--c: var(--pink)">Owns the identity and authorization layer: Supabase-issued JWTs verified in Echo middleware with HS256 pinned to close an algorithm-confusion bypass, and RBAC on admin actions behind a deny-by-default gate on every route.</li>
+      <li style="--c: var(--pink)">Shipped the student Ask the TA panel to production, with interactive hints (3 per attempt, ~$0.01 per attempt) and Java hints.</li>
+      <li style="--c: var(--pink)">Built a timed interview mode (33 company profiles over 1,044 gradable problems) and a Big-O analyzer that times code in the browser with Pyodide and fits curves to the timings.</li>
+      <li style="--c: var(--pink)">Fixed a judge bug where one failing hidden test failed every test after it, which had overstated 151 of 221 project verdicts. <span>Also restored student code from the server and fixed an autosave data-loss bug.</span></li>
+    </ul>
+  </section>
+
+  <section class="cta">
+    <h2>Questions about this project?</h2>
+    <p>LedbetterLM is an AI that knows David's work. Ask it how the tutor runs in the browser, what the placebo control caught, or how the Elo rates skill from each attempt.</p>
+    <a class="btn primary big" href="/projects/pathion">Ask LedbetterLM about this project &rarr;</a>
+  </section>
+
+  <section class="sources">
+    <span>Pathion's code is private. Everything on this page comes from the public CV and the project card:</span>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David's CV, standard (PDF): Pathion entry</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short" target="_blank" rel="noopener noreferrer">David's CV, short (PDF): Pathion entry</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/resume" target="_blank" rel="noopener noreferrer">David's r&eacute;sum&eacute; (PDF): Pathion entry</a>
+    <a href="/#portfolio">Project card on davidamosledbetter.com</a>
+    <a href="https://pathion.dev" target="_blank" rel="noopener noreferrer">pathion.dev, the live product</a>
+  </section>
+  <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
+</div>
+<a class="ask-fab" href="/projects/pathion">Ask LedbetterLM</a>
+<script src="ask.js" defer></script>
+</body>
+</html>

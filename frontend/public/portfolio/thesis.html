@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lingual-First Host Intrusion Detection &middot; David Ledbetter</title>
+<meta name="description" content="David Ledbetter's UMBC master's thesis: DARPA Transparent Computing kernel provenance written as a compact language, what a training-free frequency count can detect, how labels and budgets reorder published detectors, and SENTINEL, a one-layer attention model over a node's named relations.">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="portfolio.css">
+<style>
+/* Thesis page: diagram strokes, chart marks and the legend under the results chart. */
+.d-box.hl { stroke: var(--c, var(--ink)); stroke-width: 1.4; }
+.d-num { fill: var(--c, var(--ink)); font-size: 10.5px; font-weight: 600; }
+.d-code { fill: var(--copper); font-size: 11px; }
+.d-axis { stroke: var(--muted); stroke-width: 1; }
+.d-grid { stroke: var(--line); stroke-width: 1; }
+.d-tick { fill: var(--muted); font-size: 10px; }
+.d-val { fill: var(--ink); font-size: 11px; font-weight: 600; }
+.bar { fill: var(--c, var(--muted)); }
+.bar.range { opacity: .45; }
+.bar.pub { fill: none; stroke: var(--c, var(--copper)); stroke-width: 1.4; stroke-dasharray: 4 3; }
+#fig-pipe .v-wide svg { min-width: 760px; }
+#fig-chart .v-wide svg { min-width: 600px; max-width: 900px; }
+#fig-sentinel .v-wide svg { min-width: 760px; }
+/* Each diagram has a wide drawing and a stacked one for phones; only one is shown. */
+svg.v-narrow { display: none; max-width: 420px; }
+@media (max-width: 640px) {
+  .v-wide { display: none; }
+  svg.v-narrow { display: block; }
+}
+svg.v-narrow .d-title { font-size: 13px; }
+svg.v-narrow .d-sub { font-size: 11px; }
+svg.v-narrow .d-num { font-size: 11.5px; }
+svg.v-narrow .d-code { font-size: 12px; }
+svg.v-narrow .d-note, svg.v-narrow .d-tick { font-size: 10.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { display: inline-block; width: 14px; height: 10px; background: var(--c); }
+.legend i.pub { background: none; border: 1.4px dashed var(--c); }
+.fulltitle { font-family: var(--f-display); font-weight: 600; font-size: 19px; color: var(--ink); max-width: 60ch; }
+table.cost th.num, table.cost td.num { padding-left: 8px; }
+.sources { border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="Page">
+    <a class="back" href="/#portfolio">&larr; All projects</a>
+    <div class="actions">
+      <a class="btn primary" href="/projects/thesis">Ask LedbetterLM about this</a>
+      <a class="btn" href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">UMBC &middot; M.S. Computer Science, December 2024</div>
+    <h1>Lingual-First Host Intrusion Detection</h1>
+    <p class="fulltitle">Representation, Controlled Evaluation, and the Limits of Language Modeling on System Provenance</p>
+    <p class="lede">Can a language model catch an attack from a host's audit log? David's master's thesis writes kernel provenance as a compact, readable language and measures what the representation gives against what learning adds. Frequency counts go surprisingly far, they stop where entities interact, and SENTINEL, a one-layer attention model over a node's named relations, picks up there.</p>
+    <div class="meta"><span><b>Role</b> Thesis author</span><span><b>Advisor</b> Dr. Anupam Joshi</span><span><b>Dates</b> 2024 &ndash; 2026</span></div>
+    <div class="tags"><span>PyTorch</span><span>Self-supervised transformers</span><span>Graph attention networks</span><span>Entity resolution</span><span>eBPF / provenance</span><span>CUDA (RTX 4090/3090, A100)</span></div>
+  </header>
+
+  <section>
+    <h2>At a glance</h2>
+    <div class="stats">
+      <div class="stat" style="--c: var(--green)"><b>42.0 of 118</b><span>attack nodes in SENTINEL's first 93 alerts on THEIA, mean of five runs; 62 when five models' scores are averaged</span></div>
+      <div class="stat" style="--c: var(--blue)"><b>4&ndash;7 and 19</b><span>the same count for David's reproductions of ORTHRUS and Velox, two published learned detectors</span></div>
+      <div class="stat" style="--c: var(--yellow)"><b>6.2 min</b><span>SENTINEL end to end on one A100 machine, against 56.3 for Velox and 127.3 for ORTHRUS</span></div>
+      <div class="stat" style="--c: var(--violet)"><b>47,078</b><span>weights in SENTINEL's network, against 216,842 for Velox and 1.2M for ORTHRUS</span></div>
+      <div class="stat" style="--c: var(--copper)"><b>0.885</b><span>CADETS oracle F1 for a training-free frequency table once the serializer resolved coreference, up from 0.284</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The question</h2>
+    <div class="cols">
+      <div>
+        <h3>Audit data as a language</h3>
+        <p>Host intrusion detection asks which recorded events on a host belong to an attack. Since Forrest et al. showed that normal programs emit a stable vocabulary of short system-call sequences, audit data has been treated as a language. The thesis asks what a compact symbolic representation of provenance (the record of which processes acted on which files, sockets and processes) preserves for detection, and what learning adds on top.</p>
+      </div>
+      <div>
+        <h3>The data</h3>
+        <p>DARPA Transparent Computing audit records of hosts attacked by a red team: CADETS (FreeBSD), TRACE and THEIA (Linux) from Engagement 3 in April 2018, and CADETS from Engagement 5 in May 2019. The main comparison is scored as analyst recall at a fixed alert budget: how many labelled attack nodes appear in the first N alerts an analyst would read.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>1. What the representation supports</h2>
+    <ul class="points">
+      <li>Each event becomes a clause of subject, operation and object. The object is replaced by a type code (for a file, its location and extension class), and repeated references to one object are linked by a pointer. <span>The vocabulary stays small, free of host-specific names and readable, for example S:firefox#0 OP:WRITE O:FILE#5.</span></li>
+      <li>David rebuilt the serializer around coreference, resolving an object's identifier and its path to one entity. Scored with a training-free frequency table of benign clause counts, the rebuild moved CADETS from AUC 0.746 and oracle F1 0.284 to oracle F1 0.885 (0.843 on TRACE), under the ThreaTrace detector's released labels. <span>The gain came from the representation: the detector here is a count table with no training.</span></li>
+      <li>These are best-case numbers. The benign reference is selected with the labels and the threshold (oracle F1) is chosen on the test labels. <span>A threshold set on benign data alone gives 0.642 on CADETS.</span></li>
+      <li>On THEIA the table reaches only 0.203, because most attack entities there are not rare. A language model of benign entity biographies (each entity's history of clauses), fused with rarity around the rarest entities, lifts THEIA to 0.987, against 0.647 for the same model untrained. <span>Same labels, with benign training data selected by them.</span></li>
+    </ul>
+
+    <figure id="fig-pipe">
+      <figcaption><h3>From audit log to alerts</h3></figcaption>
+      <div class="scroll v-wide">
+        <svg viewBox="0 0 1080 330" role="img" aria-label="Pipeline: DARPA audit records go through a serializer into subject, operation, object clauses, which feed three scorers (a frequency table, a trajectory model fused with rarity, and SENTINEL) that each produce a ranked alert list.">
+          <!-- audit records -->
+          <rect class="d-box" x="10" y="117" width="200" height="96"/>
+          <text class="d-title" x="24" y="143">Audit records</text>
+          <text class="d-sub" x="24" y="162">DARPA TC kernel provenance</text>
+          <text class="d-sub" x="24" y="178">CADETS, TRACE, THEIA</text>
+          <text class="d-sub" x="24" y="194">E3 April 2018, E5 May 2019</text>
+          <!-- serializer -->
+          <rect class="d-box" x="250" y="117" width="230" height="96"/>
+          <text class="d-title" x="264" y="143">Serializer</text>
+          <text class="d-sub" x="264" y="162">subject, operation, object</text>
+          <text class="d-sub" x="264" y="178">object becomes a type code</text>
+          <text class="d-sub" x="264" y="194">repeats share one pointer</text>
+          <text class="d-code" x="365" y="240" text-anchor="middle">S:firefox#0 OP:WRITE O:FILE#5</text>
+          <text class="d-note" x="365" y="258" text-anchor="middle">one clause per event</text>
+          <!-- scorers -->
+          <rect class="d-box" x="540" y="20" width="250" height="74"/>
+          <text class="d-title" x="554" y="44">Frequency table</text>
+          <text class="d-sub" x="554" y="62">benign clause counts, no training</text>
+          <text class="d-num" x="554" y="80" style="--c: var(--copper)">F1 0.885 CADETS, 0.843 TRACE</text>
+          <rect class="d-box" x="540" y="128" width="250" height="74"/>
+          <text class="d-title" x="554" y="152">Trajectory model</text>
+          <text class="d-sub" x="554" y="170">benign entity biographies + rarity</text>
+          <text class="d-num" x="554" y="188" style="--c: var(--violet)">F1 0.987 THEIA</text>
+          <rect class="d-box hl" x="540" y="236" width="250" height="74" style="--c: var(--green)"/>
+          <text class="d-title" x="554" y="260">SENTINEL</text>
+          <text class="d-sub" x="554" y="278">(edge type, partner name) relations</text>
+          <text class="d-num" x="554" y="296" style="--c: var(--green)">42.0 of 118 in 93 alerts</text>
+          <!-- alerts -->
+          <rect class="d-box" x="850" y="117" width="220" height="96"/>
+          <text class="d-title" x="864" y="143">Ranked alerts</text>
+          <text class="d-sub" x="864" y="162">an analyst reads the first N</text>
+          <text class="d-sub" x="864" y="178">THEIA budget: N = 93</text>
+          <text class="d-sub" x="864" y="194">of 701,622 nodes</text>
+          <!-- wiring -->
+          <path class="d-line" style="--c: var(--blue)" d="M210,165 H244"/>
+          <polygon class="d-arrow" style="--c: var(--blue)" points="250,165 242,161 242,169"/>
+          <path class="d-line" style="--c: var(--blue)" d="M480,165 C510,165 506,57 534,57"/>
+          <path class="d-line" style="--c: var(--blue)" d="M480,165 H534"/>
+          <path class="d-line" style="--c: var(--blue)" d="M480,165 C510,165 506,273 534,273"/>
+          <polygon class="d-arrow" style="--c: var(--blue)" points="540,57 532,53 532,61"/>
+          <polygon class="d-arrow" style="--c: var(--blue)" points="540,165 532,161 532,169"/>
+          <polygon class="d-arrow" style="--c: var(--blue)" points="540,273 532,269 532,277"/>
+          <path class="d-line" style="--c: var(--blue)" d="M790,57 C820,57 816,165 844,165"/>
+          <path class="d-line" style="--c: var(--blue)" d="M790,165 H844"/>
+          <path class="d-line" style="--c: var(--green)" d="M790,273 C820,273 816,165 844,165"/>
+          <polygon class="d-arrow" style="--c: var(--blue)" points="850,165 842,161 842,169"/>
+        </svg>
+      </div>
+      <svg class="v-narrow" viewBox="0 0 360 662" role="img" aria-label="Pipeline, stacked: DARPA audit records go through a serializer into subject, operation, object clauses, which feed three scorers (a frequency table, a trajectory model fused with rarity, and SENTINEL) that each produce a ranked alert list.">
+        <rect class="d-box" x="10" y="10" width="340" height="84"/>
+        <text class="d-title" x="24" y="34">Audit records</text>
+        <text class="d-sub" x="24" y="54">DARPA TC kernel provenance</text>
+        <text class="d-sub" x="24" y="69">CADETS, TRACE, THEIA</text>
+        <text class="d-sub" x="24" y="84">E3 April 2018, E5 May 2019</text>
+        <path class="d-line" style="--c: var(--blue)" d="M180,94 V112"/>
+        <polygon class="d-arrow" style="--c: var(--blue)" points="180,118 176,110 184,110"/>
+        <rect class="d-box" x="10" y="118" width="340" height="104"/>
+        <text class="d-title" x="24" y="142">Serializer</text>
+        <text class="d-sub" x="24" y="162">subject, operation, object</text>
+        <text class="d-sub" x="24" y="177">object becomes a type code</text>
+        <text class="d-sub" x="24" y="192">repeats share one pointer</text>
+        <text class="d-code" x="24" y="211">S:firefox#0 OP:WRITE O:FILE#5</text>
+        <path class="d-line" style="--c: var(--blue)" d="M22,222 V473"/>
+        <path class="d-line" style="--c: var(--blue)" d="M22,304 H30 M22,389 H30 M22,473 H30"/>
+        <polygon class="d-arrow" style="--c: var(--blue)" points="36,304 28,300 28,308"/>
+        <polygon class="d-arrow" style="--c: var(--blue)" points="36,389 28,385 28,393"/>
+        <polygon class="d-arrow" style="--c: var(--blue)" points="36,473 28,469 28,477"/>
+        <rect class="d-box" x="36" y="268" width="288" height="74"/>
+        <text class="d-title" x="50" y="292">Frequency table</text>
+        <text class="d-sub" x="50" y="311">benign clause counts, no training</text>
+        <text class="d-num" x="50" y="330" style="--c: var(--copper)">F1 0.885 CADETS, 0.843 TRACE</text>
+        <rect class="d-box" x="36" y="352" width="288" height="74"/>
+        <text class="d-title" x="50" y="376">Trajectory model</text>
+        <text class="d-sub" x="50" y="395">benign entity biographies + rarity</text>
+        <text class="d-num" x="50" y="414" style="--c: var(--violet)">F1 0.987 THEIA</text>
+        <rect class="d-box hl" x="36" y="436" width="288" height="74" style="--c: var(--green)"/>
+        <text class="d-title" x="50" y="460">SENTINEL</text>
+        <text class="d-sub" x="50" y="479">(edge type, partner name) relations</text>
+        <text class="d-num" x="50" y="498" style="--c: var(--green)">42.0 of 118 in 93 alerts</text>
+        <path class="d-line" style="--c: var(--blue)" d="M324,304 H340 M324,389 H340"/>
+        <path class="d-line" style="--c: var(--green)" d="M324,473 H340"/>
+        <path class="d-line" style="--c: var(--blue)" d="M340,304 V558"/>
+        <polygon class="d-arrow" style="--c: var(--blue)" points="340,566 336,558 344,558"/>
+        <rect class="d-box" x="10" y="566" width="340" height="84"/>
+        <text class="d-title" x="24" y="590">Ranked alerts</text>
+        <text class="d-sub" x="24" y="610">an analyst reads the first N</text>
+        <text class="d-sub" x="24" y="625">THEIA budget: N = 93</text>
+        <text class="d-sub" x="24" y="640">of 701,622 nodes</text>
+      </svg>
+      <p class="note">The frequency table and trajectory model are scored by F1 under ThreaTrace's labels; SENTINEL by attack nodes in the first 93 alerts under ORTHRUS's 118 labels.</p>
+    </figure>
+  </section>
+
+  <section>
+    <h2>2. Evaluation choices change comparisons</h2>
+    <ul class="points">
+      <li>David reproduced three published detectors from their released code: MAGIC, a graph autoencoder, within 0.0001 F1 of its paper; ORTHRUS and Velox close to their published averages.</li>
+      <li>The two published THEIA ground truths share only 25 of ORTHRUS's 118 attack nodes. <span>Under ThreaTrace's labels, David's fused detector and MAGIC statistically tie (F1 0.992 and 0.987 on MAGIC's nodes). Under ORTHRUS's labels, MAGIC ranks 58 of its 66 attack nodes within 1,000 alerts and the fused detector none.</span></li>
+      <li>Metrics reorder detectors too. Ranking nodes by event count, with no training, scores an attack-detection precision of 0.342, inside the range of five ORTHRUS runs (0.260 to 0.561). <span>The same event count places only 4 of 118 attack nodes in its first 93 alerts.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. How far own-clause scores reach</h2>
+    <p class="note">On THEIA under ORTHRUS's 118 labels, ranking all 701,622 nodes at 93 alerts (the published operating point of ProvFusion, another detector), scores that read only an entity's own clauses, trained or training-free, place at most 17, even when the better of two training-free scores is chosen per node type with the test labels. The cause is the representation: it records what kind of object a process touched and drops which one, so it cannot express which entities interacted.</p>
+
+    <figure id="fig-chart">
+      <figcaption><h3>Attack nodes in the first 93 alerts</h3></figcaption>
+      <div class="scroll v-wide">
+        <svg viewBox="0 0 760 400" role="img" aria-label="Bar chart, drawn to scale from 0 to 118 attack nodes: event count 4, ORTHRUS reproduced 4 to 7, own-clause scores at most 17, Velox reproduced 19, temporal model 25.6, SENTINEL one model 42.0, SENTINEL ensemble 62, ProvFusion published 82.">
+          <!-- grid and ticks: x = 256 + v * 460/118 -->
+          <g>
+            <line class="d-grid" x1="256" y1="16" x2="256" y2="344"/>
+            <line class="d-grid" x1="333.97" y1="16" x2="333.97" y2="344"/>
+            <line class="d-grid" x1="411.93" y1="16" x2="411.93" y2="344"/>
+            <line class="d-grid" x1="489.90" y1="16" x2="489.90" y2="344"/>
+            <line class="d-grid" x1="567.86" y1="16" x2="567.86" y2="344"/>
+            <line class="d-grid" x1="645.83" y1="16" x2="645.83" y2="344"/>
+            <line class="d-grid" x1="716" y1="16" x2="716" y2="344"/>
+            <line class="d-axis" x1="256" y1="344" x2="716" y2="344"/>
+            <text class="d-tick" x="256" y="360" text-anchor="middle">0</text>
+            <text class="d-tick" x="333.97" y="360" text-anchor="middle">20</text>
+            <text class="d-tick" x="411.93" y="360" text-anchor="middle">40</text>
+            <text class="d-tick" x="489.90" y="360" text-anchor="middle">60</text>
+            <text class="d-tick" x="567.86" y="360" text-anchor="middle">80</text>
+            <text class="d-tick" x="645.83" y="360" text-anchor="middle">100</text>
+            <text class="d-tick" x="716" y="360" text-anchor="middle">118</text>
+            <text class="d-note" x="486" y="384" text-anchor="middle">attack nodes among the first 93 alerts (118 labelled, 701,622 nodes ranked)</text>
+          </g>
+          <!-- rows: center y = 36 + 40 i -->
+          <text class="d-title" x="240" y="34" text-anchor="end">Event count</text>
+          <text class="d-sub" x="240" y="47" text-anchor="end">training-free</text>
+          <rect class="bar" x="256" y="29" width="15.59" height="14" style="--c: #6e6e6e"/>
+          <text class="d-val" x="279" y="40">4</text>
+
+          <text class="d-title" x="240" y="74" text-anchor="end">ORTHRUS</text>
+          <text class="d-sub" x="240" y="87" text-anchor="end">reproduced, range 4 to 7</text>
+          <rect class="bar" x="256" y="69" width="15.59" height="14" style="--c: var(--blue)"/>
+          <rect class="bar range" x="271.59" y="69" width="11.69" height="14" style="--c: var(--blue)"/>
+          <text class="d-val" x="291" y="80">4 to 7</text>
+
+          <text class="d-title" x="240" y="114" text-anchor="end">Own-clause scores</text>
+          <text class="d-sub" x="240" y="127" text-anchor="end">trained or training-free, best case</text>
+          <rect class="bar" x="256" y="109" width="66.27" height="14" style="--c: #6e6e6e"/>
+          <text class="d-val" x="330" y="120">at most 17</text>
+
+          <text class="d-title" x="240" y="154" text-anchor="end">Velox</text>
+          <text class="d-sub" x="240" y="167" text-anchor="end">reproduced</text>
+          <rect class="bar" x="256" y="149" width="74.07" height="14" style="--c: var(--blue)"/>
+          <text class="d-val" x="338" y="160">19</text>
+
+          <text class="d-title" x="240" y="194" text-anchor="end">Temporal model</text>
+          <text class="d-sub" x="240" y="207" text-anchor="end">better held-out likelihood</text>
+          <rect class="bar" x="256" y="189" width="99.80" height="14" style="--c: var(--violet)"/>
+          <text class="d-val" x="364" y="200">25.6</text>
+
+          <text class="d-title" x="240" y="234" text-anchor="end">SENTINEL, one model</text>
+          <text class="d-sub" x="240" y="247" text-anchor="end">mean of five runs</text>
+          <rect class="bar" x="256" y="229" width="163.73" height="14" style="--c: var(--green)"/>
+          <text class="d-val" x="428" y="240">42.0</text>
+
+          <text class="d-title" x="240" y="274" text-anchor="end">SENTINEL, ensemble</text>
+          <text class="d-sub" x="240" y="287" text-anchor="end">five models' scores averaged</text>
+          <rect class="bar" x="256" y="269" width="241.69" height="14" style="--c: var(--green)"/>
+          <text class="d-val" x="506" y="280">62</text>
+
+          <text class="d-title" x="240" y="314" text-anchor="end">ProvFusion</text>
+          <text class="d-sub" x="240" y="327" text-anchor="end">published operating point</text>
+          <rect class="bar pub" x="256" y="309" width="319.66" height="14" style="--c: var(--copper)"/>
+          <text class="d-val" x="584" y="320">82</text>
+        </svg>
+      </div>
+      <svg class="v-narrow" viewBox="0 0 360 442" role="img" aria-label="Bar chart, drawn to scale from 0 to 118 attack nodes: event count 4, ORTHRUS reproduced 4 to 7, own-clause scores at most 17, Velox reproduced 19, temporal model 25.6, SENTINEL one model 42.0, SENTINEL ensemble 62, ProvFusion published 82.">
+        <line class="d-grid" x1="10.00" y1="10" x2="10.00" y2="378"/>
+        <line class="d-grid" x1="64.24" y1="10" x2="64.24" y2="378"/>
+        <line class="d-grid" x1="118.47" y1="10" x2="118.47" y2="378"/>
+        <line class="d-grid" x1="172.71" y1="10" x2="172.71" y2="378"/>
+        <line class="d-grid" x1="226.95" y1="10" x2="226.95" y2="378"/>
+        <line class="d-grid" x1="281.19" y1="10" x2="281.19" y2="378"/>
+        <line class="d-grid" x1="330.00" y1="10" x2="330.00" y2="378"/>
+        <line class="d-axis" x1="10" y1="378" x2="330" y2="378"/>
+        <text class="d-tick" x="10.00" y="394" text-anchor="start">0</text>
+        <text class="d-tick" x="64.24" y="394" text-anchor="middle">20</text>
+        <text class="d-tick" x="118.47" y="394" text-anchor="middle">40</text>
+        <text class="d-tick" x="172.71" y="394" text-anchor="middle">60</text>
+        <text class="d-tick" x="226.95" y="394" text-anchor="middle">80</text>
+        <text class="d-tick" x="281.19" y="394" text-anchor="middle">100</text>
+        <text class="d-tick" x="330.00" y="394" text-anchor="middle">118</text>
+        <text class="d-note" x="180" y="416" text-anchor="middle">attack nodes in the first 93 alerts</text>
+        <text class="d-note" x="180" y="431" text-anchor="middle">118 labelled, 701,622 nodes ranked</text>
+        <text class="d-title" x="10" y="24">Event count <tspan class="d-sub">training-free</tspan></text>
+        <rect class="bar" x="10" y="31" width="10.85" height="12" style="--c: #6e6e6e"/>
+        <text class="d-val" x="27.85" y="41">4</text>
+        <text class="d-title" x="10" y="70">ORTHRUS <tspan class="d-sub">reproduced</tspan></text>
+        <rect class="bar" x="10" y="77" width="10.85" height="12" style="--c: var(--blue)"/>
+        <rect class="bar range" x="20.85" y="77" width="8.14" height="12" style="--c: var(--blue)"/>
+        <text class="d-val" x="35.98" y="87">4 to 7</text>
+        <text class="d-title" x="10" y="116">Own-clause scores <tspan class="d-sub">trained or training-free</tspan></text>
+        <rect class="bar" x="10" y="123" width="46.10" height="12" style="--c: #6e6e6e"/>
+        <text class="d-val" x="63.10" y="133">at most 17</text>
+        <text class="d-title" x="10" y="162">Velox <tspan class="d-sub">reproduced</tspan></text>
+        <rect class="bar" x="10" y="169" width="51.53" height="12" style="--c: var(--blue)"/>
+        <text class="d-val" x="68.53" y="179">19</text>
+        <text class="d-title" x="10" y="208">Temporal model <tspan class="d-sub">better held-out likelihood</tspan></text>
+        <rect class="bar" x="10" y="215" width="69.42" height="12" style="--c: var(--violet)"/>
+        <text class="d-val" x="86.42" y="225">25.6</text>
+        <text class="d-title" x="10" y="254">SENTINEL, one model <tspan class="d-sub">mean of five runs</tspan></text>
+        <rect class="bar" x="10" y="261" width="113.90" height="12" style="--c: var(--green)"/>
+        <text class="d-val" x="130.90" y="271">42.0</text>
+        <text class="d-title" x="10" y="300">SENTINEL, ensemble <tspan class="d-sub">five models averaged</tspan></text>
+        <rect class="bar" x="10" y="307" width="168.14" height="12" style="--c: var(--green)"/>
+        <text class="d-val" x="185.14" y="317">62</text>
+        <text class="d-title" x="10" y="346">ProvFusion <tspan class="d-sub">published operating point</tspan></text>
+        <rect class="bar pub" x="10" y="353" width="222.37" height="12" style="--c: var(--copper)"/>
+        <text class="d-val" x="239.37" y="363">82</text>
+      </svg>
+      <div class="legend">
+        <span style="--c: #6e6e6e"><i></i>David's count and own-clause baselines</span>
+        <span style="--c: var(--blue)"><i></i>David's reproductions of published detectors</span>
+        <span style="--c: var(--violet)"><i></i>Temporal model</span>
+        <span style="--c: var(--green)"><i></i>SENTINEL</span>
+        <span style="--c: var(--copper)"><i class="pub"></i>Published figure</span>
+      </div>
+      <p class="note">THEIA, Engagement 3, ORTHRUS's 118 attack labels. The SENTINEL scoring rule was chosen after inspecting one run, so these SENTINEL results are exploratory; leaving that run out, one model averages 36.75. The temporal model predicted benign relations better and found fewer attack nodes, so held-out likelihood did not pick the detector.</p>
+    </figure>
+  </section>
+
+  <section>
+    <h2>4. SENTINEL, a detector over named relations</h2>
+    <p class="note">SENTINEL changes the grammar to restore which entities interacted: its words are a node's (edge type, partner name) relations. It reads up to 32 of them, pools them with one attention layer, is trained on benign data to predict the edge type of a held-out relation, and scores a node by its most surprising relation seen fewer than twice in training.</p>
+
+    <figure id="fig-sentinel">
+      <figcaption><h3>SENTINEL's detector</h3></figcaption>
+      <div class="scroll v-wide">
+        <svg viewBox="0 0 1080 236" role="img" aria-label="SENTINEL architecture: up to 32 edge type and partner name relations of a node, a partner-name encoder from word and character trigrams, one attention layer pooling the node's other relations, a head predicting the held-out relation's edge type, and a node score from its most surprising rarely seen relation.">
+          <text class="d-note" x="10" y="26">Trained on benign data only. 47,078 weights.</text>
+          <rect class="d-box" x="10" y="52" width="190" height="96"/>
+          <text class="d-title" x="24" y="78">Node's relations</text>
+          <text class="d-sub" x="24" y="98">up to 32 pairs of</text>
+          <text class="d-sub" x="24" y="114">(edge type,</text>
+          <text class="d-sub" x="24" y="130">partner name)</text>
+
+          <rect class="d-box" x="232" y="52" width="190" height="96"/>
+          <text class="d-title" x="246" y="78">Partner encoder</text>
+          <text class="d-sub" x="246" y="98">names encoded from</text>
+          <text class="d-sub" x="246" y="114">word and character</text>
+          <text class="d-sub" x="246" y="130">trigrams</text>
+
+          <rect class="d-box hl" x="454" y="52" width="190" height="96" style="--c: var(--green)"/>
+          <text class="d-title" x="468" y="78">One attention layer</text>
+          <text class="d-sub" x="468" y="98">pools the node's</text>
+          <text class="d-sub" x="468" y="114">other relations</text>
+
+          <rect class="d-box" x="676" y="52" width="190" height="96"/>
+          <text class="d-title" x="690" y="78">Edge-type head</text>
+          <text class="d-sub" x="690" y="98">predicts the held-out</text>
+          <text class="d-sub" x="690" y="114">relation's edge type</text>
+
+          <rect class="d-box" x="898" y="52" width="172" height="96"/>
+          <text class="d-title" x="912" y="78">Node score</text>
+          <text class="d-sub" x="912" y="98">most surprising</text>
+          <text class="d-sub" x="912" y="114">relation seen fewer</text>
+          <text class="d-sub" x="912" y="130">than twice in training</text>
+
+          <path class="d-line" style="--c: var(--green)" d="M200,100 H226"/>
+          <polygon class="d-arrow" style="--c: var(--green)" points="232,100 224,96 224,104"/>
+          <path class="d-line" style="--c: var(--green)" d="M422,100 H448"/>
+          <polygon class="d-arrow" style="--c: var(--green)" points="454,100 446,96 446,104"/>
+          <path class="d-line" style="--c: var(--green)" d="M644,100 H670"/>
+          <polygon class="d-arrow" style="--c: var(--green)" points="676,100 668,96 668,104"/>
+          <path class="d-line" style="--c: var(--green)" d="M866,100 H892"/>
+          <polygon class="d-arrow" style="--c: var(--green)" points="898,100 890,96 890,104"/>
+
+          <path class="d-line dash" style="--c: var(--muted)" d="M771,148 V190 H105 V154"/>
+          <polygon class="d-arrow" style="--c: var(--muted)" points="105,148 101,156 109,156"/>
+          <text class="d-note" x="438" y="210" text-anchor="middle">training: predict the edge type of a held-out relation, on benign data</text>
+        </svg>
+      </div>
+      <svg class="v-narrow" viewBox="0 0 360 512" role="img" aria-label="SENTINEL architecture, stacked: up to 32 edge type and partner name relations of a node, a partner-name encoder from word and character trigrams, one attention layer pooling the node's other relations, a head predicting the held-out relation's edge type, and a node score from its most surprising rarely seen relation.">
+        <text class="d-note" x="10" y="18">Trained on benign data only. 47,078 weights.</text>
+        <rect class="d-box" x="10" y="32" width="340" height="66"/>
+        <text class="d-title" x="24" y="56">Node's relations</text>
+        <text class="d-sub" x="24" y="78">up to 32 (edge type, partner name) pairs</text>
+        <rect class="d-box" x="10" y="122" width="340" height="66"/>
+        <text class="d-title" x="24" y="146">Partner encoder</text>
+        <text class="d-sub" x="24" y="168">names from word and character trigrams</text>
+        <rect class="d-box hl" x="10" y="212" width="340" height="66" style="--c: var(--green)"/>
+        <text class="d-title" x="24" y="236">One attention layer</text>
+        <text class="d-sub" x="24" y="258">pools the node's other relations</text>
+        <rect class="d-box" x="10" y="302" width="340" height="66"/>
+        <text class="d-title" x="24" y="326">Edge-type head</text>
+        <text class="d-sub" x="24" y="348">predicts the held-out relation's edge type</text>
+        <rect class="d-box" x="10" y="392" width="340" height="80"/>
+        <text class="d-title" x="24" y="416">Node score</text>
+        <text class="d-sub" x="24" y="438">most surprising relation seen fewer</text>
+        <text class="d-sub" x="24" y="454">than twice in training</text>
+        <path class="d-line" style="--c: var(--green)" d="M180,98 V116 M180,188 V206 M180,278 V296 M180,368 V386"/>
+        <polygon class="d-arrow" style="--c: var(--green)" points="180,122 176,114 184,114"/>
+        <polygon class="d-arrow" style="--c: var(--green)" points="180,212 176,204 184,204"/>
+        <polygon class="d-arrow" style="--c: var(--green)" points="180,302 176,294 184,294"/>
+        <polygon class="d-arrow" style="--c: var(--green)" points="180,392 176,384 184,384"/>
+        <text class="d-note" x="10" y="496">training: predict a held-out relation's edge type</text>
+      </svg>
+    </figure>
+
+    <ul class="points" style="--c: var(--green)">
+      <li>Over five training runs a single model places 42.0 of 118 attack nodes in its first 93 alerts, and averaging the five models' scores places 62. <span>David's reproductions place 4 to 7 for ORTHRUS and 19 for Velox.</span></li>
+      <li>In a one-hop variant, SENTINEL's context works as well with partner types as with names, but its predicted relations need names.</li>
+      <li>Most attack nodes on CADETS in Engagement 5 lack those names: only 19 of 124 ground-truth nodes carry the object names SENTINEL reads. <span>The replication there was limited, so the result is specific to THEIA.</span></li>
+    </ul>
+
+    <div class="cols">
+      <div>
+        <h3>Ablation: relational context</h3>
+        <div class="scroll"><table class="abl">
+          <thead><tr><th>E3-THEIA, one run</th><th class="num">Attack nodes in first 93</th></tr></thead>
+          <tbody>
+            <tr><td>Event count, training-free</td><td class="num">4</td></tr>
+            <tr><td>Without the node's other relations</td><td class="num">2</td></tr>
+            <tr><td>With them, untrained</td><td class="num">0</td></tr>
+            <tr><td>With them, trained</td><td class="num hi">42</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div>
+        <h3>Cost on one A100 machine</h3>
+        <div class="scroll"><table class="cost">
+          <thead><tr><th>Detector</th><th class="num">End to end (min)</th><th class="num">Peak memory (GB)</th><th class="num">Weights</th></tr></thead>
+          <tbody>
+            <tr><td>SENTINEL</td><td class="num hi">6.2</td><td class="num hi">13.5</td><td class="num hi">47,078</td></tr>
+            <tr><td>Velox</td><td class="num">56.3</td><td class="num">57.0</td><td class="num">216,842</td></tr>
+            <tr><td>ORTHRUS</td><td class="num">127.3</td><td class="num">174.4</td><td class="num">1.2M</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Rigor, controls and earlier studies</h2>
+    <div class="callouts">
+      <div class="callout" style="--c: var(--red)">
+        <span class="tag">Self-audit</span>
+        <h3>A label leak, retracted</h3>
+        <p>An adversarial self-audit caught a label leak in an earlier calibration. The result was retracted and re-measured label-free.</p>
+      </div>
+      <div class="callout" style="--c: var(--violet)">
+        <span class="tag">Likelihood</span>
+        <h3>Better loss, fewer attacks</h3>
+        <p>A temporal model with lower held-out cross-entropy found 25.6 of 118 attack nodes against SENTINEL's 42.0, so held-out likelihood did not pick the detector. Reported as exploratory, since the scoring rule was chosen after one run.</p>
+      </div>
+      <div class="callout" style="--c: var(--copper)">
+        <span class="tag">Thresholds</span>
+        <h3>Best case is labelled as best case</h3>
+        <p>The 0.885 and 0.843 frequency-table scores use a label-selected benign reference and a threshold chosen on the test labels. Set from benign data alone, CADETS falls to 0.642.</p>
+      </div>
+      <div class="callout" style="--c: var(--blue)">
+        <span class="tag">Earlier study: OpTC</span>
+        <h3>Supervised discrimination</h3>
+        <p>On DARPA's OpTC data, within-host leave-one-agent-out AUC was 0.979 &plusmn; 0.016, and cross-tool transfer from Empire to Meterpreter reached 0.753 against an untrained 0.37.</p>
+      </div>
+      <div class="callout" style="--c: var(--red)">
+        <span class="tag">Earlier study: LID-DS</span>
+        <h3>Negative controls falsified lifts</h3>
+        <p>System-call detectors V5 to V9 on LID-DS ran as pre-registered studies with negative controls. STIDE baselines (a table of short system-call sequences seen in benign runs) solve couchdb (0.997) and nginx (1.000), and the controls falsified several learned-model lifts.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Questions about this project?</h2>
+    <p>LedbetterLM is an AI that knows David's work. Ask it why own-clause scores stop at 17 of 118, how SENTINEL reads named relations, or how the two THEIA label sets reorder the comparison.</p>
+    <a class="btn primary big" href="/projects/thesis">Ask LedbetterLM about this project &rarr;</a>
+  </section>
+
+  <section class="sources">
+    <span>Every number on this page comes from these sources:</span>
+    <a href="/projects/thesis">Thesis page on this site: abstract, the four contributions and six figures</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David Ledbetter, CV (standard): Research, Master's thesis and Earlier HIDS and provenance studies</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short" target="_blank" rel="noopener noreferrer">David Ledbetter, CV (short): Research</a>
+    <span>LedbetterLM's knowledge base, thesis section (not public; same numbers as the thesis page, plus the E5-CADETS name coverage, the leave-one-out mean and the ORTHRUS precision range)</span>
+    <span>The thesis code is not public. Results are reported as the thesis states them, with their conditions.</span>
+  </section>
+  <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
+</div>
+<a class="ask-fab" href="/projects/thesis">Ask LedbetterLM</a>
+<script src="ask.js" defer></script>
+</body>
+</html>

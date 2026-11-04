@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import './ProjectCard.css';
 import useTypeOnVisible from '../../hooks/useTypeOnVisible';
 import useScrambleOnVisible from '../../hooks/useScrambleOnVisible';
 import usePortfolioDescription from '../../hooks/usePortfolioDescription';
+import { portfolioUrl } from '../../data/projects';
 
 // A carousel card for one project (see data/projects.js). Clicking opens the project's
-// own page, where LedbetterLM starts a conversation about it; the repo / live-site links
-// live on that page.
+// portfolio page (a static HTML page outside the React app, so it's a full page load);
+// that page links to the repo and to the LedbetterLM chat about the project.
 const ProjectCard = ({ project }) => {
-  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const fullDescription = usePortfolioDescription(project);
 
@@ -25,11 +24,11 @@ const ProjectCard = ({ project }) => {
       className={`project-card ${isHovered ? 'hovered' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => navigate(`/projects/${project.slug}`)}
+      onClick={() => window.location.assign(portfolioUrl(project))}
     >
       <h2 ref={titleRef}>{titleText}</h2>
       <p ref={descRef} style={bidi}>{descriptionText}</p>
-      <div className="project-card-footer">Chat about this project →</div>
+      <div className="project-card-footer">Open the project →</div>
     </div>
   );
 };

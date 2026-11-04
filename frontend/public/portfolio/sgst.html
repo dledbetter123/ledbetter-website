@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sparse Geometric Signal Transport &middot; David Ledbetter</title>
+<meta name="description" content="Sparse Geometric Signal Transport (SGST), David Ledbetter's independent research on a geometric theory of the transformer: attention as parallel transport on a fiber bundle, tokens as sparse Fourier constellations, 21 architecture versions against GPT, and CurvBias, a curvature-based positional encoding: a learned curvature term on the attention logits.">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="portfolio.css">
+<style>
+/* SGST page: diagram strokes, chart marks, formulas, and the wide/stacked diagram swap. */
+.d-box.hl { stroke: var(--c, var(--ink)); stroke-width: 1.4; }
+.d-code { fill: var(--copper); font-size: 11.5px; }
+.d-lab { fill: var(--ink); font-size: 11px; }
+.d-axis { stroke: var(--muted); stroke-width: 1; }
+.d-grid { stroke: var(--line); stroke-width: 1; }
+.d-tick { fill: var(--muted); font-size: 10px; }
+.d-val { fill: var(--ink); font-size: 11px; font-weight: 600; }
+.bar { fill: var(--c, var(--muted)); }
+#fig-arch .v-wide svg { min-width: 760px; }
+#fig-curv .v-wide svg { min-width: 600px; max-width: 900px; }
+svg.v-narrow { display: none; max-width: 420px; }
+@media (max-width: 640px) {
+  .v-wide { display: none; }
+  svg.v-narrow { display: block; }
+}
+svg.v-narrow .d-title { font-size: 13px; }
+svg.v-narrow .d-sub, svg.v-narrow .d-lab { font-size: 11px; }
+svg.v-narrow .d-code { font-size: 12px; }
+svg.v-narrow .d-note, svg.v-narrow .d-tick { font-size: 10.5px; }
+.formula { font-family: var(--f-mono); font-size: 15px; color: var(--copper); overflow-wrap: anywhere; padding-block: 4px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { display: inline-block; width: 14px; height: 10px; background: var(--c); }
+table.conv td:first-child { color: var(--ink); width: 34%; }
+table.conv td { color: var(--muted); }
+table.ts td.num, table.ts th.num { padding-left: 8px; }
+.sources { border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="Page">
+    <a class="back" href="/#portfolio">&larr; All projects</a>
+    <div class="actions">
+      <a class="btn primary" href="/projects/sgst">Ask LedbetterLM about this</a>
+      <a class="btn" href="https://github.com/dledbetter123/SparseGeometricSignalTransport" target="_blank" rel="noopener noreferrer">View the repo &#8599;</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">Independent research &middot; December 2024&ndash;Present</div>
+    <h1>Sparse Geometric Signal Transport</h1>
+    <p class="lede">A geometric theory of the transformer: attention as parallel transport on a fiber bundle, with tokens as sparse Fourier constellations. Across 21 architecture versions benchmarked against GPT under matched data, batch and training configurations, David's spectral model V12.1 beat a parameter-matched GPT-Nano on Tiny Shakespeare. The program also surfaced CurvBias, a curvature-based positional encoding: a learned curvature term on the attention logits that drops into a standard transformer and beat GPT with RoPE in every run at every scale tested.</p>
+    <div class="meta"><span><b>Role</b> Independent researcher</span><span><b>Dates</b> December 2024 &ndash; Present</span><span><b>Code</b> Public on GitHub</span></div>
+    <div class="tags"><span>PyTorch</span><span>Differential geometry</span><span>Attention mechanisms</span><span>Positional encodings</span><span>Efficient sequence models</span><span>Linear attention (GLA)</span></div>
+  </header>
+
+  <section>
+    <h2>At a glance</h2>
+    <div class="stats">
+      <div class="stat" style="--c: var(--green)"><b>2.13 vs 2.18</b><span>validation bits per character on Tiny Shakespeare at 10K steps: V12.1 (2.35M parameters) against GPT-Nano's best checkpoint (2.41M)</span></div>
+      <div class="stat" style="--c: var(--blue)"><b>9.0%</b><span>lower perplexity for GPT with the curvature encoding than GPT with RoPE at 14M parameters (48.6 vs 53.4)</span></div>
+      <div class="stat" style="--c: var(--violet)"><b>3.5%</b><span>lower at 77M parameters with a 3,072-token context over 40K steps (24.5 vs 25.4)</span></div>
+      <div class="stat" style="--c: var(--yellow)"><b>1.3&ndash;1.6&times;</b><span>overhead of the curvature encoding, against 5&ndash;6&times; for a holonomy-based alternative</span></div>
+      <div class="stat" style="--c: var(--copper)"><b>21</b><span>architecture versions, V1 to V21, benchmarked against GPT baselines</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The question</h2>
+    <p class="lede" style="font-size:16px">Self-attention works extraordinarily well. SGST asks why it works, what geometric object it is computing, and whether a cheaper object computes the same thing. The wager is that the answer lives in differential geometry and signal processing: if a transformer block performs parallel transport of information (moving a vector along a path while keeping it consistent with a learned connection), then attention's all-pairs computation is one expensive way to realize that transport.</p>
+    <div class="cols">
+      <div>
+        <h3>Attention is path-independent</h3>
+        <p>The score between positions i and j depends only on the content at i and j, never on what lies between them. In <em>The cat that the dog chased ran away</em>, attention from <em>ran</em> to <em>cat</em> is computed as if <em>the dog chased</em> were absent.</p>
+      </div>
+      <div>
+        <h3>Language is path-dependent</h3>
+        <p>The meaning that accrues to a token depends on the whole route through the clause. Gauge theory describes this regime: carry a vector around a curved space and the rotation it picks up on return is its holonomy. The central conjecture is that the contextual change a token undergoes is a holonomy, and attention approximates it expensively and path-independently.</p>
+      </div>
+      <div>
+        <h3>Attention's cost</h3>
+        <p>Attention is O(T<sup>2</sup>) in sequence length and keeps an exact O(T) memory, the KV cache: at sequence length 256, on the order of 1.3&times;10<sup>5</sup> stored values per layer.</p>
+      </div>
+    </div>
+    <div class="scroll"><table class="conv">
+      <thead><tr><th>Research line</th><th>Its transport object</th></tr></thead>
+      <tbody>
+        <tr><td>Gauge theory, geometric deep learning</td><td>Parallel transport along a connection A; holonomy as accumulated curvature</td></tr>
+        <tr><td>State-space models (S4, Mamba, Mamba-3)</td><td>Recurrent state h<sub>t</sub> = A<sub>t</sub>h<sub>t&#8722;1</sub> + B<sub>t</sub>x<sub>t</sub> with input-dependent transitions</td></tr>
+        <tr><td>Linear and kernel attention</td><td>Associative state S<sub>t</sub> = S<sub>t&#8722;1</sub> + k<sub>t</sub>v<sub>t</sub><sup>T</sup> updated online</td></tr>
+        <tr><td>The delta rule</td><td>Selective overwrite of state, beyond simple decay</td></tr>
+        <tr><td>Spectral methods, compressed sensing</td><td>Transport as cheap frequency-domain filtering</td></tr>
+        <tr><td>Optimal transport</td><td>Moving probability mass along a cost geometry</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Six research lines arrive at content-dependent transport of state. The product of input-dependent transition matrices in a modern state-space model, A<sub>t</sub>A<sub>t&#8722;1</sub>&#8943;A<sub>1</sub>, is the Wilson line of a gauge connection: a path-ordered product of local, content-dependent, norm-preserving maps. SGST takes that equivalence as a design principle.</p>
+  </section>
+
+  <section>
+    <h2>The architecture</h2>
+    <p class="note">The mature formulation models computation over a base manifold M (the context) with a fiber of representational features attached at each contextual coordinate q, split into K orthogonal sub-bundles. Transport between coordinates is gauge-covariant and runs in the spectral domain:</p>
+    <p class="formula">X&#771;<sub>q</sub> = X<sub>p</sub> &middot; exp(&#8722;D&omega;<sup>2</sup> &#8722; i&omega; &int;<sub>&gamma;</sub> A)</p>
+    <ul class="points" style="--c: var(--blue)">
+      <li>The diffusive term exp(&#8722;D&omega;<sup>2</sup>) is a heat kernel: frequency-dependent damping that separates scales for free. <span>Low modes travel far; high modes decay fast.</span></li>
+      <li>The advective term exp(&#8722;i&omega;&int;A) is a U(1) Wilson line: a content-dependent phase rotation that is the path's holonomy. <span>This is the term attention cannot express.</span></li>
+      <li>One Parseval inner product, Re(h &lowast; c&#772;), between an accumulated mode-state h and the current token c yields three geometric objects at once: the metric (magnitude overlap), the connection (relative phase) and a reading of curvature (how phase alignment varies across modes).</li>
+      <li>In the V12.5 constellation reframing, a token is a sparse constellation of active Fourier modes, and shared modes are the connections between tokens. <span>No attention matrix is built. With 8 sub-bundles of 17 modes and 6 active in each, the support space holds about 5.7&times;10<sup>32</sup> patterns. Stabilizing it took signed magnitudes, a pre-norm residual highway, and the observation that magnitude already encodes sparsity, so no discrete mask is needed.</span></li>
+    </ul>
+    <figure id="fig-arch">
+      <figcaption><h3>One transport step</h3></figcaption>
+      <div class="scroll v-wide">
+        <svg viewBox="0 0 1080 300" role="img" aria-label="SGST transport: a token is a sparse constellation of active Fourier modes; spectral transport applies a heat-kernel damping term and a Wilson-line phase rotation; one Parseval inner product between the accumulated mode-state and the current token yields a metric, a connection and a reading of curvature.">
+          <rect class="d-box" x="10" y="95" width="210" height="110"/>
+          <text class="d-title" x="24" y="119">Token</text>
+          <text class="d-sub" x="24" y="140">a sparse constellation</text>
+          <text class="d-sub" x="24" y="156">of active Fourier modes</text>
+          <text class="d-sub" x="24" y="172">in K orthogonal</text>
+          <text class="d-sub" x="24" y="188">sub-bundles</text>
+
+          <rect class="d-box hl" x="270" y="60" width="340" height="180" style="--c: var(--blue)"/>
+          <text class="d-title" x="284" y="86">Spectral transport</text>
+          <text class="d-code" x="284" y="112">X&#771;<tspan baseline-shift="sub" font-size="8">q</tspan> = X<tspan baseline-shift="sub" font-size="8">p</tspan> &#183; exp(&#8722;D&#969;&#178; &#8722; i&#969;&#8747;<tspan baseline-shift="sub" font-size="8">&#947;</tspan>A)</text>
+          <text class="d-sub" x="284" y="140">diffusive term exp(&#8722;D&#969;&#178;): a heat kernel;</text>
+          <text class="d-sub" x="284" y="156">low modes travel far, high modes decay fast</text>
+          <text class="d-sub" x="284" y="180">advective term exp(&#8722;i&#969;&#8747;A): a U(1) Wilson</text>
+          <text class="d-sub" x="284" y="196">line, a content-dependent phase rotation</text>
+          <text class="d-sub" x="284" y="212">that is the path's holonomy</text>
+
+          <rect class="d-box" x="660" y="95" width="200" height="110"/>
+          <text class="d-title" x="674" y="119">Parseval product</text>
+          <text class="d-code" x="674" y="143">Re(h &#8727; c&#772;)</text>
+          <text class="d-sub" x="674" y="166">h: accumulated mode-state</text>
+          <text class="d-sub" x="674" y="182">c: current token</text>
+
+          <rect class="d-box" x="900" y="40" width="170" height="60"/>
+          <text class="d-title" x="914" y="64">Metric</text>
+          <text class="d-sub" x="914" y="84">magnitude overlap</text>
+          <rect class="d-box" x="900" y="120" width="170" height="60"/>
+          <text class="d-title" x="914" y="144">Connection</text>
+          <text class="d-sub" x="914" y="164">relative phase</text>
+          <rect class="d-box" x="900" y="200" width="170" height="60"/>
+          <text class="d-title" x="914" y="222">Curvature</text>
+          <text class="d-sub" x="914" y="239">how phase alignment</text>
+          <text class="d-sub" x="914" y="253">varies across modes</text>
+
+          <path class="d-line" style="--c: var(--blue)" d="M220,150 H264"/>
+          <polygon class="d-arrow" style="--c: var(--blue)" points="270,150 262,146 262,154"/>
+          <path class="d-line" style="--c: var(--blue)" d="M610,150 H654"/>
+          <polygon class="d-arrow" style="--c: var(--blue)" points="660,150 652,146 652,154"/>
+          <path class="d-line" style="--c: var(--blue)" d="M860,150 C880,150 874,70 894,70"/>
+          <path class="d-line" style="--c: var(--blue)" d="M860,150 H894"/>
+          <path class="d-line" style="--c: var(--blue)" d="M860,150 C880,150 874,230 894,230"/>
+          <polygon class="d-arrow" style="--c: var(--blue)" points="900,70 892,66 892,74"/>
+          <polygon class="d-arrow" style="--c: var(--blue)" points="900,150 892,146 892,154"/>
+          <polygon class="d-arrow" style="--c: var(--blue)" points="900,230 892,226 892,234"/>
+          <text class="d-note" x="1070" y="288" text-anchor="end">one bilinear operation, three geometric quantities</text>
+        </svg>
+      </div>
+      <svg class="v-narrow" viewBox="0 0 360 580" role="img" aria-label="SGST transport, stacked: a token is a sparse constellation of active Fourier modes; spectral transport applies a heat-kernel damping term and a Wilson-line phase rotation; one Parseval inner product between the accumulated mode-state and the current token yields a metric, a connection and a reading of curvature.">
+        <rect class="d-box" x="10" y="10" width="340" height="72"/>
+        <text class="d-title" x="24" y="34">Token</text>
+        <text class="d-sub" x="24" y="54">a sparse constellation of active Fourier</text>
+        <text class="d-sub" x="24" y="70">modes in K orthogonal sub-bundles</text>
+        <path class="d-line" style="--c: var(--blue)" d="M180,82 V100"/>
+        <polygon class="d-arrow" style="--c: var(--blue)" points="180,106 176,98 184,98"/>
+
+        <rect class="d-box hl" x="10" y="106" width="340" height="142" style="--c: var(--blue)"/>
+        <text class="d-title" x="24" y="130">Spectral transport</text>
+        <text class="d-code" x="24" y="154">X&#771;<tspan baseline-shift="sub" font-size="9">q</tspan> = X<tspan baseline-shift="sub" font-size="9">p</tspan> &#183; exp(&#8722;D&#969;&#178; &#8722; i&#969;&#8747;<tspan baseline-shift="sub" font-size="9">&#947;</tspan>A)</text>
+        <text class="d-sub" x="24" y="178">heat kernel exp(&#8722;D&#969;&#178;): low modes travel</text>
+        <text class="d-sub" x="24" y="194">far, high modes decay fast</text>
+        <text class="d-sub" x="24" y="216">Wilson line exp(&#8722;i&#969;&#8747;A): a content-</text>
+        <text class="d-sub" x="24" y="232">dependent phase rotation, the holonomy</text>
+        <path class="d-line" style="--c: var(--blue)" d="M180,248 V266"/>
+        <polygon class="d-arrow" style="--c: var(--blue)" points="180,272 176,264 184,264"/>
+
+        <rect class="d-box" x="10" y="272" width="340" height="86"/>
+        <text class="d-title" x="24" y="296">Parseval product</text>
+        <text class="d-code" x="24" y="318">Re(h &#8727; c&#772;)</text>
+        <text class="d-sub" x="24" y="340">h: mode-state, c: current token</text>
+
+        <path class="d-line" style="--c: var(--blue)" d="M22,358 V518 M22,406 H30 M22,462 H30 M22,518 H30"/>
+        <polygon class="d-arrow" style="--c: var(--blue)" points="36,406 28,402 28,410"/>
+        <polygon class="d-arrow" style="--c: var(--blue)" points="36,462 28,458 28,466"/>
+        <polygon class="d-arrow" style="--c: var(--blue)" points="36,518 28,514 28,522"/>
+        <rect class="d-box" x="36" y="382" width="314" height="48"/>
+        <text class="d-title" x="50" y="402">Metric</text>
+        <text class="d-sub" x="50" y="420">magnitude overlap</text>
+        <rect class="d-box" x="36" y="438" width="314" height="48"/>
+        <text class="d-title" x="50" y="458">Connection</text>
+        <text class="d-sub" x="50" y="476">relative phase</text>
+        <rect class="d-box" x="36" y="494" width="314" height="48"/>
+        <text class="d-title" x="50" y="514">Curvature</text>
+        <text class="d-sub" x="50" y="532">how phase alignment varies across modes</text>
+        <text class="d-note" x="10" y="566">one bilinear operation, three geometric quantities</text>
+      </svg>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Results against GPT</h2>
+    <p class="note">The repository reports its negative results alongside the wins.</p>
+    <h3>Tiny Shakespeare, 10K steps, same schedule</h3>
+    <div class="scroll"><table class="ts">
+      <thead><tr><th>Model</th><th class="num">Params</th><th class="num">Validation BPC</th><th class="num">Accuracy</th></tr></thead>
+      <tbody>
+        <tr><td>V12.1, spectral</td><td class="num">2.35M</td><td class="num hi">2.13</td><td class="num hi">57.6%</td></tr>
+        <tr><td>GPT-Nano</td><td class="num">2.41M</td><td class="num">2.18 best checkpoint, 2.99 final step</td><td class="num">53.8%</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">BPC is bits per character; lower is better. GPT-Nano is parameter-matched to V12.1. The often-quoted within-0.12-BPC figure came from an earlier 3K-step run.</p>
+    <div class="callouts">
+      <div class="callout" style="--c: var(--red)">
+        <span class="tag">The bar: V12.2 ablation</span>
+        <h3>The spectral machinery was decorative</h3>
+        <p>At 3K steps on Tiny Shakespeare, a plain state-space model plus MLP reached 2.267 BPC and the full geometric model 2.302, at 4.7&times; the compute. The spectral machinery took 79% of step time to make the model 0.035 BPC worse. Every later iteration had to clear this baseline before any geometric claim counted.</p>
+      </div>
+      <div class="callout" style="--c: var(--yellow)">
+        <span class="tag">WikiText-103</span>
+        <h3>Within 1.6&times;, behind</h3>
+        <p>V16, built on the idea that the inverse FFT is the mixing step, reached perplexity 275 against GPT-Nano's 173.</p>
+      </div>
+      <div class="callout" style="--c: var(--red)">
+        <span class="tag">Caught and disqualified</span>
+        <h3>An apparent 18&times; win was a leak</h3>
+        <p>The variant V16b reached perplexity 36 at step 2,500, about 18&times; better than GPT at the same step. David traced it to non-causal leakage: a position FFT mixed every position, future tokens included, into each output. The result was disqualified.</p>
+      </div>
+      <div class="callout" style="--c: var(--violet)">
+        <span class="tag">Mid-project audit</span>
+        <h3>The limit is memory</h3>
+        <p>A scalar-fiber model carries about 10<sup>2</sup> state values per layer, a 16&times;8&times;8 matrix fiber about 10<sup>3</sup>, and attention's KV cache about 10<sup>5</sup>: a 128&times; memory gap. The audit's conclusion: no amount of clever routing compensates for 128&times; less memory.</p>
+      </div>
+    </div>
+    <h3>What survived every ablation</h3>
+    <ul class="points" style="--c: var(--green)">
+      <li>Content-dependent state transitions.</li>
+      <li>A per-token nonlinearity. <span>The FFN is the only nonlinear feature mixer in the stack.</span></li>
+      <li>The inverse-FFT round trip. <span>Removing it NaNs by step 5,500; it is load-bearing for stability.</span></li>
+      <li>Associative matrix-fiber memory. <span>Retrieval as q&middot;S beats a scalar moving average.</span></li>
+      <li>Complex-valued state. <span>Phase is how holonomy is stored.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>CurvBias: a curvature-based positional encoding</h2>
+    <p class="note">The program's most promising applied result adds a learned, content-dependent curvature term to the attention logits:</p>
+    <p class="formula">score<sub>ij</sub> = q<sub>i</sub>&middot;k<sub>j</sub> / &radic;d &#8722; &int;<sub>i</sub><sup>j</sup> &kappa;(t) dt</p>
+    <ul class="points" style="--c: var(--green)">
+      <li>In the gauge hierarchy, absolute and relative position encodings are flat connections, and RoPE (rotary position embedding) is a flat U(1) connection with zero curvature. <span>This encoding is the first member with nonzero, learned, content-dependent curvature.</span></li>
+      <li>It beat GPT with RoPE in every run at every scale tested.</li>
+      <li>It is a drop-in addition, compatible with FlashAttention and KV caching, with O(T<sup>2</sup>) scalar overhead, d&times; cheaper than attention itself. <span>Measured overhead is 1.3&ndash;1.6&times;, against 5&ndash;6&times; for a holonomy-based alternative.</span></li>
+      <li>The repository frames these as early, encouraging results that need further study, especially at scale.</li>
+    </ul>
+    <figure id="fig-curv">
+      <figcaption><h3>Perplexity by scale</h3></figcaption>
+      <div class="scroll v-wide">
+        <svg viewBox="0 0 760 312" role="img" aria-label="Bar chart of perplexity, drawn to scale from 0 to 70, lower is better. 14M parameters: GPT with no position encoding 62.9, GPT with RoPE 53.4, GPT with the curvature encoding 48.6. 77M parameters: RoPE 38.9, curvature encoding 37.3. 77M parameters with 3,072-token context over 40K steps: RoPE 25.4, curvature encoding 24.5.">
+          <line class="d-grid" x1="256.00" y1="10" x2="256.00" y2="262"/>
+          <line class="d-grid" x1="321.71" y1="10" x2="321.71" y2="262"/>
+          <line class="d-grid" x1="387.43" y1="10" x2="387.43" y2="262"/>
+          <line class="d-grid" x1="453.14" y1="10" x2="453.14" y2="262"/>
+          <line class="d-grid" x1="518.86" y1="10" x2="518.86" y2="262"/>
+          <line class="d-grid" x1="584.57" y1="10" x2="584.57" y2="262"/>
+          <line class="d-grid" x1="650.29" y1="10" x2="650.29" y2="262"/>
+          <line class="d-grid" x1="716.00" y1="10" x2="716.00" y2="262"/>
+          <line class="d-axis" x1="256" y1="262" x2="716" y2="262"/>
+          <text class="d-tick" x="256.00" y="278" text-anchor="middle">0</text>
+          <text class="d-tick" x="321.71" y="278" text-anchor="middle">10</text>
+          <text class="d-tick" x="387.43" y="278" text-anchor="middle">20</text>
+          <text class="d-tick" x="453.14" y="278" text-anchor="middle">30</text>
+          <text class="d-tick" x="518.86" y="278" text-anchor="middle">40</text>
+          <text class="d-tick" x="584.57" y="278" text-anchor="middle">50</text>
+          <text class="d-tick" x="650.29" y="278" text-anchor="middle">60</text>
+          <text class="d-tick" x="716.00" y="278" text-anchor="middle">70</text>
+          <text class="d-note" x="486" y="300" text-anchor="middle">perplexity, lower is better</text>
+          <text class="d-title" x="10" y="26">14M parameters</text>
+          <text class="d-lab" x="240" y="48" text-anchor="end">GPT, no position encoding</text>
+          <rect class="bar" x="256" y="38" width="413.34" height="12" style="--c: #6e6e6e"/>
+          <text class="d-val" x="677.34" y="48">62.9</text>
+          <text class="d-lab" x="240" y="68" text-anchor="end">GPT + RoPE</text>
+          <rect class="bar" x="256" y="58" width="350.91" height="12" style="--c: var(--blue)"/>
+          <text class="d-val" x="614.91" y="68">53.4</text>
+          <text class="d-lab" x="240" y="88" text-anchor="end">GPT + curvature encoding</text>
+          <rect class="bar" x="256" y="78" width="319.37" height="12" style="--c: var(--green)"/>
+          <text class="d-val" x="583.37" y="88">48.6, 9.0% lower</text>
+          <text class="d-title" x="10" y="124">77M parameters</text>
+          <text class="d-lab" x="240" y="146" text-anchor="end">GPT + RoPE</text>
+          <rect class="bar" x="256" y="136" width="255.63" height="12" style="--c: var(--blue)"/>
+          <text class="d-val" x="519.63" y="146">38.9</text>
+          <text class="d-lab" x="240" y="166" text-anchor="end">GPT + curvature encoding</text>
+          <rect class="bar" x="256" y="156" width="245.11" height="12" style="--c: var(--green)"/>
+          <text class="d-val" x="509.11" y="166">37.3, 4.1% lower</text>
+          <text class="d-title" x="10" y="202">77M parameters, 3,072-token context, 40K steps</text>
+          <text class="d-lab" x="240" y="224" text-anchor="end">GPT + RoPE</text>
+          <rect class="bar" x="256" y="214" width="166.91" height="12" style="--c: var(--blue)"/>
+          <text class="d-val" x="430.91" y="224">25.4</text>
+          <text class="d-lab" x="240" y="244" text-anchor="end">GPT + curvature encoding</text>
+          <rect class="bar" x="256" y="234" width="161.00" height="12" style="--c: var(--green)"/>
+          <text class="d-val" x="425.00" y="244">24.5, 3.5% lower</text>
+        </svg>
+      </div>
+      <svg class="v-narrow" viewBox="0 0 360 416" role="img" aria-label="Bar chart of perplexity, drawn to scale from 0 to 70, lower is better. 14M parameters: GPT with no position encoding 62.9, GPT with RoPE 53.4, GPT with the curvature encoding 48.6. 77M parameters: RoPE 38.9, curvature encoding 37.3. 77M parameters with 3,072-token context over 40K steps: RoPE 25.4, curvature encoding 24.5.">
+        <line class="d-grid" x1="10.00" y1="8" x2="10.00" y2="366"/>
+        <line class="d-grid" x1="55.71" y1="8" x2="55.71" y2="366"/>
+        <line class="d-grid" x1="101.43" y1="8" x2="101.43" y2="366"/>
+        <line class="d-grid" x1="147.14" y1="8" x2="147.14" y2="366"/>
+        <line class="d-grid" x1="192.86" y1="8" x2="192.86" y2="366"/>
+        <line class="d-grid" x1="238.57" y1="8" x2="238.57" y2="366"/>
+        <line class="d-grid" x1="284.29" y1="8" x2="284.29" y2="366"/>
+        <line class="d-grid" x1="330.00" y1="8" x2="330.00" y2="366"/>
+        <line class="d-axis" x1="10" y1="366" x2="330" y2="366"/>
+        <text class="d-tick" x="10.00" y="382" text-anchor="start">0</text>
+        <text class="d-tick" x="55.71" y="382" text-anchor="middle">10</text>
+        <text class="d-tick" x="101.43" y="382" text-anchor="middle">20</text>
+        <text class="d-tick" x="147.14" y="382" text-anchor="middle">30</text>
+        <text class="d-tick" x="192.86" y="382" text-anchor="middle">40</text>
+        <text class="d-tick" x="238.57" y="382" text-anchor="middle">50</text>
+        <text class="d-tick" x="284.29" y="382" text-anchor="middle">60</text>
+        <text class="d-tick" x="330.00" y="382" text-anchor="middle">70</text>
+        <text class="d-note" x="180" y="404" text-anchor="middle">perplexity, lower is better</text>
+        <text class="d-title" x="10" y="20">14M parameters</text>
+        <text class="d-lab" x="10" y="40">GPT, no position encoding</text>
+        <rect class="bar" x="10" y="46" width="287.54" height="12" style="--c: #6e6e6e"/>
+        <text class="d-val" x="304.54" y="56">62.9</text>
+        <text class="d-lab" x="10" y="80">GPT + RoPE</text>
+        <rect class="bar" x="10" y="86" width="244.11" height="12" style="--c: var(--blue)"/>
+        <text class="d-val" x="261.11" y="96">53.4</text>
+        <text class="d-lab" x="10" y="120">GPT + curvature encoding</text>
+        <rect class="bar" x="10" y="126" width="222.17" height="12" style="--c: var(--green)"/>
+        <text class="d-val" x="239.17" y="136">48.6, 9.0% lower</text>
+        <text class="d-title" x="10" y="166">77M parameters</text>
+        <text class="d-lab" x="10" y="186">GPT + RoPE</text>
+        <rect class="bar" x="10" y="192" width="177.83" height="12" style="--c: var(--blue)"/>
+        <text class="d-val" x="194.83" y="202">38.9</text>
+        <text class="d-lab" x="10" y="226">GPT + curvature encoding</text>
+        <rect class="bar" x="10" y="232" width="170.51" height="12" style="--c: var(--green)"/>
+        <text class="d-val" x="187.51" y="242">37.3, 4.1% lower</text>
+        <text class="d-title" x="10" y="272">77M, 3,072-token context, 40K steps</text>
+        <text class="d-lab" x="10" y="292">GPT + RoPE</text>
+        <rect class="bar" x="10" y="298" width="116.11" height="12" style="--c: var(--blue)"/>
+        <text class="d-val" x="133.11" y="308">25.4</text>
+        <text class="d-lab" x="10" y="332">GPT + curvature encoding</text>
+        <rect class="bar" x="10" y="338" width="112.00" height="12" style="--c: var(--green)"/>
+        <text class="d-val" x="129.00" y="348">24.5, 3.5% lower</text>
+      </svg>
+      <div class="legend">
+        <span style="--c: #6e6e6e"><i></i>GPT, no position encoding</span>
+        <span style="--c: var(--blue)"><i></i>GPT + RoPE</span>
+        <span style="--c: var(--green)"><i></i>GPT + curvature encoding</span>
+      </div>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Where the program goes next</h2>
+    <p class="note">The gap to attention is a capacity gap. The forward program in the repository (V19 to V21) aims to close it without attention's quadratic cost:</p>
+    <ul class="points">
+      <li>Widen the fiber from scalar to matrix to operator, moving state capacity from about 10<sup>3</sup> toward 10<sup>4</sup> per layer (K = 8 to 32), with a real associative store per mode.</li>
+      <li>Combine U(K) unitary transport with the delta rule, the one untried cell in the six-way table.</li>
+      <li>Sparse, learned-band FFTs: O(s log s) transport on differentiable frequency masks, with blocks specializing to different bands.</li>
+      <li>Apply the curvature encoding to LLaMA- and Mistral-class models during continued pretraining, to test whether the geometric signal grows or fades with scale.</li>
+    </ul>
+    <p class="note">SGST has a sister project with a different approach: <a href="finsler-transformer.html">the Finsler Transformer</a>, which replaces attention with geodesic flow on a learned Finsler manifold.</p>
+  </section>
+
+  <section class="cta">
+    <h2>Questions about this project?</h2>
+    <p>LedbetterLM is an AI that knows David's work and reads his public GitHub repos live. Ask it how attention becomes parallel transport, what the V12.2 ablation ruled out, or how CurvBias works.</p>
+    <a class="btn primary big" href="/projects/sgst">Ask LedbetterLM about this project &rarr;</a>
+  </section>
+
+  <section class="sources">
+    <span>Every number on this page comes from these sources:</span>
+    <a href="https://github.com/dledbetter123/SparseGeometricSignalTransport/blob/main/README.md" target="_blank" rel="noopener noreferrer">SGST repository README (motivation, architecture, results, forward program)</a>
+    <a href="https://github.com/dledbetter123/SparseGeometricSignalTransport/blob/main/README_portfolio.md" target="_blank" rel="noopener noreferrer">SGST portfolio summary (README_portfolio.md)</a>
+    <a href="https://github.com/dledbetter123/SparseGeometricSignalTransport/blob/main/v16/CHANGELOG.md" target="_blank" rel="noopener noreferrer">V16 changelog (the V16b leak: perplexity 36 at step 2,500, about 18&times; GPT at the same step)</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David Ledbetter, CV (standard): Research, Sparse Geometric Signal Transport</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short" target="_blank" rel="noopener noreferrer">David Ledbetter, CV (short): Research</a>
+  </section>
+  <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
+</div>
+<a class="ask-fab" href="/projects/sgst">Ask LedbetterLM</a>
+<script src="ask.js" defer></script>
+</body>
+</html>

@@ -68,12 +68,17 @@ const gatherSummary = (log = []) => {
 // Two modes. By default it's the floating toggle + panel on the homepage. `embedded`
 // renders the panel inline and always open (a project page's chat): it keeps its own
 // conversation under `storeKey`, opens with `greeting`, and on a fresh visit sends
-// `starter` itself so the conversation is already underway.
+// `starter` itself so the conversation is already underway. `askNow` is a question the
+// visitor brought from a portfolio page; it is sent on arrival even when an earlier
+// conversation was restored. `page` ({slug, section, state, selection}) rides along with
+// every request so the server can load that portfolio page's text for the answer.
 const ChatWidget = ({
   embedded = false,
   storeKey = CHAT_STORE_KEY,
   greeting = GREETING,
   starter = '',
+  askNow = '',
+  page = null,
   placeholder = 'Ask David…',
 }) => {
   // Restore a recent conversation (and its open/closed state) on refresh, else greet.
@@ -230,7 +235,7 @@ const ChatWidget = ({
     const path = operatorToken ? '/api/operator/chat' : '/api/chat';
     const payload = operatorToken
       ? { message, history, token: operatorToken }
-      : { message, history, sessionId: sessionIdRef.current, deliver: silent };
+      : { message, history, sessionId: sessionIdRef.current, deliver: silent, ...(page ? { page } : {}) };
     try {
       const res = await fetch(`${backendUri}${path}`, {
         method: 'POST',
@@ -293,13 +298,16 @@ const ChatWidget = ({
     }
   };
 
-  // Embedded chats open mid-conversation: on a fresh visit (nothing restored), ask the
-  // starter question once. The ref survives StrictMode's double effect run.
+  // Embedded chats open mid-conversation: ask the visitor's question from the portfolio
+  // page if they brought one, else on a fresh visit (nothing restored) the starter. Once;
+  // the ref survives StrictMode's double effect run.
   const starterSentRef = useRef(false);
   useEffect(() => {
-    if (!embedded || !starter || saved || starterSentRef.current) return;
+    if (!embedded || starterSentRef.current) return;
+    const question = askNow || (saved ? '' : starter);
+    if (!question) return;
     starterSentRef.current = true;
-    send({ messageOverride: starter });
+    send({ messageOverride: question });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

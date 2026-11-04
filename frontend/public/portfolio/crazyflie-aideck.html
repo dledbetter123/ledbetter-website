@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Crazyflie AI-Deck &middot; David Ledbetter</title>
+<meta name="description" content="Autonomous Crazyflie nano-drones with the AI-deck: camera streaming into YOLO detection, GAP8 RISC-V firmware, and a serial link carried over the deck's I2C lines, re-created and verified in simulation.">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="portfolio.css">
+<style>
+/* Crazyflie page: bus colors map onto the portfolio palette; the rest styles the two diagrams. */
+:root {
+  --uart1: var(--red); --uart2: var(--yellow); --i2c: var(--blue); --spi: var(--violet);
+  --ctrl: var(--green); --radio: var(--pink); --mem: var(--orange); --gpio: #6e6e6e;
+}
+.filters { display: flex; flex-wrap: wrap; gap: 4px 22px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--bg); padding-block: 12px; border-bottom: 1px solid var(--line); }
+.filters button {
+  font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+  border: 0; background: none; color: var(--muted); padding: 4px 0; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+  border-bottom: 2px solid transparent;
+}
+.filters button .sw { width: 8px; height: 8px; background: var(--c, var(--ink)); }
+.filters button:hover { color: var(--ink); }
+.filters button[aria-pressed="true"] { color: var(--c, var(--ink)); border-bottom-color: var(--c, var(--ink)); }
+.filters button:focus-visible, .callout:focus-visible, input:focus-visible { outline: 2px solid var(--i2c); outline-offset: 3px; }
+
+figure { margin: 0; display: grid; gap: 14px; min-width: 0; }
+figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+figcaption .note { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scroll svg { display: block; width: 100%; height: auto; }
+#fig-side svg { min-width: 760px; }
+#fig-stack svg { min-width: 560px; max-width: 860px; margin-inline: auto; }
+.slider { display: inline-flex; align-items: center; gap: 12px; font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.slider input { width: 160px; accent-color: var(--copper); }
+
+/* SVG */
+svg text { font-family: var(--f-mono); }
+.board-cf { fill: #000; stroke: var(--outline); stroke-width: 1.1; }
+.board-deck { fill: #000; stroke: var(--outline); stroke-width: 1.1; stroke-dasharray: 5 3; }
+.arm-o { stroke: var(--dim); stroke-width: 26; stroke-linecap: round; }
+.arm { stroke: #000; stroke-width: 24; stroke-linecap: round; }
+.motor { fill: #000; stroke: var(--dim); stroke-width: 1.2; }
+.motor-l { font-size: 10px; fill: var(--muted); }
+.silk { fill: var(--muted); font-size: 9px; letter-spacing: .1em; }
+.chip { fill: #000; stroke: var(--ink); stroke-width: 1; }
+.chip-l { fill: var(--ink); font-size: 10.5px; font-weight: 600; }
+.chip-s { fill: var(--muted); font-size: 7.5px; }
+.lens { fill: #000; stroke: var(--i2c); stroke-width: 1.2; }
+.pad { fill: var(--copper); }
+.pad-ring { fill: none; stroke: var(--copper); stroke-width: 1.6; }
+.pad-unused { opacity: .35; }
+.pin-l { font-size: 9.5px; fill: var(--ink); }
+.pin-ld { font-size: 10px; fill: var(--ink); }
+.pin-mcu { font-size: 9px; fill: var(--muted); }
+.pin-pill { fill: none; stroke: var(--dim); }
+.pin-use { font-size: 9px; fill: var(--muted); }
+.bus-l { font-size: 7.5px; fill: var(--muted); }
+.brace { fill: none; stroke: var(--dim); stroke-width: 1; }
+.brace-l { font-size: 9px; fill: var(--muted); }
+.net { fill: none; stroke-width: 1.6; stroke-linecap: round; transition: opacity .2s ease, stroke-width .2s ease; }
+.net.bus { stroke-width: 3; }
+.g-uart1 { stroke: var(--uart1); } .g-uart2 { stroke: var(--uart2); } .g-i2c { stroke: var(--i2c); }
+.g-spi { stroke: var(--spi); } .g-ctrl { stroke: var(--ctrl); } .g-radio { stroke: var(--radio); }
+.g-mem { stroke: var(--mem); } .g-gpio { stroke: var(--gpio); }
+.deck-layer { transition: opacity .2s ease; }
+svg.filtering .net { opacity: .08; }
+svg.filtering .net.on { opacity: 1; stroke-width: 2.4; }
+svg.filtering .net.bus.on { stroke-width: 3.8; }
+svg.filtering [data-pg] { opacity: .3; }
+svg.filtering [data-pg].on { opacity: 1; font-weight: 600; }
+svg.flow .net.flow { stroke-dasharray: 7 5; animation: flow 1.1s linear infinite; }
+svg.flow .net.flow.rev { animation-direction: reverse; }
+@keyframes flow { to { stroke-dashoffset: -24; } }
+@media (prefers-reduced-motion: reduce) { svg.flow .net.flow { animation: none; } .net, .deck-layer { transition: none; } }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { display: inline-block; width: 18px; height: 2px; background: var(--c); }
+
+.callouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 32px; }
+.callout.wide { grid-column: span 2; }
+@media (max-width: 860px) { .callouts { grid-template-columns: 1fr; } .callout.wide { grid-column: auto; } }
+.callout { text-align: left; font: inherit; color: inherit; background: none; border: 0; border-top: 1px solid var(--line); padding: 14px 0 0; display: grid; gap: 8px; align-content: start; cursor: pointer; min-width: 0; }
+.callout p { font-size: 15px; color: var(--muted); }
+.callout .tag { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--c); }
+.callout:hover h3, .callout[aria-pressed="true"] h3 { color: var(--c); }
+.callout[aria-pressed="true"] { border-top-color: var(--c); }
+
+.tablebox { display: grid; gap: 14px; min-width: 0; border-top: 1px solid var(--line); padding-top: 14px; }
+.tablebox .scroll { overflow-x: auto; }
+table { border-collapse: collapse; font-family: var(--f-mono); font-size: 12px; font-variant-numeric: tabular-nums; min-width: 760px; width: 100%; }
+th, td { border-bottom: 1px solid var(--line); padding: 8px 8px; text-align: center; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; font-family: var(--f-body); font-size: 14px; color: var(--ink); }
+thead th { font-weight: 600; color: var(--muted); font-size: 11px; letter-spacing: .06em; }
+td { color: var(--muted); }
+td.ai { color: var(--ink); font-weight: 600; }
+td.clash { color: var(--uart1); font-weight: 600; }
+td.shared { color: var(--i2c); }
+td.empty { color: var(--dim); }
+.results { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px 28px; }
+.stat { display: grid; gap: 6px; min-width: 0; align-content: start; }
+.stat b { font-family: var(--f-display); font-size: 34px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--c, var(--ink)); }
+.stat span { font-size: 14px; color: var(--muted); }
+table.speed { min-width: 560px; }
+table.speed td, table.speed th { text-align: left; font-family: var(--f-body); font-size: 14px; }
+table.speed td { color: var(--ink); }
+table.speed td:nth-child(2) { font-family: var(--f-mono); font-size: 13px; color: var(--ctrl); font-weight: 600; }
+.sources { font-size: 13.5px; color: var(--muted); display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="Page">
+    <a class="back" href="/#portfolio">&larr; All projects</a>
+    <div class="actions">
+      <a class="btn primary" href="/projects/crazyflie-aideck">Ask LedbetterLM about this</a>
+      <a class="btn" href="https://github.com/dledbetter123/aideck-bitbang-link" target="_blank" rel="noopener noreferrer">Simulator repo &#8599;</a>
+      <a class="btn" href="https://github.com/dledbetter123/CF2-Computervision" target="_blank" rel="noopener noreferrer">Camera + YOLO repo &#8599;</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">CARDS and EEHPC Labs, UMBC &middot; 2021&ndash;2022</div>
+    <h1>Crazyflie AI-Deck</h1>
+    <p class="lede">Autonomous nano-drones built on the Bitcraze Crazyflie 2.1 and its AI-deck. David streamed the deck's camera into YOLO detection, wrote RISC-V firmware for its GAP8 processor, and moved the GAP8-to-STM32 link onto the deck's I2C lines when the stacked decks used up the serial ports.</p>
+    <div class="meta"><span><b>Role</b> Research Assistant, Autonomous Vehicles</span><span><b>Dates</b> October 2021 &ndash; September 2022</span></div>
+    <div class="tags"><span>GAP8 RISC-V</span><span>PMSIS SDK</span><span>C / C++</span><span>STM32F405</span><span>Python</span><span>OpenCV</span><span>YOLOv3</span></div>
+  </header>
+
+  <section>
+    <h2>What David built</h2>
+    <ul class="points">
+      <li>Streamed the AI-deck camera over its ESP32 WiFi link to a ground station running YOLO object detection through OpenCV. <span>The viewer code is in <a href="https://github.com/dledbetter123/CF2-Computervision" target="_blank" rel="noopener noreferrer">CF2-Computervision</a> on GitHub.</span></li>
+      <li>Cut swarm reaction time 40% with a C/C++ state machine.</li>
+      <li>Built odometry-based maps of the drones' flight trajectories.</li>
+      <li>Wrote RISC-V firmware for the GAP8 on GreenWaves' PMSIS SDK: dispatching work across its 8-core cluster, sending data over UART, and driving the status LED.</li>
+      <li>When the decks used up the Crazyflie's UART ports, carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol. <span>The original firmware wasn't recovered; it is re-created and verified in simulation below, with the code in <a href="https://github.com/dledbetter123/aideck-bitbang-link" target="_blank" rel="noopener noreferrer">aideck-bitbang-link</a>.</span></li>
+      <li>Presented the poster <em>Energy-Efficient Onboard Autonomous Drone Navigation</em> at URCAD 2022, UMBC.</li>
+    </ul>
+  </section>
+
+  <div class="filters" role="toolbar" aria-label="Highlight a bus">
+    <button type="button" data-f="all" aria-pressed="true">All lines</button>
+    <button type="button" data-f="uart1" style="--c: var(--uart1)" aria-pressed="false"><span class="sw"></span>UART1</button>
+    <button type="button" data-f="uart2" style="--c: var(--uart2)" aria-pressed="false"><span class="sw"></span>UART2</button>
+    <button type="button" data-f="i2c" style="--c: var(--i2c)" aria-pressed="false"><span class="sw"></span>I2C bus</button>
+    <button type="button" data-f="link" style="--c: var(--i2c)" aria-pressed="false"><span class="sw"></span>Custom link on SDA/SCL</button>
+    <button type="button" data-f="ctrl" style="--c: var(--ctrl)" aria-pressed="false"><span class="sw"></span>Boot + reset</button>
+    <button type="button" data-f="spi" style="--c: var(--spi)" aria-pressed="false"><span class="sw"></span>SPI</button>
+    <button type="button" data-f="mem" style="--c: var(--mem)" aria-pressed="false"><span class="sw"></span>Camera + memory</button>
+    <button type="button" data-f="radio" style="--c: var(--radio)" aria-pressed="false"><span class="sw"></span>Radio MCU</button>
+  </div>
+
+  <figure id="fig-side">
+    <figcaption>
+      <h2>Side by side</h2>
+      <span class="note">Top view, front up. Pin 1 of each header is at the front.</span>
+    </figcaption>
+    <p class="sr-only">Crazyflie 2.1 deck connector, left header pins 1 to 10: VCC, RX1 (STM32 PC11), TX1 (PC10), SDA (PB7), SCL (PB6), IO_1 (PB8), IO_2 (PB5), IO_3 (PB4), IO_4 (PC12), GND. Right header pins 1 to 10: TX2 (PA2), RX2 (PA3), SCK (PA5), MISO (PA6), MOSI (PA7), N_IO_1 (nRF51 P0.11), N_IO_2 or WKUP (P0.12), OW 1-wire deck ID (P0.08), VCOM, VUSB. On the Crazyflie, the STM32F405 (Cortex-M4, 168 MHz) drives UART1, I2C1, IO_1 to IO_4, UART2 and SPI; the nRF51822 radio and power MCU drives N_IO_1, N_IO_2 and OW and talks to the STM32 over the syslink UART; the I2C1 bus on SDA and SCL is shared with the onboard EEPROM. On the AI-deck: the GAP8 UART connects to RX1 and TX1, with GAP8 TX going through a 1.8 V to 3 V level shifter; the GAP8's spare I2C pads connect to SDA and SCL; the ESP32 (NINA-W102) UART connects to TX2 and RX2; IO_1 drives the ESP32 boot pin; IO_4 resets the GAP8 and the ESP32; the GAP8 and ESP32 are linked by SPI plus two GPIO lines; the GAP8 reaches the HyperFlash (512 Mbit) and HyperRAM (64 Mbit) over HyperBus; the HM01B0 camera (320 by 320) connects to the GAP8 over its CPI camera interface, configured over the GAP8's own I2C. The AI-deck does not use IO_2, IO_3, SCK, MISO, MOSI, N_IO_1 or N_IO_2.</p>
+    <div class="scroll"><svg id="svg-side" viewBox="0 0 1080 640" role="img" aria-label="Crazyflie 2.1 and AI-deck drawn side by side with their chips and deck-connector wiring"></svg></div>
+  </figure>
+
+  <figure id="fig-stack">
+    <figcaption>
+      <h2>Stacked</h2>
+      <label class="slider" for="deck-opacity">AI-deck opacity <input id="deck-opacity" type="range" min="0" max="100" value="62"></label>
+    </figcaption>
+    <p class="sr-only">Stacked view: the AI-deck mounted on top, its header pins on the Crazyflie's, so each route runs chip to pin to chip: GAP8 to STM32 over UART1 (RX1/TX1, PC11/PC10); ESP32 to STM32 over UART2 (TX2/RX2, PA2/PA3); GAP8 spare I2C pads to the STM32's I2C1 on SDA/SCL (PB7/PB6), shared with the EEPROM, which is the path the custom link uses; STM32 IO_1 to the ESP32 boot pin and IO_4 to the deck reset.</p>
+    <div class="scroll"><svg id="svg-stack" viewBox="0 0 760 660" role="img" aria-label="AI-deck stacked over the Crazyflie with routes running chip to pin to chip"></svg></div>
+    <div class="legend">
+      <span style="--c: var(--uart1)"><i></i>UART1: GAP8 to STM32</span>
+      <span style="--c: var(--uart2)"><i></i>UART2: ESP32 to STM32</span>
+      <span style="--c: var(--i2c)"><i></i>I2C: STM32 bus, GAP8 spare pads</span>
+      <span style="--c: var(--ctrl)"><i></i>IO_1 boot, IO_4 reset</span>
+      <span style="--c: var(--spi)"><i></i>SPI</span>
+      <span style="--c: var(--mem)"><i></i>HyperBus, camera</span>
+      <span style="--c: var(--radio)"><i></i>nRF51 radio MCU</span>
+    </div>
+  </figure>
+
+  <section style="display:grid; gap:12px">
+    <h2>Where the ports run out</h2>
+    <div class="callouts">
+      <button type="button" class="callout" data-f="uart1" style="--c: var(--uart1)" aria-pressed="false">
+        <span class="tag">AI-deck datasheet errata</span>
+        <h3>GAP8 UART TX shares pins with the HyperFlash</h3>
+        <p>UART TX from the GAP8 to the Crazyflie does not work while the HyperFlash is in use. A network running from flash cannot also talk to the STM32 over UART1.</p>
+      </button>
+      <button type="button" class="callout" data-f="uart1" style="--c: var(--uart1)" aria-pressed="false">
+        <span class="tag">Deck conflict</span>
+        <h3>UART1 is contested</h3>
+        <p>The Lighthouse deck uses RX1 and TX1. The Loco deck uses RX1 for its IRQ and TX1 for reset. Stack either with the AI-deck and the GAP8 loses its port.</p>
+      </button>
+      <button type="button" class="callout" data-f="ctrl" style="--c: var(--ctrl)" aria-pressed="false">
+        <span class="tag">Deck conflict</span>
+        <h3>IO_1 and IO_4</h3>
+        <p>The AI-deck uses IO_1 for the ESP32's boot pin and IO_4 to reset the GAP8 and ESP32. The Loco deck uses IO_1 as a chip select; the SD-card deck uses IO_4 as one.</p>
+      </button>
+      <button type="button" class="callout" data-f="i2c" style="--c: var(--i2c)" aria-pressed="false">
+        <span class="tag">Shared by design</span>
+        <h3>SDA and SCL are one bus</h3>
+        <p>The STM32's I2C1 runs to the deck connector, shared with the onboard EEPROM and with the Flow, Multi-ranger and Z-ranger decks. The GAP8's spare I2C pads are wired to it too.</p>
+      </button>
+      <button type="button" class="callout wide" data-f="link" style="--c: var(--i2c)" aria-pressed="false">
+        <span class="tag">The re-created link</span>
+        <h3>A clocked serial link on SDA and SCL</h3>
+        <p>The GAP8 drives its spare I2C pads as plain pins: SCL is the clock, SDA is the data, changing only while SCL is low. The STM32 catches PB6 rising edges with an interrupt and reads PB7. It never forms an I2C START, so the EEPROM and sensor decks ignore it.</p>
+      </button>
+    </div>
+  </section>
+
+  <section class="tablebox" id="sim">
+    <h2>The custom link, in simulation</h2>
+    <p class="lede" style="font-size:14.5px">A re-creation built from the wiring above, not the 2021–22 firmware. The GAP8 sends YOLO-style detection records (class, confidence, box) in 17-byte frames: a sync word, a length byte, the payload and a CRC-16. Simulated at the logic level, then decoded three separate ways.</p>
+    <div class="results">
+      <div class="stat" style="--c: var(--ctrl)"><b>200 / 200</b><span>frames byte-exact at 250 kHz, by the STM32 receiver, a separate Python decoder, and sigrok's SPI decoder (3,400 of 3,400 bytes)</span></div>
+      <div class="stat" style="--c: var(--i2c)"><b>0 STARTs</b><span>sigrok's I2C decoder stayed idle for the whole capture, so the EEPROM and sensor decks are never addressed</span></div>
+      <div class="stat" style="--c: var(--uart2)"><b>0 false accepts</b><span>in 20,000 frames: all 8,036 corrupted frames rejected, all 11,964 clean ones delivered, recovered after all 1,011 garbage bursts</span></div>
+      <div class="stat" style="--c: var(--uart1)"><b>Control fails</b><span>changing SDA while SCL is high made 1,223 STARTs and 517 I2C address phases across 63 addresses; only 3 of 50 frames got through</span></div>
+    </div>
+    <div class="scroll"><table class="speed">
+      <thead><tr><th>STM32 interrupt latency (modeled)</th><th>Highest clean bitrate</th><th>What limits it</th><th>Detections per second</th></tr></thead>
+      <tbody>
+        <tr><td>None (ideal)</td><td>1.5 MHz</td><td>300 ns line rise time</td><td>about 9,600</td></tr>
+        <tr><td>0.25 to 0.75 µs</td><td>500 kHz</td><td>sampling after the clock edge</td><td>about 3,400</td></tr>
+        <tr><td>Plus rare 5 µs stalls</td><td>100 kHz</td><td>clock edges lost during a stall</td><td>about 700</td></tr>
+      </tbody>
+    </table></div>
+    <p class="lede" style="font-size:13.5px">Assumptions: 300 ns rise time on the pulled-up lines (the I2C Fast-mode limit) and the latency models above. Not modeled: real silicon, GAP8 timing jitter, a second I2C master talking mid-frame. Every rate up to the limit delivered 2,000 of 2,000 frames; the next rate up lost frames.</p>
+  </section>
+
+  <section class="tablebox">
+    <h2>Which decks use which pins</h2>
+    <p class="lede" style="font-size:14.5px">From Bitcraze's deck table. Parentheses mark an optional or alternative use. Red cells collide with a pin the AI-deck needs; blue cells share the I2C bus, which I2C allows.</p>
+    <p class="sr-only">Deck pin usage from Bitcraze's table, parentheses meaning optional or alternative use. AI deck: RX1, TX1, SDA, SCL, IO1 boot, IO4 reset, TX2, RX2. Lighthouse: RX1, TX1, (SDA), (SCL). Loco: RX1 as IRQ, TX1 as RST, IO1 as CS, (IO2 IRQ), (IO3 RST), SCK, MOSI, MISO. Flow v2: SDA, SCL, (IO2 RST/MOT/IO), IO3 CS, (TX2 RST), (RX2 MOT), SCK, MOSI, MISO. Multi-ranger: SDA, SCL. Z-ranger v2: SDA, SCL, (IO2 VL53_IO). Micro SD card: (RX1 MISO), (TX1 SCK), (IO1 CS), (IO2 CS), (IO3 CS), IO4 CS/(MOSI), SCK, MOSI, MISO. Clashes with the AI-deck: Lighthouse and Loco on UART1; Loco on IO1; SD card on IO4 and its alternates on UART1. SDA/SCL users share the I2C bus, which I2C allows.</p>
+    <div class="scroll"><table id="deck-table"></table></div>
+  </section>
+
+  <section class="cta">
+    <h2>Questions about this project?</h2>
+    <p>LedbetterLM is an AI that knows David's work and reads his public GitHub repos live. Ask it how the I2C link works, why the ports ran out, or what the simulation does and does not prove.</p>
+    <a class="btn primary big" href="/projects/crazyflie-aideck">Ask LedbetterLM about this project &rarr;</a>
+  </section>
+
+  <section class="sources">
+    <span>Chip placement is schematic, not to PCB scale. Pin order and wiring come from:</span>
+    <a href="https://github.com/bitcraze/crazyflie2-exp-template-electronics">Bitcraze expansion-deck KiCad template (pin order, STM32 and nRF51 pin names)</a>
+    <a href="https://www.bitcraze.io/documentation/hardware/ai_deck/ai_deck-datasheet.pdf">AI-deck datasheet (connections and errata)</a>
+    <a href="https://www.bitcraze.io/documentation/hardware/ai_deck/ai-deck-revc.pdf">AI-deck Rev C schematic (level shifter, spare I2C, camera and HyperBus nets)</a>
+    <a href="https://www.bitcraze.io/documentation/system/platform/cf2-expansiondecks/">Bitcraze expansion deck table (pins used per deck)</a>
+    <a href="https://www.bitcraze.io/documentation/hardware/crazyflie_2_1/crazyflie_2_1-datasheet.pdf">Crazyflie 2.1 datasheet (MCUs, connector signals)</a>
+  </section>
+  <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
+</div>
+<a class="ask-fab" href="/projects/crazyflie-aideck">Ask LedbetterLM</a>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, parent, text) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+
+  const PITCH = 24, HX = 80;
+  const LEFT = ['VCC', 'RX1', 'TX1', 'SDA', 'SCL', 'IO_1', 'IO_2', 'IO_3', 'IO_4', 'GND'];
+  const RIGHT = ['TX2', 'RX2', 'SCK', 'MISO', 'MOSI', 'N_IO_1', 'N_IO_2', 'OW', 'VCOM', 'VUSB'];
+  const MCU = { RX1: 'PC11', TX1: 'PC10', SDA: 'PB7', SCL: 'PB6', IO_1: 'PB8', IO_2: 'PB5', IO_3: 'PB4', IO_4: 'PC12',
+                TX2: 'PA2', RX2: 'PA3', SCK: 'PA5', MISO: 'PA6', MOSI: 'PA7', N_IO_1: 'P0.11', N_IO_2: 'P0.12', OW: 'P0.08' };
+  const DECK_USE = { RX1: 'GAP8 RX', TX1: 'GAP8 TX', SDA: 'GAP8 SDA', SCL: 'GAP8 SCL', IO_1: 'ESP32 boot', IO_4: 'reset',
+                     TX2: 'ESP32 UART', RX2: 'ESP32 UART', OW: 'deck ID', VCOM: 'power', GND: 'ground' };
+  const PIN_GROUPS = { uart1: ['RX1', 'TX1'], uart2: ['TX2', 'RX2'], i2c: ['SDA', 'SCL'], link: ['SDA', 'SCL'],
+                       ctrl: ['IO_1', 'IO_4'], spi: ['SCK', 'MISO', 'MOSI'], radio: ['N_IO_1', 'N_IO_2', 'OW'], mem: [] };
+  const BOARD = { cf: { pin1: -108 }, deck: { pin1: -70 } };
+
+  const pinPos = (name, board) => {
+    let i = LEFT.indexOf(name), side = -1;
+    if (i < 0) { i = RIGHT.indexOf(name); side = 1; }
+    return { x: side * HX, y: BOARD[board].pin1 + i * PITCH, side };
+  };
+
+  const CHIPS = {
+    cf: {
+      stm32: { x: 0, y: 6, w: 78, h: 78, l: 'STM32F405', s: 'Cortex-M4 · 168 MHz' },
+      nrf51: { x: 36, y: 122, w: 60, h: 36, l: 'nRF51822', s: 'radio + power' },
+    },
+    deck: {
+      cam:   { x: 0, y: -132, w: 46, h: 40, l: 'HM01B0', s: '320×320 camera', lens: true },
+      gap8:  { x: 0, y: -46, w: 64, h: 64, l: 'GAP8', s: '8+1 RISC-V cores' },
+      lvl:   { x: -60, y: -36, w: 20, h: 12, l: '', s: '' },
+      hflash:{ x: -30, y: 48, w: 52, h: 24, l: 'HyperFlash', s: '512 Mbit', ls: 8.5 },
+      hram:  { x: 30, y: 48, w: 52, h: 24, l: 'HyperRAM', s: '64 Mbit', ls: 8.5 },
+      nina:  { x: 6, y: 112, w: 66, h: 48, l: 'NINA-W102', s: 'ESP32 · WiFi' },
+    },
+  };
+
+  // a: chip anchor [chip, side, t] or ['pin', name]; groups space-separated
+  const NETS = {
+    cf: [
+      { g: 'uart1', a: ['stm32', 'l', .1], b: ['pin', 'RX1'] },
+      { g: 'uart1', a: ['stm32', 'l', .2], b: ['pin', 'TX1'] },
+      { g: 'i2c link', a: ['stm32', 'l', .32], b: ['pin', 'SDA'], flow: 'rev' },
+      { g: 'i2c link', a: ['stm32', 'l', .42], b: ['pin', 'SCL'], flow: 'rev' },
+      { g: 'ctrl', a: ['stm32', 'l', .56], b: ['pin', 'IO_1'] },
+      { g: 'gpio', a: ['stm32', 'l', .66], b: ['pin', 'IO_2'] },
+      { g: 'gpio', a: ['stm32', 'l', .76], b: ['pin', 'IO_3'] },
+      { g: 'ctrl', a: ['stm32', 'l', .88], b: ['pin', 'IO_4'] },
+      { g: 'uart2', a: ['stm32', 'r', .1], b: ['pin', 'TX2'] },
+      { g: 'uart2', a: ['stm32', 'r', .2], b: ['pin', 'RX2'] },
+      { g: 'spi', a: ['stm32', 'r', .34], b: ['pin', 'SCK'] },
+      { g: 'spi', a: ['stm32', 'r', .44], b: ['pin', 'MISO'] },
+      { g: 'spi', a: ['stm32', 'r', .54], b: ['pin', 'MOSI'] },
+      { g: 'radio', a: ['nrf51', 'r', .2], b: ['pin', 'N_IO_1'] },
+      { g: 'radio', a: ['nrf51', 'r', .5], b: ['pin', 'N_IO_2'] },
+      { g: 'radio', a: ['nrf51', 'r', .8], b: ['pin', 'OW'] },
+      { g: 'radio', a: ['stm32', 'b', .72], b: ['nrf51', 't', .3], cls: 'bus', label: 'syslink UART', lp: [16, 78, 'end'] },
+    ],
+    deck: [
+      { g: 'uart1', a: ['gap8', 'l', .15], b: ['pin', 'RX1'] },
+      { g: 'uart1', a: ['gap8', 'l', .35], b: ['lvl', 'r', .5] },
+      { g: 'uart1', a: ['lvl', 'l', .5], b: ['pin', 'TX1'] },
+      { g: 'i2c link', a: ['gap8', 'l', .7], b: ['pin', 'SDA'], flow: 'fwd' },
+      { g: 'i2c link', a: ['gap8', 'l', .88], b: ['pin', 'SCL'], flow: 'fwd' },
+      { g: 'ctrl', a: ['pin', 'IO_1'], b: ['nina', 'l', .3] },
+      { g: 'ctrl', a: ['pin', 'IO_4'], b: ['nina', 'l', .75] },
+      { g: 'uart2', a: ['nina', 'r', .25], b: ['pin', 'TX2'] },
+      { g: 'uart2', a: ['nina', 'r', .45], b: ['pin', 'RX2'] },
+      { g: 'spi', a: ['gap8', 'b', .5], b: ['nina', 't', .42], cls: 'bus', label: 'SPI + 2 GPIO', lp: [5, 80, 'start'] },
+      { g: 'mem', a: ['gap8', 'b', .18], b: ['hflash', 't', .5], cls: 'bus' },
+      { g: 'mem', a: ['gap8', 'b', .82], b: ['hram', 't', .5], cls: 'bus', label: 'HyperBus', lp: [-30, 70, 'middle'] },
+      { g: 'mem', a: ['gap8', 't', .34], b: ['cam', 'b', .34], cls: 'bus', label: 'CPI', lp: [-16, -94, 'end'] },
+      { g: 'mem', a: ['gap8', 't', .7], b: ['cam', 'b', .7], label: 'I2C', lp: [17, -94, 'start'] },
+    ],
+  };
+
+  const anchor = (board, spec) => {
+    if (spec[0] === 'pin') {
+      const p = pinPos(spec[1], board);
+      return { x: p.x, y: p.y, dx: -p.side, dy: 0 };
+    }
+    const c = CHIPS[board][spec[0]], side = spec[1], t = spec[2];
+    const L = c.x - c.w / 2, T = c.y - c.h / 2;
+    if (side === 'l') return { x: L, y: T + c.h * t, dx: -1, dy: 0 };
+    if (side === 'r') return { x: L + c.w, y: T + c.h * t, dx: 1, dy: 0 };
+    if (side === 't') return { x: L + c.w * t, y: T, dx: 0, dy: -1 };
+    return { x: L + c.w * t, y: T + c.h, dx: 0, dy: 1 };
+  };
+
+  const pathFor = (A, B) => {
+    const d = Math.min(34, Math.max(8, Math.hypot(B.x - A.x, B.y - A.y) * 0.42));
+    const c1 = { x: A.x + A.dx * d, y: A.y + A.dy * d };
+    const c2 = { x: B.x + B.dx * d, y: B.y + B.dy * d };
+    return `M${A.x},${A.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${B.x},${B.y}`;
+  };
+
+  const drawChip = (g, c) => {
+    el('rect', { x: c.x - c.w / 2, y: c.y - c.h / 2, width: c.w, height: c.h, rx: 3, class: 'chip' }, g);
+    if (c.lens) el('circle', { cx: c.x, cy: c.y - 3, r: 9, class: 'lens' }, g);
+    if (c.l) el('text', { x: c.x, y: c.lens ? c.y + 12 : c.y + (c.s ? -1 : 3), 'text-anchor': 'middle', class: 'chip-l', style: c.ls ? `font-size:${c.ls}px` : '' }, g, c.l);
+    if (c.s && !c.lens) el('text', { x: c.x, y: c.y + 10, 'text-anchor': 'middle', class: 'chip-s' }, g, c.s);
+    if (c.lens) el('text', { x: c.x, y: c.y + 21, 'text-anchor': 'middle', class: 'chip-s' }, g, c.s);
+  };
+
+  const drawNets = (g, board) => {
+    for (const n of NETS[board]) {
+      const A = anchor(board, n.a), B = anchor(board, n.b);
+      const groups = n.g.split(' ');
+      const cls = ['net', 'g-' + groups[0], n.cls || '', n.flow ? 'flow' : '', n.flow === 'rev' ? 'rev' : ''].join(' ');
+      el('path', { d: pathFor(A, B), class: cls, 'data-g': n.g }, g);
+      if (n.label) {
+        const [lx, ly, la] = n.lp || [(A.x + B.x) / 2, (A.y + B.y) / 2 - 4, 'middle'];
+        el('text', { x: lx, y: ly, class: 'bus-l', 'text-anchor': la }, g, n.label);
+      }
+    }
+  };
+
+  const drawPads = (g, board, ring) => {
+    const used = board === 'deck' ? new Set(Object.keys(DECK_USE)) : null;
+    [...LEFT, ...RIGHT].forEach((name) => {
+      const p = pinPos(name, board);
+      const first = name === 'VCC' || name === 'TX2';
+      const unused = used && !used.has(name) ? ' pad-unused' : '';
+      if (ring) {
+        el(first ? 'rect' : 'circle', first
+          ? { x: p.x - 6.5, y: p.y - 6.5, width: 13, height: 13, class: 'pad-ring' + unused }
+          : { cx: p.x, cy: p.y, r: 6.5, class: 'pad-ring' + unused }, g);
+      } else {
+        el(first ? 'rect' : 'circle', first
+          ? { x: p.x - 4.5, y: p.y - 4.5, width: 9, height: 9, class: 'pad' }
+          : { cx: p.x, cy: p.y, r: 4.5, class: 'pad' }, g);
+      }
+    });
+  };
+
+  const pinGroupsOf = (name) => Object.keys(PIN_GROUPS).filter((k) => PIN_GROUPS[k].includes(name)).join(' ');
+
+  // CF labels sit outside the headers: pin name, then the MCU pin in a pill.
+  const drawCfLabels = (g) => {
+    [...LEFT, ...RIGHT].forEach((name) => {
+      const p = pinPos(name, 'cf');
+      const s = p.side;
+      el('text', { x: p.x + s * 13, y: p.y + 3.5, 'text-anchor': s < 0 ? 'end' : 'start', class: 'pin-l', 'data-pg': pinGroupsOf(name) }, g, name);
+      if (MCU[name]) {
+        const w = 40, x = s < 0 ? p.x - 128 : p.x + 128 - w;
+        el('rect', { x, y: p.y - 8, width: w, height: 16, rx: 8, class: 'pin-pill' }, g);
+        el('text', { x: x + w / 2, y: p.y + 3, 'text-anchor': 'middle', class: 'pin-mcu' }, g, MCU[name]);
+      }
+    });
+    // bracket the I2C pair: shared with the onboard EEPROM
+    const a = pinPos('SDA', 'cf'), b = pinPos('SCL', 'cf');
+    const bx = a.x - 136;
+    el('path', { d: `M${bx},${a.y - 8} h-5 v${b.y - a.y + 16} h5`, class: 'brace' }, g);
+    el('text', { x: bx - 9, y: (a.y + b.y) / 2 - 2, 'text-anchor': 'end', class: 'brace-l' }, g, 'I2C1, shared');
+    el('text', { x: bx - 9, y: (a.y + b.y) / 2 + 9, 'text-anchor': 'end', class: 'brace-l' }, g, 'with EEPROM');
+    const n1 = pinPos('N_IO_1', 'cf'), n3 = pinPos('OW', 'cf');
+    const rx = n1.x + 136;
+    el('path', { d: `M${rx},${n1.y - 8} h5 v${n3.y - n1.y + 16} h-5`, class: 'brace' }, g);
+    el('text', { x: rx + 9, y: (n1.y + n3.y) / 2 + 3, class: 'brace-l' }, g, 'nRF51');
+  };
+
+  const drawDeckLabels = (g) => {
+    [...LEFT, ...RIGHT].forEach((name) => {
+      const p = pinPos(name, 'deck');
+      const s = p.side;
+      const use = DECK_USE[name];
+      el('text', { x: p.x + s * 20, y: p.y + 3.5, 'text-anchor': s < 0 ? 'end' : 'start', class: 'pin-ld', 'data-pg': pinGroupsOf(name), opacity: use ? 1 : .45 }, g, name);
+      if (use) el('text', { x: p.x + s * 62, y: p.y + 3.5, 'text-anchor': s < 0 ? 'end' : 'start', class: 'pin-use', 'data-pg': pinGroupsOf(name) }, g, use);
+    });
+  };
+
+  const drawCfBoard = (g, stacked) => {
+    const arms = [[-112, -150, -196, -232, 'M4'], [112, -150, 196, -232, 'M1'], [-112, 150, -196, 232, 'M3'], [112, 150, 196, 232, 'M2']];
+    for (const [x1, y1, x2, y2] of arms) el('line', { x1, y1, x2, y2, class: 'arm-o' }, g);
+    for (const [x1, y1, x2, y2] of arms) el('line', { x1, y1, x2, y2, class: 'arm' }, g);
+    for (const [, , x2, y2, m] of arms) {
+      el('circle', { cx: x2, cy: y2, r: 17, class: 'motor' }, g);
+      el('text', { x: x2, y: y2 + 3.5, 'text-anchor': 'middle', class: 'motor-l' }, g, m);
+    }
+    el('path', { d: 'M-112,-172 H112 Q126,-172 126,-158 V158 Q126,172 112,172 H-112 Q-126,172 -126,158 V-158 Q-126,-172 -112,-172 Z', class: 'board-cf' }, g);
+    if (stacked) return;
+    el('text', { x: 0, y: -150, 'text-anchor': 'middle', class: 'silk' }, g, 'CRAZYFLIE 2.1 · FRONT');
+    el('path', { d: 'M0,-142 l-5,8 h10 z', fill: 'var(--muted)' }, g);
+  };
+
+  const drawDeckBoard = (g) => {
+    el('rect', { x: -96, y: -156, width: 192, height: 312, rx: 10, class: 'board-deck' }, g);
+    el('text', { x: -62, y: 149, class: 'silk' }, g, 'AI-DECK 1.1');
+  };
+
+  function render(svg, opts) {
+    const root = el('g', {}, svg);
+    // Crazyflie
+    const cf = el('g', { transform: `translate(${opts.cf[0]},${opts.cf[1]})` }, root);
+    drawCfBoard(cf, opts.stacked);
+    drawNets(cf, 'cf');
+    Object.values(CHIPS.cf).forEach((c) => drawChip(cf, c));
+    drawPads(cf, 'cf', false);
+    // AI-deck
+    const deckWrap = el('g', { transform: `translate(${opts.deck[0]},${opts.deck[1]})` }, root);
+    const deckBody = el('g', { class: 'deck-layer deck-body' }, deckWrap);
+    drawDeckBoard(deckBody);
+    const deckTop = el('g', { class: 'deck-layer deck-top' }, deckWrap);
+    drawNets(deckTop, 'deck');
+    Object.values(CHIPS.deck).forEach((c) => drawChip(deckTop, c));
+    el('text', { x: -60, y: -21, 'text-anchor': 'middle', class: 'bus-l' }, deckTop, '1V8→3V');
+    drawPads(deckWrap, 'deck', opts.stacked);
+    if (!opts.stacked) drawDeckLabels(deckWrap);
+    // labels last so the deck never covers them
+    const cfLabels = el('g', { transform: `translate(${opts.cf[0]},${opts.cf[1]})` }, root);
+    drawCfLabels(cfLabels);
+    return { deckBody, deckTop };
+  }
+
+  const side = render(document.getElementById('svg-side'), { cf: [340, 320], deck: [830, 320], stacked: false });
+  const stack = render(document.getElementById('svg-stack'), { cf: [380, 345], deck: [380, 345 + BOARD.cf.pin1 - BOARD.deck.pin1], stacked: true });
+
+  const slider = document.getElementById('deck-opacity');
+  const applyOpacity = () => {
+    const v = slider.value / 100;
+    stack.deckBody.style.opacity = (0.15 + 0.85 * v).toFixed(2);
+    stack.deckTop.style.opacity = (0.35 + 0.65 * v).toFixed(2);
+  };
+  slider.addEventListener('input', applyOpacity);
+  applyOpacity();
+
+  // Filtering, shared by both figures, the toolbar and the callouts
+  const svgs = [...document.querySelectorAll('svg[id^="svg-"]')];
+  const toggles = [...document.querySelectorAll('[data-f]')];
+  // What ask.js reports as page state: the bus the visitor had highlighted.
+  let currentFilter = 'all';
+  window.askState = () => {
+    if (currentFilter === 'all') return '';
+    const btn = document.querySelector(`.filters [data-f="${currentFilter}"]`);
+    return btn ? `with the ${btn.textContent.trim()} lines highlighted` : '';
+  };
+  const setFilter = (f) => {
+    currentFilter = f;
+    toggles.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.f === f || (f === 'all' && b.dataset.f === 'all'))));
+    for (const s of svgs) {
+      s.classList.toggle('filtering', f !== 'all');
+      s.classList.toggle('flow', f === 'link');
+      s.querySelectorAll('.net').forEach((n) => n.classList.toggle('on', f !== 'all' && n.dataset.g.split(' ').includes(f)));
+      s.querySelectorAll('[data-pg]').forEach((t) => t.classList.toggle('on', f !== 'all' && t.dataset.pg.split(' ').includes(f)));
+    }
+    try { localStorage.setItem('cf-stack-filter', f); } catch (e) { /* storage unavailable */ }
+  };
+  toggles.forEach((b) => b.addEventListener('click', () => {
+    const on = b.getAttribute('aria-pressed') === 'true' && b.dataset.f !== 'all';
+    setFilter(on ? 'all' : b.dataset.f);
+  }));
+  let saved = 'all';
+  try { saved = localStorage.getItem('cf-stack-filter') || 'all'; } catch (e) { /* storage unavailable */ }
+  setFilter(saved);
+
+  // Deck table
+  const COLS = ['RX1', 'TX1', 'SDA', 'SCL', 'IO1', 'IO2', 'IO3', 'IO4', 'TX2', 'RX2', 'SCK', 'MOSI', 'MISO'];
+  const AI = new Set(['RX1', 'TX1', 'SDA', 'SCL', 'IO1', 'IO4', 'TX2', 'RX2']);
+  const ROWS = [
+    ['AI deck',        ['RX1', 'TX1', 'SDA', 'SCL', 'BOOT', '', '', 'RST', 'TX2', 'RX2', '', '', '']],
+    ['Lighthouse',     ['RX1', 'TX1', '(SDA)', '(SCL)', '', '', '', '', '', '', '', '', '']],
+    ['Loco',           ['IRQ', 'RST', '', '', 'CS', '(IRQ)', '(RST)', '', '', '', 'SCK', 'MOSI', 'MISO']],
+    ['Flow v2',        ['', '', 'SDA', 'SCL', '', '(RST/MOT/IO)', 'CS', '', '(RST)', '(MOT)', 'SCK', 'MOSI', 'MISO']],
+    ['Multi-ranger',   ['', '', 'SDA', 'SCL', '', '', '', '', '', '', '', '', '']],
+    ['Z-ranger v2',    ['', '', 'SDA', 'SCL', '', '(VL53_IO)', '', '', '', '', '', '', '']],
+    ['Micro SD card',  ['(MISO)', '(SCK)', '', '', '(CS)', '(CS)', '(CS)', 'CS/(MOSI)', '', '', 'SCK', 'MOSI', 'MISO']],
+  ];
+  const t = document.getElementById('deck-table');
+  const thead = document.createElement('thead'); t.appendChild(thead);
+  const hr = document.createElement('tr'); thead.appendChild(hr);
+  ['Deck', ...COLS].forEach((c) => { const th = document.createElement('th'); th.textContent = c; hr.appendChild(th); });
+  const tb = document.createElement('tbody'); t.appendChild(tb);
+  ROWS.forEach(([name, cells], ri) => {
+    const tr = document.createElement('tr'); tb.appendChild(tr);
+    const td0 = document.createElement('td'); td0.textContent = name; tr.appendChild(td0);
+    cells.forEach((v, ci) => {
+      const td = document.createElement('td');
+      td.textContent = v || '·';
+      const col = COLS[ci];
+      if (!v) td.className = 'empty';
+      else if (ri === 0) td.className = 'ai';
+      else if (AI.has(col) && (col === 'SDA' || col === 'SCL')) td.className = 'shared';
+      else if (AI.has(col)) td.className = 'clash';
+      tr.appendChild(td);
+    });
+  });
+})();
+</script>
+
+<script src="ask.js" defer></script>
+</body>
+</html>

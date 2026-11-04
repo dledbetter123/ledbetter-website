@@ -6,7 +6,7 @@
 const thesis = {
   title:
     'Lingual-First Host Intrusion Detection: Representation, Controlled Evaluation, and the Limits of Language Modeling on System Provenance',
-  degree: 'Master of Science, UMBC, 2026',
+  degree: 'Master of Science, UMBC, December 2024',
   advisor: 'Directed by Dr. Anupam Joshi',
 
   abstract: [

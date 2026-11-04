@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Finsler Transformer &middot; David Ledbetter</title>
+<meta name="description" content="The Finsler Transformer, David Ledbetter's independent research: replacing O(T²) attention with geodesic flow on a learned Finsler (Randers) manifold for O(T) autoregressive generation, with the spray derived analytically from the metric.">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="portfolio.css">
+<style>
+/* Finsler page: diagram strokes, the unit-cost figure, formulas, and the wide/stacked diagram swap. */
+.d-box.hl { stroke: var(--c, var(--ink)); stroke-width: 1.4; }
+.d-code { fill: var(--copper); font-size: 11.5px; }
+.d-lab { fill: var(--ink); font-size: 11px; }
+.d-curve { fill: none; stroke: var(--c, var(--copper)); stroke-width: 2; }
+.d-curve.dash { stroke-dasharray: 4 4; stroke-width: 1.2; }
+.d-dot { fill: var(--c, var(--ink)); }
+.d-grid { stroke: var(--line); stroke-width: 1; }
+#fig-flow .v-wide svg { min-width: 760px; }
+#fig-unit svg { max-width: 480px; }
+#fig-unit .d-sub, #fig-unit .d-note { font-size: 10.5px; }
+svg.v-narrow { display: none; max-width: 420px; }
+@media (max-width: 640px) {
+  .v-wide { display: none; }
+  svg.v-narrow { display: block; }
+}
+svg.v-narrow .d-title { font-size: 13px; }
+svg.v-narrow .d-sub { font-size: 11px; }
+svg.v-narrow .d-code { font-size: 12px; }
+svg.v-narrow .d-note { font-size: 10.5px; }
+.formula { font-family: var(--f-mono); font-size: 15px; color: var(--copper); overflow-wrap: anywhere; padding-block: 4px; }
+table.cmp td:first-child { color: var(--ink); width: 28%; }
+table.cmp td { color: var(--muted); }
+.sources { border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="Page">
+    <a class="back" href="/#portfolio">&larr; All projects</a>
+    <div class="actions">
+      <a class="btn primary" href="/projects/finsler-transformer">Ask LedbetterLM about this</a>
+      <a class="btn" href="https://github.com/dledbetter123/LedbetterFinslerTransformer" target="_blank" rel="noopener noreferrer">View the repo &#8599;</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">Independent research &middot; February 2026&ndash;Present</div>
+    <h1>The Finsler Transformer</h1>
+    <p class="lede">What if attention were a curvature a sequence moves through? The Finsler Transformer replaces the transformer's O(T<sup>2</sup>) attention with geodesic flow on a learned Finsler manifold, where a sentence is a geodesic, aiming at O(T) autoregressive generation. The flow comes from the metric itself: the spray that drives it is derived analytically from the learned metric with autograd.</p>
+    <div class="meta"><span><b>Role</b> Independent researcher</span><span><b>Dates</b> February 2026 &ndash; Present</span><span><b>Code</b> Public on GitHub</span></div>
+    <div class="tags"><span>PyTorch</span><span>Differential geometry</span><span>Randers metrics</span><span>Autograd</span><span>Geodesic ODEs</span><span>Efficient sequence models</span></div>
+  </header>
+
+  <section>
+    <h2>At a glance</h2>
+    <div class="stats">
+      <div class="stat" style="--c: var(--green)"><b>O(T)</b><span>total cost targeted for autoregressive generation, against attention's O(T<sup>2</sup>)</span></div>
+      <div class="stat" style="--c: var(--violet)"><b>0</b><span>T&times;T score matrices formed; context lives in the metric and the holonomy, both of fixed size</span></div>
+      <div class="stat" style="--c: var(--blue)"><b>2D</b><span>synthetic dynamics where the design was validated: deterministic spirals and stochastic drift</span></div>
+      <div class="stat" style="--c: var(--red)"><b>4</b><span>failure modes in earlier designs that led to the metric-first architecture</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why Finsler</h2>
+    <div class="cols">
+      <div>
+        <h3>Euclidean: symmetric</h3>
+        <p>A standard transformer treats representation space as Euclidean. Distances are symmetric and direction-independent, so relevance from A to B and from B to A come from the same inner product. Language is directional: <em>A implies B</em> is a different claim from <em>B implies A</em>, and syntax constrains what may follow what.</p>
+      </div>
+      <div>
+        <h3>Riemannian: still symmetric</h3>
+        <p>A Riemannian metric g<sub>ij</sub>(x) lets distance vary with position but keeps it symmetric in direction. Isotropic diffusion on such a manifold tends to over-smooth: tokens drift toward generic attractors and lose their identity, the rank-collapse pathology seen in deep graph networks.</p>
+      </div>
+      <div>
+        <h3>Finsler: direction-dependent</h3>
+        <p>A Finsler norm F(x, v) assigns a direction-dependent cost to motion at every point of the manifold, with F(x, v) &ne; F(x, &#8722;v) in general. Asymmetry, the property language needs most, is built into the metric.</p>
+      </div>
+    </div>
+    <p class="note">The project uses the simplest non-Riemannian Finsler metric, the Randers metric:</p>
+    <p class="formula">F(x, y) = &radic;(a<sub>ij</sub>(x) y<sup>i</sup>y<sup>j</sup>) + b<sub>i</sub>(x) y<sup>i</sup>, &nbsp;with &Vert;b&Vert;<sub>a</sub> &lt; 1</p>
+    <ul class="points">
+      <li>a<sub>ij</sub>(x) is a learned Riemannian background: baseline semantic similarity.</li>
+      <li>b<sub>i</sub>(x) is a learned 1-form, which the repository calls a wind, that biases flow toward the next logical token.</li>
+      <li>Together they let the geometry stiffen to block information flow in irrelevant directions and loosen to channel it toward grammatically or semantically licensed continuations.</li>
+    </ul>
+    <figure id="fig-unit">
+      <figcaption><h3>One metric, two costs</h3></figcaption>
+      <svg viewBox="0 0 400 270" role="img" aria-label="The set of unit-cost moves under a Randers metric, drawn for a equal to the identity and b of length 0.4: an ellipse shifted off the origin, reaching 0.71 along b and 1.67 against it, beside the dashed Euclidean unit circle.">
+        <line class="d-grid" x1="20" y1="130" x2="220" y2="130"/>
+        <line class="d-grid" x1="150" y1="40" x2="150" y2="220"/>
+        <circle class="d-curve dash" cx="150" cy="130" r="60" style="--c: var(--muted)"/>
+        <ellipse class="d-curve" cx="121.43" cy="130" rx="71.43" ry="65.47" style="--c: var(--copper)"/>
+        <path class="d-line thick" style="--c: var(--blue)" d="M150,130 H178"/>
+        <polygon class="d-arrow" style="--c: var(--blue)" points="186,130 176,125 176,135"/>
+        <text class="d-lab" x="168" y="120" style="fill: var(--blue)">b</text>
+        <circle class="d-dot" cx="150" cy="130" r="3" style="--c: var(--ink)"/>
+        <circle class="d-dot" cx="192.86" cy="130" r="3.5" style="--c: var(--copper)"/>
+        <circle class="d-dot" cx="50" cy="130" r="3.5" style="--c: var(--copper)"/>
+        <text class="d-sub" x="186" y="150" text-anchor="end">0.71</text>
+        <text class="d-sub" x="46" y="150" text-anchor="end">1.67</text>
+        <path class="d-curve" style="--c: var(--copper)" d="M240,52 H262"/>
+        <text class="d-lab" x="270" y="56">F = 1, Randers</text>
+        <path class="d-curve dash" style="--c: var(--muted)" d="M240,74 H262"/>
+        <text class="d-lab" x="270" y="78">|v| = 1, Euclidean</text>
+        <text class="d-sub" x="240" y="112">reach along b:</text>
+        <text class="d-lab" x="240" y="128">1/(1 + |b|) = 0.71</text>
+        <text class="d-sub" x="240" y="156">reach against b:</text>
+        <text class="d-lab" x="240" y="172">1/(1 &#8722; |b|) = 1.67</text>
+        <text class="d-note" x="20" y="242">Drawn with a = identity and |b| = 0.4. A move v</text>
+        <text class="d-note" x="20" y="258">costs |v|(1 + |b|) along b and |v|(1 &#8722; |b|) against it.</text>
+      </svg>
+      <p class="note">The set of moves that cost exactly 1 is an ellipse with the origin off-center, so the same step length costs more in one direction than the other. This follows directly from the Randers formula above.</p>
+    </figure>
+  </section>
+
+  <section>
+    <h2>A sentence is a geodesic</h2>
+    <p class="note">The governing idea: context is the geometric deformation of the latent space, in place of an additive matrix operation.</p>
+    <div class="cols">
+      <div>
+        <h3>Sequence as trajectory</h3>
+        <p>A sentence is a path x(t) through the manifold. The exact order of tokens defines the differential equation whose solution is that path.</p>
+      </div>
+      <div>
+        <h3>Attention is curvature</h3>
+        <p>As the state moves from w<sub>1</sub> to w<sub>2</sub>, the nonlinear connection distorts the tangent space seen by w<sub>3</sub>. The attention a token pays to its predecessors is encoded in the accumulated distortion along the route. No T&times;T score matrix is formed.</p>
+      </div>
+      <div>
+        <h3>Path-dependent meaning is holonomy</h3>
+        <p>Two routes that arrive at the same point carry different holonomy, the accumulated rotation of a frame transported along the path, and therefore different representations.</p>
+      </div>
+    </div>
+    <p class="note">Generation integrates the geodesic equation:</p>
+    <p class="formula">d<sup>2</sup>x<sup>i</sup>/dt<sup>2</sup> + 2G<sup>i</sup>(x, &#7819;) = 0</p>
+    <ul class="points" style="--c: var(--copper)">
+      <li>The spray coefficients G<sup>i</sup>(x, y), the laws of motion of the sequence, are derived analytically from the Randers metric through &frac12;F<sup>2</sup> and the Euler&ndash;Lagrange equation, using autograd.</li>
+      <li>The nonlinear connection N<sup>i</sup><sub>j</sub> = &part;G<sup>i</sup>/&part;y<sup>j</sup> drives frame parallel transport, H<sub>t+1</sub> = exp(&#8722;N dt) H<sub>t</sub>, which is where holonomy accumulates.</li>
+      <li>Training minimizes geodesic deviation, the residual of the geodesic equation on observed sequences, plus a rollout term that forces the learned metric to produce stable trajectories under iteration as well as pointwise fits.</li>
+    </ul>
+
+    <figure id="fig-flow">
+      <figcaption><h3>Metric first: everything else is derived</h3></figcaption>
+      <div class="scroll v-wide">
+        <svg viewBox="0 0 1080 300" role="img" aria-label="Architecture: a learned Randers metric; autograd on one half F squared and the Euler-Lagrange equation give the spray; the spray drives a geodesic step and, through its Jacobian, the nonlinear connection, which drives frame transport where holonomy accumulates; a training loss of geodesic deviation plus a rollout stability term updates the metric.">
+          <rect class="d-box hl" x="10" y="30" width="280" height="110" style="--c: var(--copper)"/>
+          <text class="d-title" x="24" y="56">Learned Randers metric</text>
+          <text class="d-code" x="24" y="82">F(x,y) = &#8730;(a<tspan baseline-shift="sub" font-size="8">ij</tspan>(x) y<tspan baseline-shift="super" font-size="8">i</tspan>y<tspan baseline-shift="super" font-size="8">j</tspan>) + b<tspan baseline-shift="sub" font-size="8">i</tspan>(x) y<tspan baseline-shift="super" font-size="8">i</tspan></text>
+          <text class="d-sub" x="24" y="106">a: learned background similarity</text>
+          <text class="d-sub" x="24" y="122">b: learned 1-form, its a-norm below 1</text>
+
+          <text class="d-note" x="350" y="74" text-anchor="middle">autograd on &#189;F&#178;</text>
+          <text class="d-note" x="350" y="104" text-anchor="middle">Euler&#8211;Lagrange</text>
+          <path class="d-line" style="--c: var(--copper)" d="M290,85 H404"/>
+          <polygon class="d-arrow" style="--c: var(--copper)" points="410,85 402,81 402,89"/>
+
+          <rect class="d-box" x="410" y="30" width="240" height="110"/>
+          <text class="d-title" x="424" y="56">Spray G<tspan baseline-shift="super" font-size="8">i</tspan>(x, y)</text>
+          <text class="d-sub" x="424" y="82">derived analytically</text>
+          <text class="d-sub" x="424" y="98">from the metric, so the</text>
+          <text class="d-sub" x="424" y="114">geometry stays grounded</text>
+
+          <path class="d-line" style="--c: var(--copper)" d="M650,85 H724"/>
+          <polygon class="d-arrow" style="--c: var(--copper)" points="730,85 722,81 722,89"/>
+
+          <rect class="d-box" x="730" y="30" width="340" height="110"/>
+          <text class="d-title" x="744" y="56">Geodesic step</text>
+          <text class="d-code" x="744" y="82">d&#178;x<tspan baseline-shift="super" font-size="8">i</tspan>/dt&#178; + 2G<tspan baseline-shift="super" font-size="8">i</tspan>(x, &#7819;) = 0</text>
+          <text class="d-sub" x="744" y="106">a handful of ODE sub-steps per token</text>
+          <text class="d-sub" x="744" y="122">no pairwise score matrix, no T&#178; term</text>
+
+          <path class="d-line" style="--c: var(--copper)" d="M530,140 V184"/>
+          <polygon class="d-arrow" style="--c: var(--copper)" points="530,190 526,182 534,182"/>
+
+          <rect class="d-box" x="410" y="190" width="240" height="100"/>
+          <text class="d-title" x="424" y="216">Nonlinear connection</text>
+          <text class="d-code" x="424" y="242">N<tspan baseline-shift="super" font-size="8">i</tspan><tspan baseline-shift="sub" font-size="8">j</tspan> = &#8706;G<tspan baseline-shift="super" font-size="8">i</tspan>/&#8706;y<tspan baseline-shift="super" font-size="8">j</tspan></text>
+          <text class="d-sub" x="424" y="266">the Jacobian of the spray</text>
+
+          <path class="d-line" style="--c: var(--copper)" d="M650,240 H724"/>
+          <polygon class="d-arrow" style="--c: var(--copper)" points="730,240 722,236 722,244"/>
+
+          <rect class="d-box hl" x="730" y="190" width="340" height="100" style="--c: var(--violet)"/>
+          <text class="d-title" x="744" y="216">Frame transport</text>
+          <text class="d-code" x="744" y="242">H<tspan baseline-shift="sub" font-size="8">t+1</tspan> = exp(&#8722;N dt) H<tspan baseline-shift="sub" font-size="8">t</tspan></text>
+          <text class="d-sub" x="744" y="266">holonomy accumulates here</text>
+
+          <rect class="d-box soft" x="10" y="190" width="280" height="100"/>
+          <text class="d-title" x="24" y="216">Training loss</text>
+          <text class="d-sub" x="24" y="238">geodesic deviation: the residual of the</text>
+          <text class="d-sub" x="24" y="254">geodesic equation on observed sequences,</text>
+          <text class="d-sub" x="24" y="270">plus a rollout stability term</text>
+          <path class="d-line dash" style="--c: var(--muted)" d="M150,190 V148"/>
+          <polygon class="d-arrow" style="--c: var(--muted)" points="150,141 146,149 154,149"/>
+          <text class="d-note" x="160" y="172">updates the metric</text>
+        </svg>
+      </div>
+      <svg class="v-narrow" viewBox="0 0 360 664" role="img" aria-label="Architecture, stacked: a learned Randers metric; autograd and the Euler-Lagrange equation give the spray; the spray drives a geodesic step and, through its Jacobian, the nonlinear connection, which drives frame transport where holonomy accumulates; a training loss of geodesic deviation plus a rollout stability term updates the metric.">
+        <rect class="d-box hl" x="10" y="10" width="340" height="104" style="--c: var(--copper)"/>
+        <text class="d-title" x="24" y="34">Learned Randers metric</text>
+        <text class="d-code" x="24" y="60">F(x,y) = &#8730;(a<tspan baseline-shift="sub" font-size="9">ij</tspan>(x) y<tspan baseline-shift="super" font-size="9">i</tspan>y<tspan baseline-shift="super" font-size="9">j</tspan>) + b<tspan baseline-shift="sub" font-size="9">i</tspan>(x) y<tspan baseline-shift="super" font-size="9">i</tspan></text>
+        <text class="d-sub" x="24" y="84">a: learned background similarity</text>
+        <text class="d-sub" x="24" y="100">b: learned 1-form, its a-norm below 1</text>
+        <path class="d-line" style="--c: var(--copper)" d="M180,114 V140"/>
+        <polygon class="d-arrow" style="--c: var(--copper)" points="180,146 176,138 184,138"/>
+        <text class="d-note" x="192" y="126">autograd on &#189;F&#178;,</text>
+        <text class="d-note" x="192" y="140">Euler&#8211;Lagrange</text>
+
+        <rect class="d-box" x="10" y="146" width="340" height="66"/>
+        <text class="d-title" x="24" y="170">Spray G<tspan baseline-shift="super" font-size="9">i</tspan>(x, y)</text>
+        <text class="d-sub" x="24" y="192">derived analytically from the metric</text>
+        <path class="d-line" style="--c: var(--copper)" d="M193,212 V232"/>
+        <polygon class="d-arrow" style="--c: var(--copper)" points="193,238 189,230 197,230"/>
+
+        <rect class="d-box" x="36" y="238" width="314" height="80"/>
+        <text class="d-title" x="50" y="262">Geodesic step</text>
+        <text class="d-code" x="50" y="284">d&#178;x<tspan baseline-shift="super" font-size="9">i</tspan>/dt&#178; + 2G<tspan baseline-shift="super" font-size="9">i</tspan>(x, &#7819;) = 0</text>
+        <text class="d-sub" x="50" y="306">a handful of ODE sub-steps per token</text>
+
+        <path class="d-line" style="--c: var(--copper)" d="M22,212 V386 H30"/>
+        <polygon class="d-arrow" style="--c: var(--copper)" points="36,386 28,382 28,390"/>
+        <rect class="d-box" x="36" y="346" width="314" height="80"/>
+        <text class="d-title" x="50" y="370">Nonlinear connection</text>
+        <text class="d-code" x="50" y="392">N<tspan baseline-shift="super" font-size="9">i</tspan><tspan baseline-shift="sub" font-size="9">j</tspan> = &#8706;G<tspan baseline-shift="super" font-size="9">i</tspan>/&#8706;y<tspan baseline-shift="super" font-size="9">j</tspan></text>
+        <text class="d-sub" x="50" y="414">the Jacobian of the spray</text>
+        <path class="d-line" style="--c: var(--copper)" d="M193,426 V446"/>
+        <polygon class="d-arrow" style="--c: var(--copper)" points="193,452 189,444 197,444"/>
+
+        <rect class="d-box hl" x="36" y="452" width="314" height="80" style="--c: var(--violet)"/>
+        <text class="d-title" x="50" y="476">Frame transport</text>
+        <text class="d-code" x="50" y="498">H<tspan baseline-shift="sub" font-size="9">t+1</tspan> = exp(&#8722;N dt) H<tspan baseline-shift="sub" font-size="9">t</tspan></text>
+        <text class="d-sub" x="50" y="520">holonomy accumulates here</text>
+
+        <rect class="d-box soft" x="10" y="556" width="340" height="96"/>
+        <text class="d-title" x="24" y="580">Training loss</text>
+        <text class="d-sub" x="24" y="600">residual of the geodesic equation on</text>
+        <text class="d-sub" x="24" y="616">observed sequences, plus a rollout</text>
+        <text class="d-sub" x="24" y="632">stability term; it updates the metric</text>
+      </svg>
+    </figure>
+  </section>
+
+  <section>
+    <h2>The efficiency argument</h2>
+    <div class="scroll"><table class="cmp">
+      <thead><tr><th></th><th>Attention</th><th>Geodesic flow</th></tr></thead>
+      <tbody>
+        <tr><td>Total cost over T tokens</td><td>O(T<sup>2</sup>)</td><td>O(T)</td></tr>
+        <tr><td>Work per generated token</td><td>scores against every earlier token</td><td>one autograd pass over F<sup>2</sup>/2 for the spray, the connection Jacobian, a small matrix exponential (O(d<sup>3</sup>) with d small) and a handful of ODE sub-steps</td></tr>
+        <tr><td>Where context lives</td><td>a pairwise score matrix that grows with T</td><td>the holonomy and the metric, both of fixed size</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">In the long-sequence regime, T much larger than d, where attention hurts most, geometric transport is asymptotically favorable.</p>
+  </section>
+
+  <section>
+    <h2>What worked, and what failed</h2>
+    <p class="note">This is an exploration repository, and its failure analysis is the most valuable part of it.</p>
+    <div class="callouts">
+      <div class="callout" style="--c: var(--green)">
+        <span class="tag">Synthetic 2D: worked</span>
+        <h3>Deterministic spirals</h3>
+        <p>With high signal-to-noise, where acceleration is uniquely determined by position and velocity, the metric-first model learns a sensible geometry.</p>
+      </div>
+      <div class="callout" style="--c: var(--green)">
+        <span class="tag">Synthetic 2D: worked</span>
+        <h3>Stochastic drift</h3>
+        <p>On constant-wind stochastic walks, geodesic deviation correctly plateaus at the noise floor: the Randers b-form learns the drift direction and the spray learns roughly flat space. Reproducing the mean trajectory is the right answer here.</p>
+      </div>
+      <div class="callout" style="--c: var(--red)">
+        <span class="tag">Failure mode 1</span>
+        <h3>A free-form MLP spray</h3>
+        <p>Expressive but geometrically ungrounded: no guarantee of 2-homogeneity, metric compatibility or consistent geodesics.</p>
+      </div>
+      <div class="callout" style="--c: var(--red)">
+        <span class="tag">Failure mode 2</span>
+        <h3>Additive holonomy</h3>
+        <p>Accumulating a vector onto position is a translation. The design needs a frame transformation, and the translation silently discards the direction-dependence the project exists for.</p>
+      </div>
+      <div class="callout" style="--c: var(--red)">
+        <span class="tag">Failure mode 3</span>
+        <h3>A space mismatch</h3>
+        <p>Accelerations measured in raw data space, while the spray predicted them in encoded space, produced meaningless gradients.</p>
+      </div>
+      <div class="callout" style="--c: var(--red)">
+        <span class="tag">Failure mode 4</span>
+        <h3>Compounding layers</h3>
+        <p>Compounding all geodesic layers on every step exploded rollout error far outside the training regime.</p>
+      </div>
+    </div>
+    <ul class="points" style="--c: var(--copper)">
+      <li>The lesson was the metric-first architecture: learn the Randers metric explicitly, derive the spray analytically from it, and train on geodesic deviation directly.</li>
+      <li>The current frontier is metric expressiveness. A smooth 2&ndash;3 layer metric network cannot carve the sharp, localized channels language needs. <span>The proposed fix is a Hybrid Randers manifold: the analytic spray plus a residual network conditioned on the local metric parameters, so the network corrects the geometry and the geometric guarantees stay.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Status and next tests</h2>
+    <p class="note">Validation so far is on synthetic 2D dynamics. The repository lists these next tests:</p>
+    <ul class="points" style="--c: var(--blue)">
+      <li>Spatially varying test geometry: rotating-wind fields and multi-attractor dynamics. <span>The direct test of whether position- and direction-dependent metrics learn trajectory structure.</span></li>
+      <li>A language-model proof of concept: train on tokenized text and compare perplexity against a parameter- and FLOP-matched transformer. <span>Especially at long context, where the O(T) advantage is largest.</span></li>
+      <li>Multi-chart manifolds: overlapping local coordinate charts, each with its own metric, since a single global metric is too smooth for high-dimensional language.</li>
+      <li>Richer Finsler structure: general (&alpha;, &beta;) metrics beyond Randers, connected to information geometry through Fisher metrics on the output simplex.</li>
+    </ul>
+    <p class="note">The sister project, <a href="sgst.html">Sparse Geometric Signal Transport</a>, works in a spectral fiber bundle, with tokens as sparse Fourier constellations. The Finsler Transformer works on the base manifold itself: the metric is asymmetric, the sequence is the geodesic, and holonomy replaces the attention matrix.</p>
+  </section>
+
+  <section class="cta">
+    <h2>Questions about this project?</h2>
+    <p>LedbetterLM is an AI that knows David's work and reads his public GitHub repos live. Ask it why a Randers metric fits language, how the spray is derived from the metric, or what the 2D spiral and drift experiments showed.</p>
+    <a class="btn primary big" href="/projects/finsler-transformer">Ask LedbetterLM about this project &rarr;</a>
+  </section>
+
+  <section class="sources">
+    <span>Every fact on this page comes from these sources:</span>
+    <a href="https://github.com/dledbetter123/LedbetterFinslerTransformer/blob/main/README.md" target="_blank" rel="noopener noreferrer">Finsler Transformer repository README (geometry, training objective, efficiency argument, results and failure modes, next tests)</a>
+    <a href="https://github.com/dledbetter123/LedbetterFinslerTransformer/blob/main/README_portfolio.md" target="_blank" rel="noopener noreferrer">Finsler Transformer portfolio summary (README_portfolio.md)</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David Ledbetter, CV (standard): Research, The Finsler Transformer</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short" target="_blank" rel="noopener noreferrer">David Ledbetter, CV (short): Research</a>
+    <span>The unit-cost figure is computed from the Randers formula with a = identity and |b| = 0.4; it illustrates the formula and is not an experimental result.</span>
+  </section>
+  <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
+</div>
+<a class="ask-fab" href="/projects/finsler-transformer">Ask LedbetterLM</a>
+<script src="ask.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Character-Aware Neural Language Model &middot; David Ledbetter</title>
+<meta name="description" content="A PyTorch language model that builds every word's vector from its spelling with a character CNN and a highway network, then predicts the next word with an LSTM. Based on Kim et al. (2016); a 3% reduction in perplexity against models of the same size.">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="portfolio.css">
+<style>
+/* Character-aware LM page: the architecture diagram, a parameter comparison and two tables. */
+#fig-arch svg { min-width: 960px; }
+.bars { display: grid; gap: 18px; max-width: 760px; }
+.bar-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 14px; }
+.bar-label { grid-column: 1 / -1; font-size: 14.5px; color: var(--muted); }
+.bar-label b { color: var(--ink); font-weight: 600; }
+.bar-track { height: 14px; min-width: 0; }
+.bar { display: block; height: 14px; background: var(--c, var(--ink)); }
+.bar-val { font-family: var(--f-mono); font-size: 13px; color: var(--c, var(--ink)); font-variant-numeric: tabular-nums; }
+table.params td:first-child, table.setup td:first-child { color: var(--ink); }
+table.setup td:first-child { white-space: nowrap; }
+table.params td, table.setup td { color: var(--muted); }
+table.params tr.total td { color: var(--ink); font-weight: 600; border-bottom: 0; }
+table.params td:nth-child(2) { min-width: 0; }
+.cols h3 { color: var(--ink); }
+.cols .k { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--c, var(--copper)); }
+.mono { font-family: var(--f-mono); font-size: 13.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="Page">
+    <a class="back" href="/#portfolio">&larr; All projects</a>
+    <div class="actions">
+      <a class="btn primary" href="/projects/char-aware-lm">Ask LedbetterLM about this</a>
+      <a class="btn" href="https://github.com/dledbetter123/Grad-Assessment" target="_blank" rel="noopener noreferrer">View the repo &#8599;</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">UMBC graduate coursework &middot; 2023</div>
+    <h1>Character-Aware Neural Language Model</h1>
+    <p class="lede">A language model that reads every word through its spelling. David built it in PyTorch after Kim et al. (2016): a character embedding, a convolutional network over the characters and a highway network turn each word into a vector, and an LSTM predicts the next word. The model achieved a 3% reduction in perplexity against models of the same size.</p>
+    <div class="meta"><span><b>Dates</b> September &ndash; December 2023</span><span><b>Based on</b> Kim et al. (2016), Character-Aware Neural Language Models</span></div>
+    <div class="tags"><span>PyTorch</span><span>Char-CNN</span><span>Highway network</span><span>LSTM</span><span>Language modeling</span><span>Apple MPS</span><span>Google Colab</span></div>
+  </header>
+
+  <section>
+    <h2>Headline numbers</h2>
+    <div class="stats">
+      <div class="stat" style="--c: var(--green)"><b>3%</b><span>reduction in perplexity against models of the same size</span></div>
+      <div class="stat" style="--c: var(--blue)"><b>310,726</b><span>parameters on the character side: the embedding, 256 filters and two highway layers</span></div>
+      <div class="stat" style="--c: var(--yellow)"><b>9,999</b><span>words in the output vocabulary the model predicts over</span></div>
+      <div class="stat" style="--c: var(--violet)"><b>845,453</b><span>training pairs, each a word and the word that follows it</span></div>
+    </div>
+  </section>
+
+  <figure id="fig-arch">
+    <figcaption><h2>Architecture</h2></figcaption>
+    <div class="scroll">
+      <svg viewBox="0 0 1100 250" role="img" aria-label="Model pipeline: an input word as characters, a 50-dimensional character embedding, a character CNN with filter widths 2 to 5 and 64 filters each, max pooling over positions to 256 values, two highway layers, a two-layer LSTM with 512 hidden units, and a softmax over 9,999 words.">
+        <!-- group labels -->
+        <text x="85" y="44" text-anchor="middle" class="d-note">INPUT</text>
+        <path d="M172,60 V52 H778 V60" class="d-line" style="--c: var(--blue)"/>
+        <text x="475" y="42" text-anchor="middle" class="d-note" style="fill: var(--blue)">CHARACTER SIDE &#183; 310,726 PARAMETERS</text>
+        <path d="M796,60 V52 H1090 V60" class="d-line" style="--c: var(--violet)"/>
+        <text x="943" y="42" text-anchor="middle" class="d-note" style="fill: var(--violet)">WORD SIDE &#183; 8,807,695 PARAMETERS</text>
+
+        <!-- boxes -->
+        <rect x="16" y="70" width="138" height="160" class="d-box"/>
+        <rect x="172" y="70" width="138" height="160" class="d-box"/>
+        <rect x="328" y="70" width="138" height="160" class="d-box"/>
+        <rect x="484" y="70" width="138" height="160" class="d-box"/>
+        <rect x="640" y="70" width="138" height="160" class="d-box"/>
+        <rect x="796" y="70" width="138" height="160" class="d-box"/>
+        <rect x="952" y="70" width="138" height="160" class="d-box"/>
+
+        <!-- arrows -->
+        <g style="--c: var(--copper)">
+          <line x1="156" y1="150" x2="166" y2="150" class="d-line"/><path d="M166,146 L171,150 L166,154 Z" class="d-arrow"/>
+          <line x1="312" y1="150" x2="322" y2="150" class="d-line"/><path d="M322,146 L327,150 L322,154 Z" class="d-arrow"/>
+          <line x1="468" y1="150" x2="478" y2="150" class="d-line"/><path d="M478,146 L483,150 L478,154 Z" class="d-arrow"/>
+          <line x1="624" y1="150" x2="634" y2="150" class="d-line"/><path d="M634,146 L639,150 L634,154 Z" class="d-arrow"/>
+          <line x1="780" y1="150" x2="790" y2="150" class="d-line"/><path d="M790,146 L795,150 L790,154 Z" class="d-arrow"/>
+          <line x1="936" y1="150" x2="946" y2="150" class="d-line"/><path d="M946,146 L951,150 L946,154 Z" class="d-arrow"/>
+        </g>
+
+        <!-- 0: input word -->
+        <text x="26" y="92" class="d-title">Input word</text>
+        <text x="26" y="110" class="d-sub">one word, as chars</text>
+        <text x="26" y="124" class="d-sub">padded to 50 slots</text>
+        <g>
+          <rect x="26" y="146" width="16" height="22" class="d-box"/>
+          <rect x="45" y="146" width="16" height="22" class="d-box"/>
+          <rect x="64" y="146" width="16" height="22" class="d-box"/>
+          <rect x="83" y="146" width="16" height="22" class="d-box"/>
+          <rect x="102" y="146" width="16" height="22" class="d-box soft" stroke-dasharray="3 2"/>
+          <rect x="121" y="146" width="16" height="22" class="d-box soft" stroke-dasharray="3 2"/>
+          <text x="34" y="161" text-anchor="middle" class="d-title">c</text>
+          <text x="53" y="161" text-anchor="middle" class="d-title">a</text>
+          <text x="72" y="161" text-anchor="middle" class="d-title">t</text>
+          <text x="91" y="161" text-anchor="middle" class="d-title">s</text>
+        </g>
+        <text x="26" y="196" class="d-sub">48 chars + pad + unk</text>
+
+        <!-- 1: character embedding -->
+        <text x="182" y="92" class="d-title">Char embedding</text>
+        <text x="182" y="110" class="d-sub">each symbol &#8594; 50-d</text>
+        <text x="182" y="124" class="d-sub">learned vector</text>
+        <g fill="var(--blue)">
+          <rect x="182" y="144" width="14" height="8" opacity=".9"/><rect x="182" y="155" width="14" height="8" opacity=".35"/><rect x="182" y="166" width="14" height="8" opacity=".6"/><rect x="182" y="177" width="14" height="8" opacity=".2"/><rect x="182" y="188" width="14" height="8" opacity=".75"/>
+          <rect x="201" y="144" width="14" height="8" opacity=".3"/><rect x="201" y="155" width="14" height="8" opacity=".8"/><rect x="201" y="166" width="14" height="8" opacity=".45"/><rect x="201" y="177" width="14" height="8" opacity=".9"/><rect x="201" y="188" width="14" height="8" opacity=".25"/>
+          <rect x="220" y="144" width="14" height="8" opacity=".6"/><rect x="220" y="155" width="14" height="8" opacity=".2"/><rect x="220" y="166" width="14" height="8" opacity=".85"/><rect x="220" y="177" width="14" height="8" opacity=".4"/><rect x="220" y="188" width="14" height="8" opacity=".65"/>
+          <rect x="239" y="144" width="14" height="8" opacity=".45"/><rect x="239" y="155" width="14" height="8" opacity=".7"/><rect x="239" y="166" width="14" height="8" opacity=".3"/><rect x="239" y="177" width="14" height="8" opacity=".55"/><rect x="239" y="188" width="14" height="8" opacity=".9"/>
+          <rect x="258" y="144" width="14" height="8" opacity=".12"/><rect x="258" y="155" width="14" height="8" opacity=".12"/><rect x="258" y="166" width="14" height="8" opacity=".12"/><rect x="258" y="177" width="14" height="8" opacity=".12"/><rect x="258" y="188" width="14" height="8" opacity=".12"/>
+          <rect x="277" y="144" width="14" height="8" opacity=".12"/><rect x="277" y="155" width="14" height="8" opacity=".12"/><rect x="277" y="166" width="14" height="8" opacity=".12"/><rect x="277" y="177" width="14" height="8" opacity=".12"/><rect x="277" y="188" width="14" height="8" opacity=".12"/>
+        </g>
+        <text x="182" y="214" class="d-sub">2,500 weights</text>
+
+        <!-- 2: char-CNN -->
+        <text x="338" y="92" class="d-title">Char-CNN</text>
+        <text x="338" y="110" class="d-sub">widths 2, 3, 4, 5</text>
+        <text x="338" y="124" class="d-sub">64 each, tanh</text>
+        <rect x="338" y="142" width="36" height="9" fill="var(--red)"/><text x="380" y="150" class="d-sub">w=2</text>
+        <rect x="338" y="156" width="54" height="9" fill="var(--yellow)"/><text x="398" y="164" class="d-sub">w=3</text>
+        <rect x="338" y="170" width="72" height="9" fill="var(--green)"/><text x="416" y="178" class="d-sub">w=4</text>
+        <rect x="338" y="184" width="90" height="9" fill="var(--violet)"/><text x="434" y="192" class="d-sub">w=5</text>
+        <text x="338" y="214" class="d-sub">256 filters</text>
+
+        <!-- 3: max over time -->
+        <text x="494" y="92" class="d-title">Max over time</text>
+        <text x="494" y="110" class="d-sub">each filter keeps</text>
+        <text x="494" y="124" class="d-sub">its peak value</text>
+        <rect x="494" y="150" width="27" height="14" fill="var(--red)"/>
+        <rect x="522" y="150" width="27" height="14" fill="var(--yellow)"/>
+        <rect x="550" y="150" width="27" height="14" fill="var(--green)"/>
+        <rect x="578" y="150" width="27" height="14" fill="var(--violet)"/>
+        <text x="494" y="186" class="d-sub">4 &#215; 64 = 256</text>
+        <text x="494" y="214" class="d-sub">one word vector</text>
+
+        <!-- 4: highway -->
+        <text x="650" y="92" class="d-title">Highway &#215; 2</text>
+        <text x="650" y="110" class="d-sub">gate t: transform</text>
+        <text x="650" y="124" class="d-sub">or carry each value</text>
+        <text x="650" y="154" class="d-sub" style="fill: var(--ink)">y = t&#183;relu(W&#8341;x)</text>
+        <text x="662" y="168" class="d-sub" style="fill: var(--ink)">+ (1&#8722;t)&#183;x</text>
+        <text x="650" y="186" class="d-sub">t = &#963;(W&#8348;x + b)</text>
+        <text x="650" y="214" class="d-sub">b starts at &#8722;2</text>
+
+        <!-- 5: LSTM -->
+        <text x="806" y="92" class="d-title">LSTM &#215; 2</text>
+        <text x="806" y="110" class="d-sub">512 hidden units</text>
+        <text x="806" y="124" class="d-sub">dropout 0.1</text>
+        <rect x="810" y="146" width="86" height="20" class="d-box soft"/>
+        <text x="853" y="160" text-anchor="middle" class="d-sub">layer 1</text>
+        <line x1="853" y1="166" x2="853" y2="180" class="d-line" style="--c: var(--blue)"/>
+        <rect x="810" y="180" width="86" height="20" class="d-box soft"/>
+        <text x="853" y="194" text-anchor="middle" class="d-sub">layer 2</text>
+        <path d="M896,151 a6,6 0 1 1 0,10" class="d-line" style="--c: var(--pink)"/>
+        <path d="M896,185 a6,6 0 1 1 0,10" class="d-line" style="--c: var(--pink)"/>
+        <text x="806" y="218" class="d-sub">3,678,208 weights</text>
+
+        <!-- 6: softmax -->
+        <text x="962" y="92" class="d-title">Word softmax</text>
+        <text x="962" y="110" class="d-sub">512 &#8594; 9,999</text>
+        <text x="962" y="124" class="d-sub">next-word scores</text>
+        <g fill="var(--dim)">
+          <rect x="964" y="190" width="9" height="10"/>
+          <rect x="978" y="182" width="9" height="18"/>
+          <rect x="992" y="192" width="9" height="8"/>
+          <rect x="1006" y="160" width="9" height="40" fill="var(--copper)"/>
+          <rect x="1020" y="186" width="9" height="14"/>
+          <rect x="1034" y="194" width="9" height="6"/>
+          <rect x="1048" y="178" width="9" height="22"/>
+          <rect x="1062" y="188" width="9" height="12"/>
+        </g>
+        <text x="962" y="218" class="d-sub">5,129,487 weights</text>
+      </svg>
+    </div>
+    <figcaption>Each training example is one word and the word after it. Weight counts come from building the notebook's model with its settings.</figcaption>
+  </figure>
+
+  <section>
+    <h2>Small by design</h2>
+    <p>A word-level language model keeps a learned vector for every word it knows. This model keeps none on its input side. It computes each word's vector from the word's characters, using 50 character vectors, 256 convolution filters and two highway layers. That whole stage is 310,726 parameters. A lookup table of 256-number vectors for the same 9,999 words would need 2,559,744.</p>
+    <div class="bars" role="img" aria-label="Character side 310,726 parameters against 2,559,744 for a 256-wide word lookup table over the same vocabulary">
+      <div class="bar-row" style="--c: var(--blue)">
+        <span class="bar-label"><b>Character side</b> (embedding, Char-CNN, highway)</span>
+        <span class="bar-track"><span class="bar" style="width: 12.14%"></span></span>
+        <span class="bar-val">310,726</span>
+      </div>
+      <div class="bar-row" style="--c: var(--muted)">
+        <span class="bar-label"><b>Word lookup table</b>, 256 wide, for the same 9,999 words</span>
+        <span class="bar-track"><span class="bar" style="width: 100%"></span></span>
+        <span class="bar-val">2,559,744</span>
+      </div>
+    </div>
+    <ul class="points">
+      <li>Rare and unseen words still get a vector, built by the same weights as every other word. <span>The project README names out-of-vocabulary and rare words as the target.</span></li>
+      <li>Filters respond to substrings, so words that share a stem or an ending produce related features. <span>The README frames this as a way to capture morphology.</span></li>
+      <li>Most of the remaining weight sits in the LSTM and the word softmax: 8,807,695 of the 9,118,421 parameters.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>How each stage works</h2>
+    <div class="cols">
+      <div style="--c: var(--blue)"><span class="k">1 &middot; Embedding</span><h3>Characters to vectors</h3><p>Each word becomes a row of up to 50 character IDs, padded with a reserved pad symbol. The alphabet has 50 symbols: the 48 characters in the training text plus pad and unknown. Each symbol maps to a learned 50-number vector, initialized uniformly between &minus;0.1 and 0.1.</p></div>
+      <div style="--c: var(--red)"><span class="k">2 &middot; Char-CNN</span><h3>Filters over spelling</h3><p>Four banks of filters slide across the character vectors, 2, 3, 4 and 5 characters wide, with 64 filters per bank and a tanh on each output. The paper's Figure 1 example uses widths two to four; David added width five.</p></div>
+      <div style="--c: var(--green)"><span class="k">3 &middot; Max over time</span><h3>One vector per word</h3><p>Each filter keeps only its strongest response anywhere in the word, so the word's vector has a fixed size whatever the word's length: 4 &times; 64 = 256 numbers.</p></div>
+      <div style="--c: var(--yellow)"><span class="k">4 &middot; Highway</span><h3>Gated mixing</h3><p>Two layers. Each computes a gate t from its input and outputs t &middot; relu(W<sub>H</sub>x) + (1 &minus; t) &middot; x, choosing per value between transforming the input and carrying it through. A learned bias that starts at &minus;2 tilts each gate toward carry at the start of training.</p></div>
+      <div style="--c: var(--pink)"><span class="k">5 &middot; LSTM</span><h3>Sequence model</h3><p>Two LSTM layers with 512 hidden units, with dropout of 0.1 between the layers and on the output.</p></div>
+      <div style="--c: var(--violet)"><span class="k">6 &middot; Softmax</span><h3>Next-word scores</h3><p>A linear layer maps the 512 hidden units to a score for each of the 9,999 words. Training minimizes cross-entropy against the word that actually came next.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Where the parameters sit</h2>
+    <div class="scroll"><table class="params">
+      <thead><tr><th>Stage</th><th>Shape</th><th class="num">Parameters</th></tr></thead>
+      <tbody>
+        <tr><td>Character embedding</td><td>50 symbols &times; 50</td><td class="num">2,500</td></tr>
+        <tr><td>Char-CNN</td><td>widths 2&ndash;5 &times; 64 filters</td><td class="num">45,056</td></tr>
+        <tr><td>Highway network</td><td>2 layers, 256 wide</td><td class="num">263,170</td></tr>
+        <tr><td>LSTM</td><td>2 layers, 512 hidden</td><td class="num">3,678,208</td></tr>
+        <tr><td>Word softmax</td><td>512 &rarr; 9,999</td><td class="num">5,129,487</td></tr>
+        <tr class="total"><td>Total</td><td></td><td class="num">9,118,421</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Counted by instantiating <span class="mono">CharacterToWordModel</span> from Model.ipynb with the notebook's settings.</p>
+  </section>
+
+  <section>
+    <h2>Training setup</h2>
+    <div class="scroll"><table class="setup">
+      <tbody>
+        <tr><td>Data</td><td>train.txt, valid.txt and test.txt in the repo; 42,068 training lines become 845,453 (word, next word) pairs</td></tr>
+        <tr><td>Vocabulary</td><td>9,999 words out; 50 character symbols in</td></tr>
+        <tr><td>Batches</td><td>256 pairs, 3,303 batches per epoch</td></tr>
+        <tr><td>Optimizer</td><td>Adam at a learning rate of 0.0001, cross-entropy loss</td></tr>
+        <tr><td>Schedule</td><td>up to 100 epochs, with a checkpoint saved after every epoch</td></tr>
+        <tr><td>Hardware</td><td>an Apple GPU through PyTorch's MPS backend (Model.ipynb), where each epoch took 3:06 to 3:12, and a CUDA GPU on Google Colab (Model_Colab.ipynb)</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>From the paper to the code</h2>
+    <div class="callouts">
+      <div class="callout" style="--c: var(--copper)">
+        <span class="tag">Based on</span>
+        <h3>Kim et al. (2016)</h3>
+        <p><a href="https://cdn.aaai.org/ojs/10362/10362-13-13890-1-2-20201228.pdf" target="_blank" rel="noopener noreferrer">Character-Aware Neural Language Models</a>, by Yoon Kim, Yacine Jernite, David Sontag and Alexander Rush, AAAI 2016. The same pipeline: character CNN, highway network, LSTM, softmax over words.</p>
+      </div>
+      <div class="callout" style="--c: var(--yellow)">
+        <span class="tag">Hardest part</span>
+        <h3>The highway network</h3>
+        <p>David's design write-up names the highway network as one of the primary challenges: it has to draw character-level features out of a word while keeping the important information. The design answers with transform and carry gates.</p>
+      </div>
+      <div class="callout" style="--c: var(--red)">
+        <span class="tag">Changed</span>
+        <h3>A fifth filter width</h3>
+        <p>The notebook follows the paper's figure for filter widths two to four and adds width five, with 64 filters at every width.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Questions about this project?</h2>
+    <p>LedbetterLM is an AI that knows David's work and reads his public GitHub repos live. Ask it how the highway gates work, why a character CNN can replace a word-embedding table, or how the code follows Kim et al. (2016).</p>
+    <a class="btn primary big" href="/projects/char-aware-lm">Ask LedbetterLM about this project &rarr;</a>
+  </section>
+
+  <section class="sources">
+    <span>Sources. Every number on this page comes from these:</span>
+    <a href="https://github.com/dledbetter123/Grad-Assessment/blob/main/Model.ipynb" target="_blank" rel="noopener noreferrer">Model.ipynb: the model classes, settings, data pipeline and training loop</a>
+    <a href="https://github.com/dledbetter123/Grad-Assessment/blob/main/Model_Colab.ipynb" target="_blank" rel="noopener noreferrer">Model_Colab.ipynb: the same model run on Google Colab</a>
+    <a href="https://github.com/dledbetter123/Grad-Assessment/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md: the approach, out-of-vocabulary words and morphology</a>
+    <a href="https://github.com/dledbetter123/Grad-Assessment/blob/main/GA_Writeup.pdf" target="_blank" rel="noopener noreferrer">GA_Writeup.pdf: the design write-up, November 6, 2023</a>
+    <a href="https://cdn.aaai.org/ojs/10362/10362-13-13890-1-2-20201228.pdf" target="_blank" rel="noopener noreferrer">Kim, Jernite, Sontag and Rush (2016), Character-Aware Neural Language Models, AAAI</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David's CV, Selected projects: the dates and the perplexity result</a>
+  </section>
+  <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
+</div>
+<a class="ask-fab" href="/projects/char-aware-lm">Ask LedbetterLM</a>
+<script src="ask.js" defer></script>
+</body>
+</html>

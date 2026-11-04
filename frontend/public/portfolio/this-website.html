@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>This Website &middot; David Ledbetter</title>
+<meta name="description" content="How davidamosledbetter.com is built: React on S3 behind CloudFront, one Go Lambda running LedbetterLM, Cloudflare Workers AI with a Gemini warm-start, live read-only tools over David Ledbetter's GitHub repos, and the caps and guards around them.">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="portfolio.css">
+<style>
+/* This-website page: the architecture diagram, the turn table and the cost tables. */
+figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+figcaption .note { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+#fig-arch svg { min-width: 820px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { display: inline-block; width: 18px; height: 2px; background: var(--c); }
+.stats { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+td { color: var(--muted); }
+td:first-child { color: var(--ink); }
+table.steps td:first-child { width: 26%; }
+table.cost { max-width: 720px; }
+table.verdict td:first-child { width: 34%; }
+code { font-family: var(--f-mono); font-size: .88em; color: var(--ink); overflow-wrap: anywhere; }
+pre.cmd { margin: 0; font-family: var(--f-mono); font-size: 12px; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding-block: 10px; }
+.sources { border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="Page">
+    <a class="back" href="/#portfolio">&larr; All projects</a>
+    <div class="actions">
+      <a class="btn primary" href="/projects/this-website">Ask LedbetterLM about this</a>
+      <a class="btn" href="https://github.com/dledbetter123/ledbetter-website" target="_blank" rel="noopener noreferrer">View the repo &#8599;</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">Personal project &middot; davidamosledbetter.com &middot; 2024&ndash;present</div>
+    <h1>This Website</h1>
+    <p class="lede">The site you're on, and the AI you're talking to. It runs on serverless AWS: React on S3 behind CloudFront, and one Go Lambda running LedbetterLM, David's AI librarian. A fast model chats, and code questions go to an agent that reads David's GitHub repos live.</p>
+    <div class="meta"><span><b>Role</b> Designed, shipped and operates it</span><span><b>Dates</b> 2024 &ndash; Present</span></div>
+    <div class="tags"><span>React</span><span>Go</span><span>AWS Lambda</span><span>API Gateway</span><span>CloudFront</span><span>S3</span><span>DynamoDB</span><span>SQS</span><span>Cloudflare Workers AI</span><span>Gemini</span><span>WebAuthn</span><span>GitHub Actions</span></div>
+  </header>
+
+  <section>
+    <h2>Headline numbers</h2>
+    <div class="stats">
+      <div class="stat" style="--c: var(--green)"><b>~$112 &rarr; ~$2</b><span>monthly hosting after David rebuilt the site serverless in June 2026, moving it off ECS/Fargate. The README puts the new bill at ~$2&ndash;3.</span></div>
+      <div class="stat" style="--c: var(--orange)"><b>~9&times;</b><span>cheaper per chat turn on Cloudflare Workers AI than on Gemini, head-to-head on the same prompt</span></div>
+      <div class="stat" style="--c: var(--blue)"><b>10,000</b><span>Neurons a day in Workers AI's free allowance. The site uses ~1&ndash;4k a day, so at current traffic the chat runs effectively free.</span></div>
+      <div class="stat" style="--c: var(--pink)"><b>34 of 34</b><span>probing attempts caught by a single-purpose classifier call, which also passed 34 of 34 ordinary questions</span></div>
+    </div>
+  </section>
+
+  <figure id="fig-arch">
+    <figcaption>
+      <h2>How the site is built</h2>
+      <span class="note">One request path for the page, another for /api/*.</span>
+    </figcaption>
+    <div class="scroll"><svg viewBox="0 0 1120 500" role="img" aria-label="Architecture diagram. Visitors, MCP clients and the operator reach CloudFront. CloudFront serves the React site from a private S3 bucket through Origin Access Control and sends /api/* to an API Gateway HTTP API, which invokes one Go Lambda on arm64. Each chat turn in the Lambda runs request and spend caps, a probe guard, an asynchronous cataloguer on Gemini, the worker tool loop, and then enqueues side effects. The Lambda calls Cloudflare Workers AI running Llama 4 Scout as the primary model, Gemini for cold starts and the cataloguer, the GitHub API for live read-only repo reads, DynamoDB for caps, the warm marker and session state, the S3 knowledge base, and an SQS FIFO queue whose worker logs turns to S3 and sends email. GitHub Actions deploys the site and the Lambda using OIDC.">
+      <defs>
+        <marker id="ar-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--blue)"/></marker>
+        <marker id="ar-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--violet)"/></marker>
+        <marker id="ar-yellow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--yellow)"/></marker>
+        <marker id="ar-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--orange)"/></marker>
+        <marker id="ar-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--green)"/></marker>
+        <marker id="ar-pink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--pink)"/></marker>
+        <marker id="ar-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--muted)"/></marker>
+      </defs>
+
+      <!-- clients -->
+      <rect class="d-box" x="16" y="120" width="160" height="56"/>
+      <text class="d-title" x="96" y="144" text-anchor="middle">Visitors</text>
+      <text class="d-sub" x="96" y="162" text-anchor="middle">React SPA + chat widget</text>
+
+      <rect class="d-box" x="16" y="212" width="160" height="56"/>
+      <text class="d-title" x="96" y="236" text-anchor="middle">MCP clients</text>
+      <text class="d-sub" x="96" y="254" text-anchor="middle">/api/mcp, stateless</text>
+
+      <rect class="d-box" x="16" y="304" width="160" height="56"/>
+      <text class="d-title" x="96" y="328" text-anchor="middle">Operator</text>
+      <text class="d-sub" x="96" y="346" text-anchor="middle">passkey / WebAuthn</text>
+
+      <!-- edge -->
+      <rect class="d-box" x="216" y="100" width="170" height="280"/>
+      <text class="d-title" x="301" y="126" text-anchor="middle">CloudFront</text>
+      <text class="d-sub" x="301" y="144" text-anchor="middle">TLS, HSTS, CSP</text>
+      <text class="d-sub" x="301" y="157" text-anchor="middle">SPA routing function</text>
+      <text class="d-sub" x="301" y="170" text-anchor="middle">only path to the API</text>
+
+      <rect class="d-box" x="426" y="40" width="190" height="56"/>
+      <text class="d-title" x="521" y="64" text-anchor="middle">S3 static site</text>
+      <text class="d-sub" x="521" y="82" text-anchor="middle">private bucket, OAC</text>
+
+      <rect class="d-box" x="426" y="212" width="190" height="56"/>
+      <text class="d-title" x="521" y="236" text-anchor="middle">API Gateway</text>
+      <text class="d-sub" x="521" y="254" text-anchor="middle">HTTP API at /api/*</text>
+
+      <rect class="d-box soft" x="426" y="372" width="190" height="70"/>
+      <text class="d-title" x="521" y="396" text-anchor="middle">GitHub Actions</text>
+      <text class="d-sub" x="521" y="414" text-anchor="middle">OIDC, no stored keys</text>
+      <text class="d-sub" x="521" y="427" text-anchor="middle">deploys site + Lambda</text>
+
+      <!-- lambda -->
+      <rect class="d-box" x="656" y="20" width="230" height="460"/>
+      <text class="d-title" x="771" y="46" text-anchor="middle">Go Lambda, arm64</text>
+      <text class="d-sub" x="771" y="62" text-anchor="middle">LedbetterLM</text>
+      <text class="d-note" x="676" y="98">EACH CHAT TURN</text>
+      <text class="d-sub" x="676" y="120">1</text><text class="d-sub" x="692" y="120">request + spend caps</text>
+      <text class="d-sub" x="676" y="138">2</text><text class="d-sub" x="692" y="138">probe guard</text>
+      <text class="d-sub" x="676" y="156">3</text><text class="d-sub" x="692" y="156">cataloguer, async</text>
+      <text class="d-sub" x="692" y="169">self-invoke on Gemini</text>
+      <text class="d-sub" x="676" y="187">4</text><text class="d-sub" x="692" y="187">worker tool loop</text>
+      <text class="d-sub" x="676" y="205">5</text><text class="d-sub" x="692" y="205">enqueue side effects</text>
+      <text class="d-note" x="676" y="244">ALSO SERVES</text>
+      <text class="d-sub" x="676" y="266">MCP server</text>
+      <text class="d-sub" x="676" y="284">status, contact, inbox</text>
+      <text class="d-sub" x="676" y="302">operator mode</text>
+
+      <!-- services -->
+      <rect class="d-box" x="926" y="20" width="178" height="56"/>
+      <text class="d-title" x="1015" y="44" text-anchor="middle">Workers AI</text>
+      <text class="d-sub" x="1015" y="62" text-anchor="middle">Llama 4 Scout, primary</text>
+
+      <rect class="d-box" x="926" y="96" width="178" height="56"/>
+      <text class="d-title" x="1015" y="120" text-anchor="middle">Gemini</text>
+      <text class="d-sub" x="1015" y="138" text-anchor="middle">cold starts, cataloguer</text>
+
+      <rect class="d-box" x="926" y="172" width="178" height="56"/>
+      <text class="d-title" x="1015" y="196" text-anchor="middle">GitHub API</text>
+      <text class="d-sub" x="1015" y="214" text-anchor="middle">live read-only repo reads</text>
+
+      <rect class="d-box" x="926" y="248" width="178" height="70"/>
+      <text class="d-title" x="1015" y="272" text-anchor="middle">DynamoDB</text>
+      <text class="d-sub" x="1015" y="290" text-anchor="middle">caps, warm marker,</text>
+      <text class="d-sub" x="1015" y="303" text-anchor="middle">session state</text>
+
+      <rect class="d-box" x="926" y="338" width="178" height="56"/>
+      <text class="d-title" x="1015" y="362" text-anchor="middle">S3 knowledge base</text>
+      <text class="d-sub" x="1015" y="380" text-anchor="middle">edited without a redeploy</text>
+
+      <rect class="d-box" x="926" y="414" width="178" height="66"/>
+      <text class="d-title" x="1015" y="438" text-anchor="middle">SQS FIFO + worker</text>
+      <text class="d-sub" x="1015" y="456" text-anchor="middle">turn log to S3, email,</text>
+      <text class="d-sub" x="1015" y="469" text-anchor="middle">dead-letter queue</text>
+
+      <!-- flows -->
+      <path class="d-line" style="--c: var(--blue)" d="M176,148 H214" marker-end="url(#ar-blue)"/>
+      <path class="d-line" style="--c: var(--blue)" d="M176,240 H214" marker-end="url(#ar-blue)"/>
+      <path class="d-line" style="--c: var(--violet)" d="M176,332 H214" marker-end="url(#ar-violet)"/>
+      <path class="d-line" style="--c: var(--yellow)" d="M386,150 H406 V68 H424" marker-end="url(#ar-yellow)"/>
+      <text class="d-note" x="412" y="124">default route</text>
+      <path class="d-line" style="--c: var(--blue)" d="M386,240 H424" marker-end="url(#ar-blue)"/>
+      <path class="d-line" style="--c: var(--blue)" d="M616,240 H654" marker-end="url(#ar-blue)"/>
+      <path class="d-line dash" style="--c: var(--muted)" d="M616,407 H654" marker-end="url(#ar-dim)"/>
+      <path class="d-line" style="--c: var(--orange)" d="M886,48 H924" marker-end="url(#ar-orange)"/>
+      <path class="d-line" style="--c: var(--orange)" d="M886,124 H924" marker-end="url(#ar-orange)"/>
+      <path class="d-line" style="--c: var(--violet)" d="M886,200 H924" marker-end="url(#ar-violet)"/>
+      <path class="d-line" style="--c: var(--green)" d="M886,283 H924" marker-end="url(#ar-green)"/>
+      <path class="d-line" style="--c: var(--yellow)" d="M886,366 H924" marker-end="url(#ar-yellow)"/>
+      <path class="d-line" style="--c: var(--pink)" d="M886,447 H924" marker-end="url(#ar-pink)"/>
+    </svg></div>
+    <div class="legend">
+      <span style="--c: var(--blue)"><i></i>Requests</span>
+      <span style="--c: var(--yellow)"><i></i>Static content</span>
+      <span style="--c: var(--orange)"><i></i>Model calls</span>
+      <span style="--c: var(--violet)"><i></i>Repo reads, operator</span>
+      <span style="--c: var(--green)"><i></i>State</span>
+      <span style="--c: var(--pink)"><i></i>Side effects</span>
+    </div>
+  </figure>
+
+  <section>
+    <div class="cols">
+      <div>
+        <h3>Frontend</h3>
+        <p>React (Create React App), built to static files in a private S3 bucket and served through CloudFront with Origin Access Control. A CloudFront Function rewrites extensionless paths to <code>index.html</code> for client-side routing, and a response-headers policy sets HSTS, a Content-Security-Policy and the usual hardening headers. Editable content (the intro paragraph, the knowledge base, the r&eacute;sum&eacute;) loads from S3 at page time, so copy changes need no rebuild.</p>
+      </div>
+      <div>
+        <h3>Backend</h3>
+        <p>One Go Lambda (arm64, <code>provided.al2023</code>) behind an API Gateway HTTP API at <code>/api/*</code>, same-origin with the site. API keys come from Secrets Manager at cold start. Before the June 2026 rebuild, the site ran as Go and React containers on ECS/Fargate behind Application Load Balancers.</p>
+      </div>
+      <div>
+        <h3>Deploys</h3>
+        <p>GitHub Actions runs on every push to <code>main</code>: it builds the React app, syncs it to S3, invalidates CloudFront, then builds the Go Lambda and updates the function. AWS access goes through GitHub OIDC, so no long-lived access keys are stored.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>How a chat turn runs</h2>
+    <div class="scroll"><table class="steps">
+      <thead><tr><th>Step</th><th>What happens</th></tr></thead>
+      <tbody>
+        <tr><td>1. Caps</td><td>Per-day request counts (global and per IP) and spend caps (per browser session and per day) live in DynamoDB and are checked before any model call.</td></tr>
+        <tr><td>2. Probe guard</td><td>A pattern check and a short classifier call screen each message. A flagged session moves to a guard model that has no repo tools.</td></tr>
+        <tr><td>3. Cataloguer</td><td>When the first message looks code-bound, the Lambda invokes itself asynchronously and runs a Gemini research agent over the repos: up to 8 tool rounds inside a 95 s budget, under the 120 s Lambda timeout. Its fact sheet is cached for the session for an hour and handed to the chat model.</td></tr>
+        <tr><td>4. Worker loop</td><td>The chat model answers, calling <code>list_my_repos</code>, <code>list_repo_files</code> and <code>read_repo_file</code> as needed: up to 5 tool rounds plus a forced text answer, with an 18 s soft budget that keeps the turn under API Gateway's 30 s limit.</td></tr>
+        <tr><td>5. Side effects</td><td>The turn goes onto an SQS FIFO queue, one message group per session and deduplicated per turn, so the reply returns at once. A worker writes the turn to a private, encrypted S3 bucket under a content-hash key and sends the notification email, with a dead-letter queue behind it.</td></tr>
+        <tr><td>AI agents</td><td>A known AI crawler's first contact gets a static greeting: no model call and no spend.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Gemini as the session starter</h2>
+    <p class="lede" style="font-size:15px">Workers AI models go cold on a low-traffic site, and a cold load can outlast the request timeout. So each turn prefers Cloudflare and falls back to Gemini, and a DynamoDB marker tracks whether Cloudflare is warm.</p>
+    <div class="callouts">
+      <div class="callout" style="--c: var(--green)">
+        <span class="tag">Warm</span>
+        <h3>Cloudflare served in the last 180 s</h3>
+        <p>The turn waits up to 20 s for Workers AI.</p>
+      </div>
+      <div class="callout" style="--c: var(--blue)">
+        <span class="tag">Cold</span>
+        <h3>A 6 s probe, then Gemini</h3>
+        <p>The cold attempt itself starts Cloudflare's model load, so a later turn finds it warm and traffic rotates back to Cloudflare.</p>
+      </div>
+      <div class="callout" style="--c: var(--orange)">
+        <span class="tag">Accounting</span>
+        <h3>Billed to whoever answered</h3>
+        <p>Each turn's cost and logs go to the provider that actually served it, and conversation logs record the provider, model and token counts, so later comparisons are exact.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Pricing the switch</h2>
+    <p class="lede" style="font-size:15px">Before moving off Gemini, David priced the chat both ways. 26 logged Gemini turns cost $0.3375 in total, ~$0.013 a turn, dominated by a ~3,250-token system prefix re-sent on every model call plus billed thinking tokens. A token model calibrated on that traffic predicted $0.32, within 5% of the bill, and then priced the same 26 turns on Workers AI.</p>
+    <div class="scroll"><table class="cost">
+      <thead><tr><th>Model</th><th class="num">Same 26 turns</th><th class="num">vs Gemini</th></tr></thead>
+      <tbody>
+        <tr><td>Gemini Pro (actual bill)</td><td class="num">$0.3375</td><td class="num">1&times;</td></tr>
+        <tr><td>gpt-oss-120b</td><td class="num">$0.057</td><td class="num">5.6&times; cheaper</td></tr>
+        <tr><td>mistral-small-3.1-24b</td><td class="num">$0.056</td><td class="num">5.7&times; cheaper</td></tr>
+        <tr><td>llama-4-scout-17b-16e</td><td class="num hi">$0.045</td><td class="num hi">7.1&times; cheaper</td></tr>
+        <tr><td>glm-4.7-flash</td><td class="num">$0.011</td><td class="num">29&times; cheaper</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">These are modeled from token counts. The ~9&times; headline is the per-turn head-to-head on the same prompt. At this site's traffic every Workers AI model above stays inside the daily free allowance, while Gemini bills from the first token.</p>
+    <h3>The bake-off</h3>
+    <p class="note">Each model ran with the real system prompt and repo tools on a simple question, a repo lookup that must emit a tool call, and a privacy rule it must not break.</p>
+    <div class="scroll"><table class="verdict">
+      <thead><tr><th>Model</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td>llama-4-scout-17b-16e</td><td class="hi">Default: clean tool calls, grounded answers, the best persona voice, and the privacy rule followed</td></tr>
+        <tr><td>mistral-small-3.1-24b</td><td>Backup: correct and grounded, with a terser voice</td></tr>
+        <tr><td>nemotron-3-120b</td><td>A good answer without tools, null content with tools present, so unsafe for the agentic loop</td></tr>
+        <tr><td>llama-3.3-70b-fp8-fast</td><td>Refused basic questions and leaked tool calls as text</td></tr>
+        <tr><td>gpt-oss-120b, gpt-oss-20b</td><td>Reasoning models: under the bot's short output limit, the budget went to hidden reasoning and the answer came back null</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Model history</h2>
+    <ul class="points">
+      <li style="--c: var(--orange)">LedbetterLM started on Google's Gemini.</li>
+      <li style="--c: var(--orange)">Primary inference moved to Cloudflare Workers AI for cost, with Gemini kept as the warm-start fallback.</li>
+      <li style="--c: var(--orange)">On Cloudflare it first ran Meta's Llama 4 Scout, then Mistral Small 3.1 (24B) while the priority was following a long set of behavior rules without drifting.</li>
+      <li style="--c: var(--orange)">It went back to Llama 4 Scout once the agent leaned into exploring the repos. <span>Under the multi-round tool loop the 24B model sometimes fabricated ungrounded specifics, such as claiming Terraform or Docker after reading files that mentioned neither, while Scout emitted cleaner structured tool calls and stayed grounded in what it found.</span></li>
+      <li style="--c: var(--orange)">In September 2026 the Gemini Pro alias moved to a model with no free tier, every call returned 429, and the fallback and the cataloguer went down with it. <span>The fallback and the cataloguer now run <code>gemini-flash-lite-latest</code>, set by an environment variable, so the next alias move is a config change.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Repo access and security</h2>
+    <div class="cols">
+      <div>
+        <h3>What the agent can read</h3>
+        <ul class="points">
+          <li style="--c: var(--violet)">Public repos are open to the three read-only tools.</li>
+          <li style="--c: var(--violet)">Private repos are deny-by-default. One stays invisible unless it carries a disclosure-rules file at its root, and those rules are injected as binding with every read.</li>
+          <li style="--c: var(--violet)">A hardcoded never-list blocks sensitive repos entirely.</li>
+          <li style="--c: var(--violet)">David's geometric-transformer research repos are description-only: the tools return only their READMEs, and fenced code is stripped from any reply about them.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>How the site is protected</h3>
+        <ul class="points">
+          <li style="--c: var(--pink)">Operator mode, David's private way to update the knowledge base, sits behind passkey/WebAuthn login over constant-time HMAC-SHA256 session tokens.</li>
+          <li style="--c: var(--pink)">Deny-by-default authorization for private resources.</li>
+          <li style="--c: var(--pink)">Origin verification: the API answers only through CloudFront, and the raw API Gateway URL returns 403.</li>
+          <li style="--c: var(--pink)">Rate limits, per-session spend caps and API Gateway throttling.</li>
+          <li style="--c: var(--pink)">A guard model for probing attempts. <span>The first design had the chat model flag probes itself through a rule in its long system prompt, and it flagged 0 of 8 subtle probes. A short single-purpose classifier call on the same model caught 34 of 34 probes and passed 34 of 34 ordinary questions (two runs each over 17 + 17 cases, p50 0.7 s).</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Also on the site</h2>
+    <div class="cols">
+      <div>
+        <h3>An MCP server</h3>
+        <p>LedbetterLM is also a remote MCP server at <code>/api/mcp</code>, over stateless Streamable HTTP, with tools such as <code>about_david</code> and <code>ask_ledbetterlm</code>. MCP traffic runs through the same chat pipeline, caps and guard as the widget.</p>
+        <pre class="cmd">claude mcp add --transport http ledbetter https://www.davidamosledbetter.com/api/mcp</pre>
+      </div>
+      <div>
+        <h3>A contact inbox</h3>
+        <p>Contact-form messages land on an inbox page behind operator login, and a visitor's email reply threads back into the same conversation through SES inbound mail.</p>
+      </div>
+      <div>
+        <h3>Pages like this one</h3>
+        <p>Each project has a standalone HTML page under <code>/portfolio/</code>, with self-hosted fonts and inline SVG diagrams, because the site's Content-Security-Policy does not allow third-party scripts, styles or fonts.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Questions about this project?</h2>
+    <p>LedbetterLM is an AI that knows David's work and reads his public GitHub repos live. Ask it how the cataloguer decides to gather code, why Gemini starts cold sessions, or how the repo tools stay inside the API Gateway limit.</p>
+    <a class="btn primary big" href="/projects/this-website">Ask LedbetterLM about this project &rarr;</a>
+  </section>
+
+  <section class="sources">
+    <span>Everything on this page comes from the public repo and the CV:</span>
+    <a href="https://github.com/dledbetter123/ledbetter-website/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md: architecture, frontend, deploys, security, the ECS/Fargate history and the ~$2&ndash;3/mo bill</a>
+    <a href="https://github.com/dledbetter123/ledbetter-website/blob/main/backend-lambda/COST_GEMINI_VS_WORKERSAI.md" target="_blank" rel="noopener noreferrer">COST_GEMINI_VS_WORKERSAI.md: the 26-turn pricing, the free tier, the bake-off and the cold-start design</a>
+    <a href="https://github.com/dledbetter123/ledbetter-website/blob/main/backend-lambda/main.go" target="_blank" rel="noopener noreferrer">backend-lambda/main.go: the turn pipeline, tool-loop limits, warm and cold timeouts, and the Gemini model note</a>
+    <a href="https://github.com/dledbetter123/ledbetter-website/blob/main/backend-lambda/guard.go" target="_blank" rel="noopener noreferrer">backend-lambda/guard.go: the probe guard, its classifier results, and the description-only research repos</a>
+    <a href="https://github.com/dledbetter123/ledbetter-website/blob/main/backend-lambda/cataloguer.go" target="_blank" rel="noopener noreferrer">backend-lambda/cataloguer.go: the async Gemini research agent</a>
+    <a href="https://github.com/dledbetter123/ledbetter-website/blob/main/backend-lambda/queue.go" target="_blank" rel="noopener noreferrer">backend-lambda/queue.go: the SQS FIFO side-effect queue</a>
+    <a href="https://github.com/dledbetter123/ledbetter-website/blob/main/backend-lambda/mcp.go" target="_blank" rel="noopener noreferrer">backend-lambda/mcp.go: the MCP server</a>
+    <a href="https://github.com/dledbetter123/ledbetter-website/blob/main/backend-lambda/operator.go" target="_blank" rel="noopener noreferrer">backend-lambda/operator.go: passkey/WebAuthn operator login</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David's CV, standard (PDF): the ~$112 to ~$2/month hosting cut, the ~9&times; per-turn figure and the security summary</a>
+    <a href="/projects/this-website">LedbetterLM's knowledge base, through the chat: the model history and the same-prompt cost comparison</a>
+  </section>
+  <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
+</div>
+<a class="ask-fab" href="/projects/this-website">Ask LedbetterLM</a>
+<script src="ask.js" defer></script>
+</body>
+</html>

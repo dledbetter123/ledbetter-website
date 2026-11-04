@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NSBE Chapter Website &middot; David Ledbetter</title>
+<meta name="description" content="The website for the UMBC chapter of the National Society of Black Engineers: a React site on S3, a Go backend on AWS Elastic Beanstalk with MongoDB, and direct-to-S3 headshot and resume uploads through presigned URLs.">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="portfolio.css">
+<style>
+/* NSBE page: a request sequence diagram and a commit timeline. */
+#fig-seq svg { min-width: 860px; }
+.halo { paint-order: stroke; stroke: #000; stroke-width: 6px; stroke-linejoin: round; }
+.lane { font-size: 10.5px; letter-spacing: .1em; }
+.cols h3 { color: var(--ink); }
+.cols .k { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--c, var(--copper)); }
+.mono { font-family: var(--f-mono); font-size: 13.5px; }
+table.timeline td:first-child { font-family: var(--f-mono); font-size: 13px; color: var(--ink); white-space: nowrap; }
+table.timeline td { color: var(--muted); }
+table.timeline td.hi { color: var(--green); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="Page">
+    <a class="back" href="/#portfolio">&larr; All projects</a>
+    <div class="actions">
+      <a class="btn primary" href="/projects/nsbe-website">Ask LedbetterLM about this</a>
+      <a class="btn" href="https://github.com/dledbetter123/nsbe-website" target="_blank" rel="noopener noreferrer">View the repo &#8599;</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">NSBE UMBC chapter &middot; 2024</div>
+    <h1>NSBE Chapter Website</h1>
+    <p class="lede">The website for the UMBC chapter of the National Society of Black Engineers. Members sign up with a profile, a headshot and a resume, and the site shows them in a searchable carousel. David built the React front end, a Go backend on AWS Elastic Beanstalk with MongoDB, and direct-to-S3 uploads, while serving as the chapter's Finance Chair and Outreach Planner.</p>
+    <div class="meta"><span><b>Chapter role</b> Finance Chair and Outreach Planner</span><span><b>Dates</b> February &ndash; March 2024</span></div>
+    <div class="tags"><span>React 18</span><span>Go</span><span>MongoDB</span><span>AWS S3</span><span>Elastic Beanstalk</span><span>Presigned URLs</span><span>create-react-app</span></div>
+  </header>
+
+  <section>
+    <h2>Headline numbers</h2>
+    <div class="stats">
+      <div class="stat" style="--c: var(--green)"><b>22 days</b><span>from first commit to stable v3, February 13 to March 6, 2024</span></div>
+      <div class="stat" style="--c: var(--blue)"><b>4</b><span>HTTP routes in the Go server: status, member list, sign-up and upload URL</span></div>
+      <div class="stat" style="--c: var(--yellow)"><b>11</b><span>profile fields stored for each member in MongoDB</span></div>
+      <div class="stat" style="--c: var(--violet)"><b>15 min</b><span>lifetime of each presigned S3 upload URL</span></div>
+    </div>
+  </section>
+
+  <figure id="fig-seq">
+    <figcaption><h2>How a visit and a sign-up work</h2></figcaption>
+    <div class="scroll">
+      <svg viewBox="0 0 1080 480" role="img" aria-label="Sequence diagram. The browser loads the static React build from S3. It fetches the member list from the Go backend, which reads MongoDB. To sign up, the browser asks the backend for a presigned upload URL, uploads the headshot and resume straight to S3, then posts the profile with the file URLs to the backend, which inserts it into MongoDB and returns the member ID.">
+        <!-- actors -->
+        <rect x="20" y="16" width="200" height="50" class="d-box"/>
+        <text x="120" y="38" text-anchor="middle" class="d-title">Browser</text>
+        <text x="120" y="55" text-anchor="middle" class="d-sub">React 18 single-page app</text>
+        <rect x="320" y="16" width="200" height="50" class="d-box"/>
+        <text x="420" y="38" text-anchor="middle" class="d-title">Go backend</text>
+        <text x="420" y="55" text-anchor="middle" class="d-sub">Elastic Beanstalk, us-east-1</text>
+        <rect x="600" y="16" width="200" height="50" class="d-box"/>
+        <text x="700" y="38" text-anchor="middle" class="d-title">MongoDB</text>
+        <text x="700" y="55" text-anchor="middle" class="d-sub">nsbemembers.members</text>
+        <rect x="860" y="16" width="200" height="50" class="d-box"/>
+        <text x="960" y="38" text-anchor="middle" class="d-title">Amazon S3</text>
+        <text x="960" y="55" text-anchor="middle" class="d-sub">site bucket, nsbeheadshots</text>
+        <g class="d-line dash" style="--c: var(--dim)">
+          <line x1="120" y1="66" x2="120" y2="462"/>
+          <line x1="420" y1="66" x2="420" y2="462"/>
+          <line x1="700" y1="66" x2="700" y2="462"/>
+          <line x1="960" y1="66" x2="960" y2="462"/>
+        </g>
+
+        <!-- group labels -->
+        <text x="16" y="100" class="d-note lane" style="fill: var(--copper)">LOAD</text>
+        <text x="16" y="146" class="d-note lane" style="fill: var(--copper)">BROWSE</text>
+        <text x="16" y="258" class="d-note lane" style="fill: var(--copper)">SIGN UP</text>
+
+        <!-- 1: static site -->
+        <line x1="960" y1="104" x2="127" y2="104" class="d-line" style="--c: var(--orange)"/>
+        <path d="M127,100 L121,104 L127,108 Z" class="d-arrow" style="--c: var(--orange)"/>
+        <text x="540" y="96" text-anchor="middle" class="d-sub halo">static React build, synced by deploy-frontend.sh</text>
+
+        <!-- browse -->
+        <line x1="120" y1="150" x2="413" y2="150" class="d-line" style="--c: var(--blue)"/>
+        <path d="M413,146 L419,150 L413,154 Z" class="d-arrow" style="--c: var(--blue)"/>
+        <text x="270" y="142" text-anchor="middle" class="d-sub halo">GET /members/list</text>
+        <line x1="420" y1="180" x2="693" y2="180" class="d-line" style="--c: var(--green)"/>
+        <path d="M693,176 L699,180 L693,184 Z" class="d-arrow" style="--c: var(--green)"/>
+        <text x="560" y="172" text-anchor="middle" class="d-sub halo">find all members</text>
+        <line x1="420" y1="210" x2="127" y2="210" class="d-line dash" style="--c: var(--muted)"/>
+        <path d="M127,206 L121,210 L127,214 Z" class="d-arrow" style="--c: var(--muted)"/>
+        <text x="270" y="202" text-anchor="middle" class="d-sub halo">JSON list &#8594; member carousel</text>
+
+        <!-- sign up -->
+        <line x1="120" y1="262" x2="413" y2="262" class="d-line" style="--c: var(--blue)"/>
+        <path d="M413,258 L419,262 L413,266 Z" class="d-arrow" style="--c: var(--blue)"/>
+        <text x="270" y="254" text-anchor="middle" class="d-sub halo">GET /generateurl (file name, type)</text>
+        <line x1="420" y1="292" x2="127" y2="292" class="d-line dash" style="--c: var(--muted)"/>
+        <path d="M127,288 L121,292 L127,296 Z" class="d-arrow" style="--c: var(--muted)"/>
+        <text x="270" y="284" text-anchor="middle" class="d-sub halo">presigned PUT URL, valid 15 min</text>
+        <line x1="120" y1="330" x2="953" y2="330" class="d-line" style="--c: var(--orange)"/>
+        <path d="M953,326 L959,330 L953,334 Z" class="d-arrow" style="--c: var(--orange)"/>
+        <text x="540" y="322" text-anchor="middle" class="d-sub halo">PUT the file straight to nsbeheadshots/uploads/</text>
+        <text x="540" y="348" text-anchor="middle" class="d-note halo">once for the headshot, once for the resume</text>
+        <line x1="120" y1="380" x2="413" y2="380" class="d-line" style="--c: var(--blue)"/>
+        <path d="M413,376 L419,380 L413,384 Z" class="d-arrow" style="--c: var(--blue)"/>
+        <text x="270" y="372" text-anchor="middle" class="d-sub halo">POST /members/newmember: profile + file URLs</text>
+        <line x1="420" y1="410" x2="693" y2="410" class="d-line" style="--c: var(--green)"/>
+        <path d="M693,406 L699,410 L693,414 Z" class="d-arrow" style="--c: var(--green)"/>
+        <text x="560" y="402" text-anchor="middle" class="d-sub halo">InsertOne</text>
+        <line x1="420" y1="440" x2="127" y2="440" class="d-line dash" style="--c: var(--muted)"/>
+        <path d="M127,436 L121,440 L127,444 Z" class="d-arrow" style="--c: var(--muted)"/>
+        <text x="270" y="432" text-anchor="middle" class="d-sub halo">member ID</text>
+      </svg>
+    </div>
+    <figcaption>Files never pass through the Go server: it only signs the upload, and the browser sends the file to S3 itself.</figcaption>
+  </figure>
+
+  <section>
+    <h2>What David built</h2>
+    <div class="cols">
+      <div style="--c: var(--blue)"><span class="k">Back end &middot; main.go</span><h3>Go server</h3><p>A Go 1.19 <span class="mono">net/http</span> server with four routes: a status page, <span class="mono">/members/list</span>, <span class="mono">/members/newmember</span> and <span class="mono">/generateurl</span>. It reads the MongoDB URI from the environment, stores members in the <span class="mono">nsbemembers</span> database, and signs S3 uploads with the AWS SDK. A CORS middleware wraps the three API routes and answers preflight requests.</p></div>
+      <div style="--c: var(--yellow)"><span class="k">Sign-up &middot; SignUpFormDialog.js</span><h3>Profile, headshot, resume</h3><p>A dialog collects full name, student ID, email, graduation month and year, majors, minors or focuses, degree program and a short bio, plus a picture and a resume. Each file gets its own presigned URL and is uploaded to S3; the profile is then posted with the two file links.</p></div>
+      <div style="--c: var(--pink)"><span class="k">Members &middot; Carousel.js</span><h3>Searchable carousel</h3><p>Each card shows a member's headshot, name and bio, and opens the resume on click. Visitors move through it by swiping (50 px threshold), scrolling sideways (200 px), arrow keys or the on-screen arrows, with 0.5 s slides. A search box jumps to the first member whose name matches, and the jump waits in a queue if a slide is still moving.</p></div>
+      <div style="--c: var(--green)"><span class="k">Front page &middot; HeroSection.js</span><h3>Chapter sections</h3><p>The hero line, EMPOWERING INNOVATION., resolves letter by letter out of random mathematical symbols (Unicode U+2200 to U+22D5), each position cycling three times before it settles. Below it sit About, Our Impact (Academic Recognition, Workshops and Weekly General Body Meetings, with a workshop video that plays on hover), Upcoming Events and the member carousel.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Deployment</h2>
+    <ul class="points">
+      <li style="--c: var(--orange)">The front end is a create-react-app build. <span class="mono">deploy-frontend.sh</span> builds it and syncs it to the S3 bucket for www.nsbeumbc.com, deleting files that are no longer in the build.</li>
+      <li style="--c: var(--blue)">The Go server is compiled for Linux on amd64 and runs on AWS Elastic Beanstalk from a Procfile.</li>
+      <li style="--c: var(--green)">Member records live in MongoDB; headshots and resumes live in the <span class="mono">nsbeheadshots</span> S3 bucket under <span class="mono">uploads/</span>.</li>
+      <li style="--c: var(--violet)">David's CV describes the whole setup as a Go backend on Elastic Beanstalk with a MongoDB/React stack and a continuous deployment pipeline.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Build timeline</h2>
+    <div class="scroll"><table class="timeline">
+      <thead><tr><th>Date</th><th>What changed</th></tr></thead>
+      <tbody>
+        <tr><td>Feb 13, 2024</td><td>First commit</td></tr>
+        <tr><td>Feb 14</td><td>Site backbone finished and the domain deployed</td></tr>
+        <tr><td>Feb 15</td><td>DNS hosted zone updated for the www subdomain</td></tr>
+        <tr><td>Feb 18</td><td>Major styling work; backend started with MongoDB</td></tr>
+        <tr><td>Feb 22</td><td>Backend and front end connected through an AWS load balancer; member cards render at the bottom of the site</td></tr>
+        <tr><td>Mar 6</td><td class="hi">Stable v3: the sign-up form, a title bar, and the backend's S3 presigned URLs</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">From the repo's commit history.</p>
+  </section>
+
+  <section>
+    <h2>In the chapter</h2>
+    <p>David served NSBE UMBC as Finance Chair and Outreach Planner from 2023, and earlier as Event Planner. In those roles David managed the budget, secured sponsorships with local companies, organized fundraisers, and mentored and tutored members.</p>
+  </section>
+
+  <section class="cta">
+    <h2>Questions about this project?</h2>
+    <p>LedbetterLM is an AI that knows David's work and reads his public GitHub repos live. Ask it how the presigned S3 uploads work, how the Go backend talks to MongoDB, or how the member carousel handles search.</p>
+    <a class="btn primary big" href="/projects/nsbe-website">Ask LedbetterLM about this project &rarr;</a>
+  </section>
+
+  <section class="sources">
+    <span>Sources. Every number on this page comes from these:</span>
+    <a href="https://github.com/dledbetter123/nsbe-website/blob/main/backend/main.go" target="_blank" rel="noopener noreferrer">backend/main.go and models.go: the routes, MongoDB collection, presigned URLs and member fields</a>
+    <a href="https://github.com/dledbetter123/nsbe-website/tree/main/frontend/src/components" target="_blank" rel="noopener noreferrer">frontend/src/components: the sign-up dialog, carousel, hero and page sections</a>
+    <a href="https://github.com/dledbetter123/nsbe-website/blob/main/deploy-frontend.sh" target="_blank" rel="noopener noreferrer">deploy-frontend.sh, backend/Procfile and go.mod: the S3 sync and Elastic Beanstalk setup</a>
+    <a href="https://github.com/dledbetter123/nsbe-website/commits/main" target="_blank" rel="noopener noreferrer">Commit history: the build timeline</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David's CV: the NSBE chapter website entry and the chapter roles</a>
+    <a href="http://www.nsbeumbc.com/" target="_blank" rel="noopener noreferrer">www.nsbeumbc.com: the live site</a>
+  </section>
+  <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
+</div>
+<a class="ask-fab" href="/projects/nsbe-website">Ask LedbetterLM</a>
+<script src="ask.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Self-Healing Coding Agent &middot; David Ledbetter</title>
+<meta name="description" content="David Ledbetter's flagship project at Apple: a self-healing coding agent where Claude does the repair reasoning, a local Gemma 4 model handles tool calls, and an in-house harness and task queue run it all.">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="portfolio.css">
+<style>
+/* Self-healing agent page: the heal diagram, its legend and the two tables. */
+figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+figcaption .note { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+#fig-heal svg { min-width: 760px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { display: inline-block; width: 18px; height: 2px; background: var(--c); }
+.stats { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+td { color: var(--muted); }
+td:first-child { color: var(--ink); }
+table.work td:first-child { width: 56%; }
+.sources { border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="Page">
+    <a class="back" href="/#portfolio">&larr; All projects</a>
+    <div class="actions">
+      <a class="btn primary" href="/projects/self-healing-agent">Ask LedbetterLM about this</a>
+      <a class="btn" href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">Apple, San Diego &middot; 2024&ndash;present</div>
+    <h1>Self-Healing Coding Agent</h1>
+    <p class="lede">David's flagship project at Apple, on Release Validation: an agent that repairs code on its own. Claude does the repair reasoning, a local Gemma 4 model handles tool calls to cut token cost, and an in-house harness and task queue run it all.</p>
+    <div class="meta"><span><b>Role</b> ML/Full Stack Software Engineer</span><span><b>Dates</b> May 2024 &ndash; Present</span></div>
+    <div class="tags"><span>Claude</span><span>Gemma 4</span><span>Distillation</span><span>Local LLM serving</span><span>LangGraph</span><span>RAG</span><span>Vector DBs</span><span>Async Python</span><span>Swift</span></div>
+  </header>
+
+  <section>
+    <h2>Headline numbers</h2>
+    <div class="stats">
+      <div class="stat" style="--c: var(--green)"><b>$15,000 / mo</b><span>token spend saved by the distilled Gemma 4 model, now deployed in the lab</span></div>
+      <div class="stat" style="--c: var(--blue)"><b>3&ndash;6 hours</b><span>saved per person on teams that use the agent's dashboard to schedule jobs and follow their automation</span></div>
+      <div class="stat" style="--c: var(--violet)"><b>3 Macs</b><span>one internal server, spread across three Macs, hosting a fleet of autonomous AI agents that share resources</span></div>
+      <div class="stat" style="--c: var(--yellow)"><b>100,000+</b><span>devices the backend David owns administers and collects results from</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What the agent does</h2>
+    <ul class="points">
+      <li>Repairs code on its own. Claude auto-repairs code inside a custom in-house harness modeled after LangGraph, while a local Gemma 4 model performs the tool calling to cut token cost.</li>
+      <li>Repairs its plan online. The agent ingests the parsed, assembled form of the compiled Swift code to build a control-flow prior, is taught to measure incoming automation for deviations from that prior, and heals them.</li>
+      <li>Explores code as a partially observable Markov decision process (POMDP), so the agent acts on true divergences and ignores false error reports.</li>
+      <li>Reads through a RAG pipeline. Gemma 4 summarizes vision results and execution-flow traces into Claude's context.</li>
+      <li>Gets its measurements from an async Python probe manager that runs outside the agent and delivers consistent raw metrics into the agent flow without adding latency.</li>
+      <li>Learned from its own heals. David built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4. <span>The distilled model is deployed in the lab and saves $15,000 a month in token spend.</span></li>
+      <li>Reports to a dashboard David built, which monitors the agent's runs across the device gym. <span>Opened to the wider org, it lets teams schedule jobs and keep up with their automation, saving 3&ndash;6 hours per person.</span></li>
+      <li>Runs alongside a fleet. David owned the deployment of a fleet of autonomous AI agents on an internal server spread across 3 Macs, and built a local load-balancing cluster of lightweight agents serving LLM capabilities across applications.</li>
+    </ul>
+  </section>
+
+  <figure id="fig-heal">
+    <figcaption>
+      <h2>How a heal runs</h2>
+      <span class="note">Schematic drawn from the public CV, not an internal design document.</span>
+    </figcaption>
+    <div class="scroll"><svg viewBox="0 0 1000 470" role="img" aria-label="Diagram of the self-healing agent. Incoming automation and compiled Swift feed a control-flow prior inside an in-house harness modeled after LangGraph. A probe manager feeds raw metrics to a local Gemma 4 model, which handles tool calls and summarizes vision results and execution-flow traces into Claude's context. Claude does the repair reasoning and produces healed code. A dashboard monitors runs. Heals become a training corpus that is distilled back into Gemma 4.">
+      <defs>
+        <marker id="ah-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--blue)"/></marker>
+        <marker id="ah-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--violet)"/></marker>
+        <marker id="ah-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--green)"/></marker>
+        <marker id="ah-yellow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--yellow)"/></marker>
+      </defs>
+
+      <!-- inputs -->
+      <rect class="d-box" x="16" y="56" width="200" height="64"/>
+      <text class="d-title" x="116" y="80" text-anchor="middle">Incoming automation</text>
+      <text class="d-sub" x="116" y="98" text-anchor="middle">test runs across</text>
+      <text class="d-sub" x="116" y="111" text-anchor="middle">the device gym</text>
+
+      <rect class="d-box" x="16" y="150" width="200" height="64"/>
+      <text class="d-title" x="116" y="174" text-anchor="middle">Compiled Swift</text>
+      <text class="d-sub" x="116" y="192" text-anchor="middle">parsed, assembled form</text>
+
+      <rect class="d-box" x="16" y="244" width="200" height="80"/>
+      <text class="d-title" x="116" y="268" text-anchor="middle">Probe manager</text>
+      <text class="d-sub" x="116" y="286" text-anchor="middle">async Python, runs</text>
+      <text class="d-sub" x="116" y="299" text-anchor="middle">outside the agent</text>
+      <text class="d-sub" x="116" y="312" text-anchor="middle">raw metrics, no added latency</text>
+
+      <!-- harness -->
+      <rect class="d-box soft" x="262" y="20" width="476" height="290" style="stroke-dasharray: 4 4"/>
+      <text class="d-title" x="282" y="44">In-house harness</text>
+      <text class="d-sub" x="282" y="60">modeled after LangGraph</text>
+
+      <rect class="d-box" x="282" y="80" width="200" height="70"/>
+      <text class="d-title" x="382" y="104" text-anchor="middle">Control-flow prior</text>
+      <text class="d-sub" x="382" y="122" text-anchor="middle">deviations in incoming</text>
+      <text class="d-sub" x="382" y="135" text-anchor="middle">automation trigger a heal</text>
+
+      <rect class="d-box" x="282" y="176" width="200" height="110"/>
+      <text class="d-title" x="382" y="200" text-anchor="middle">Gemma 4, local</text>
+      <text class="d-sub" x="382" y="218" text-anchor="middle">tool calling</text>
+      <text class="d-sub" x="382" y="240" text-anchor="middle">summarizes vision results</text>
+      <text class="d-sub" x="382" y="253" text-anchor="middle">and execution-flow traces</text>
+      <text class="d-sub" x="382" y="266" text-anchor="middle">into Claude's context</text>
+
+      <rect class="d-box" x="518" y="80" width="200" height="206"/>
+      <text class="d-title" x="618" y="104" text-anchor="middle">Claude</text>
+      <text class="d-sub" x="618" y="122" text-anchor="middle">repair reasoning</text>
+      <text class="d-sub" x="618" y="135" text-anchor="middle">auto-repairs code</text>
+      <text class="d-sub" x="618" y="218" text-anchor="middle">explores code as a POMDP:</text>
+      <text class="d-sub" x="618" y="231" text-anchor="middle">acts on true divergences,</text>
+      <text class="d-sub" x="618" y="244" text-anchor="middle">ignores false error reports</text>
+
+      <!-- outputs -->
+      <rect class="d-box" x="784" y="80" width="200" height="78"/>
+      <text class="d-title" x="884" y="104" text-anchor="middle">Dashboard</text>
+      <text class="d-sub" x="884" y="122" text-anchor="middle">runs across the device gym</text>
+      <text class="d-sub" x="884" y="135" text-anchor="middle">teams schedule jobs</text>
+      <text class="d-sub" x="884" y="148" text-anchor="middle">3&#8211;6 hours saved per person</text>
+
+      <rect class="d-box" x="784" y="200" width="200" height="64"/>
+      <text class="d-title" x="884" y="224" text-anchor="middle">Healed code</text>
+      <text class="d-sub" x="884" y="242" text-anchor="middle">online plan repair</text>
+
+      <!-- distillation -->
+      <rect class="d-box" x="262" y="390" width="476" height="60"/>
+      <text class="d-title" x="500" y="414" text-anchor="middle">Training corpus of heals</text>
+      <text class="d-sub" x="500" y="432" text-anchor="middle">distilled into Gemma 4, saving $15,000 a month in token spend</text>
+
+      <!-- flows -->
+      <path class="d-line" style="--c: var(--blue)" d="M216,88 H246 V108 H280" marker-end="url(#ah-blue)"/>
+      <path class="d-line" style="--c: var(--blue)" d="M216,182 H246 V128 H280" marker-end="url(#ah-blue)"/>
+      <path class="d-line" style="--c: var(--violet)" d="M216,284 H246 V240 H280" marker-end="url(#ah-violet)"/>
+      <path class="d-line" style="--c: var(--blue)" d="M482,115 H516" marker-end="url(#ah-blue)"/>
+      <path class="d-line" style="--c: var(--violet)" d="M482,231 H516" marker-end="url(#ah-violet)"/>
+      <path class="d-line" style="--c: var(--green)" d="M718,232 H782" marker-end="url(#ah-green)"/>
+      <path class="d-line dash" style="--c: var(--blue)" d="M738,119 H782" marker-end="url(#ah-blue)"/>
+      <path class="d-line dash" style="--c: var(--green)" d="M884,264 V420 H740" marker-end="url(#ah-green)"/>
+      <path class="d-line dash" style="--c: var(--yellow)" d="M382,390 V288" marker-end="url(#ah-yellow)"/>
+      <text class="d-note" x="392" y="356">distillation</text>
+      <text class="d-note" x="894" y="346">heals</text>
+    </svg></div>
+    <div class="legend">
+      <span style="--c: var(--blue)"><i></i>Automation in, runs out to the dashboard</span>
+      <span style="--c: var(--violet)"><i></i>Metrics and summaries</span>
+      <span style="--c: var(--green)"><i></i>Heals</span>
+      <span style="--c: var(--yellow)"><i></i>Distillation back into Gemma 4</span>
+    </div>
+  </figure>
+
+  <section>
+    <h2>Earlier versions</h2>
+    <p class="lede" style="font-size:15px">Before the current agent, David built three earlier versions of it.</p>
+    <div class="callouts">
+      <div class="callout" style="--c: var(--blue)">
+        <span class="tag">Earlier version</span>
+        <h3>LLM debugging assistant</h3>
+        <p>Identified, classified and resolved live automation bugs, adapting scripts to high-volume UI changes.</p>
+      </div>
+      <div class="callout" style="--c: var(--violet)">
+        <span class="tag">Earlier version</span>
+        <h3>Automated coding agent</h3>
+        <p>Ingested failure cases from the cloud, inspected test results and UI tree bundles, and fixed the underlying code.</p>
+      </div>
+      <div class="callout" style="--c: var(--orange)">
+        <span class="tag">Earlier version</span>
+        <h3>Fine-tuned foundation model</h3>
+        <p>Fine-tuned an internal foundation language model to automate simple code fixes and avoid ticket overload.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The test infrastructure around it</h2>
+    <p class="lede" style="font-size:15px">David's role covers release validation and test automation. Alongside the agent, David owns the backend that administers and collects results from 100,000+ devices and many more tests per month.</p>
+    <div class="scroll"><table class="work">
+      <thead><tr><th>Work</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>Replaced Celery with an in-house distributed task queue that adds IPC, state management and episode tracking</td><td>Resource usage of two Kubernetes services cut by 50% and 75%</td></tr>
+        <tr><td>Rewrote the automation backend to streamline distributed test execution</td><td>Thousands of engineering hours saved for the QA and automation teams, July&ndash;October 2025</td></tr>
+        <tr><td>API asset randomization and pooling system</td><td>Asset collisions eliminated and test environments stabilized, unblocking automated testing across tens of thousands of test runs</td></tr>
+        <tr><td>LSTM network with attention that models the behavior of test resources and selects the optimal one, followed by language-based classification of business-related messaging</td><td>Trained on a preprocessed and cleaned dataset of 20 million events, then optimized for containerization</td></tr>
+        <tr><td>Upgraded the PostgreSQL data model with SQLAlchemy/Pydantic endpoints for a Swift frontend</td><td>Splunk queries implemented and automated in the backend</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">David joined Apple as an ML/Full Stack SWE intern in summer 2024, then moved to full time.</p>
+  </section>
+
+  <section class="cta">
+    <h2>Questions about this project?</h2>
+    <p>LedbetterLM is an AI that knows David's work. Ask it why Claude and a local Gemma 4 split the work, how heals became a training corpus, or what the earlier versions did.</p>
+    <a class="btn primary big" href="/projects/self-healing-agent">Ask LedbetterLM about this project &rarr;</a>
+  </section>
+
+  <section class="sources">
+    <span>This is proprietary Apple work with no public repo. Everything on this page comes from the public CV and the project card:</span>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David's CV, standard (PDF): Apple entry, self-healing coding agent and test infrastructure bullets</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short" target="_blank" rel="noopener noreferrer">David's CV, short (PDF): Apple entry</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/resume" target="_blank" rel="noopener noreferrer">David's r&eacute;sum&eacute; (PDF): Apple entry</a>
+    <a href="/#portfolio">Project card on davidamosledbetter.com</a>
+  </section>
+  <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
+</div>
+<a class="ask-fab" href="/projects/self-healing-agent">Ask LedbetterLM</a>
+<script src="ask.js" defer></script>
+</body>
+</html>

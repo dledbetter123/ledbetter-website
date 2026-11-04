@@ -13,6 +13,10 @@
 //                no public repo to fetch from.
 //   opener       The question the project page sends to LedbetterLM to start the chat.
 //   detail       Optional extra page section rendered by ProjectPage ('thesis').
+//
+// Every project also has a standalone portfolio page at /portfolio/<slug>.html
+// (frontend/public/portfolio). Cards open that page; its "Ask LedbetterLM" button
+// leads to the chat at /projects/<slug>.
 const projects = [
   {
     // Proprietary Apple work: no public repo, so the card carries its own description.
@@ -32,13 +36,23 @@ const projects = [
     opener: "What is David's master's thesis about, and what did he find?",
   },
   {
+    // Inline description: the repo is the simulator that re-creates the link, and its
+    // README_portfolio.md would undersell the drone work around it.
+    slug: 'crazyflie-aideck',
+    title: 'Crazyflie AI-Deck',
+    githubUrl: 'https://github.com/dledbetter123/aideck-bitbang-link',
+    description:
+      "Autonomous nano-drones at UMBC's CARDS and EEHPC labs. I streamed the AI-deck's camera into YOLO detection, wrote RISC-V firmware for its GAP8 processor, and carried the GAP8-to-STM32 link over the deck's I2C lines when the decks ran out of serial ports. That link is re-created and verified in simulation.",
+    opener: "Tell me about David's Crazyflie AI-deck drone work and the link he ran over the I2C lines.",
+  },
+  {
     // Personal project with private repos: inline description, links to the live product.
     slug: 'pathion',
-    title: 'Pathion — In-Browser AI Coding Tutor',
+    title: 'Pathion: In-Browser AI Coding Tutor',
     linkUrl: 'https://pathion.dev',
     linkLabel: 'Visit pathion.dev',
     description:
-      'A learn-to-code and interview-prep platform where all code runs on-device in WebAssembly. I built the AI layer end to end: an in-browser LLM tutor (WebNN/WebGPU), the learning-data pipeline, and an adaptive Elo that rates skill from every attempt.',
+      'A browser-native platform that teaches kids to code, with every program running on-device in WebAssembly. As a developer there I built the AI layer: an in-browser LLM tutor (WebNN/WebGPU), a hint model trained with SFT and RL, and the learning-data pipeline behind an adaptive Elo that rates skill from every attempt.',
     opener: 'Tell me about Pathion and what David built for it.',
   },
   {
@@ -61,7 +75,7 @@ const projects = [
   },
   {
     slug: 'char-aware-lm',
-    title: 'Character Aware Neural Language Model',
+    title: 'Character-Aware Neural Language Model',
     githubUrl: 'https://github.com/dledbetter123/Grad-Assessment',
     opener: "Tell me about David's character-aware neural language model.",
   },
@@ -94,5 +108,6 @@ const projects = [
 ];
 
 export const projectBySlug = (slug) => projects.find((p) => p.slug === slug) || null;
+export const portfolioUrl = (project) => `/portfolio/${project.slug}.html`;
 
 export default projects;

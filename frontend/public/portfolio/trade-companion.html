@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Algorithmic Trading Companion &middot; David Ledbetter</title>
+<meta name="description" content="A stock-forecasting app: a stacked LSTM trained on Apple's daily closing prices, a Flask API that rolls the forecast forward 30 days, and a React chart. David's CV describes a hybrid transformer that adds news-headline sentiment.">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="portfolio.css">
+<style>
+/* Trade Companion page: a two-lane pipeline diagram and a rolling-forecast diagram. */
+#fig-pipe svg { min-width: 900px; }
+#fig-roll svg { min-width: 520px; max-width: 760px; }
+.cols h3 { color: var(--ink); }
+.cols .k { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--c, var(--copper)); }
+.mono { font-family: var(--f-mono); font-size: 13.5px; }
+.lane { font-size: 10.5px; letter-spacing: .1em; }
+.callouts { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="Page">
+    <a class="back" href="/#portfolio">&larr; All projects</a>
+    <div class="actions">
+      <a class="btn primary" href="/projects/trade-companion">Ask LedbetterLM about this</a>
+      <a class="btn" href="https://github.com/dledbetter123/trade-companion" target="_blank" rel="noopener noreferrer">View the repo &#8599;</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">Personal project &middot; 2022&ndash;2024</div>
+    <h1>Algorithmic Trading Companion</h1>
+    <p class="lede">A stock-forecasting app: a model trained on Apple's daily closing prices, a Flask API that rolls a forecast forward 30 days, and a React page that charts it. The public repo holds that version, built on a stacked LSTM in Keras. David's CV describes the project as a hybrid transformer in PyTorch that adds news-headline sentiment, served through Flask/FastAPI and Go REST APIs on AWS and backtested in R.</p>
+    <div class="meta"><span><b>Dates</b> November 2022 &ndash; 2024</span><span><b>Repo stack</b> Keras, Flask, React</span></div>
+    <div class="tags"><span>Python</span><span>TensorFlow / Keras</span><span>LSTM</span><span>scikit-learn</span><span>yfinance</span><span>Flask</span><span>React</span><span>Plotly</span><span>PyTorch</span><span>Go</span><span>AWS</span><span>R</span></div>
+  </header>
+
+  <section>
+    <h2>Headline numbers</h2>
+    <div class="stats">
+      <div class="stat" style="--c: var(--green)"><b>50,851</b><span>parameters in the stacked LSTM: three LSTM layers of 50 units and a one-value output</span></div>
+      <div class="stat" style="--c: var(--blue)"><b>200</b><span>days of closing prices in each training window, used to predict the day after</span></div>
+      <div class="stat" style="--c: var(--yellow)"><b>30 days</b><span>forecast horizon the API returns by default; the forecast function caps it at 90</span></div>
+      <div class="stat" style="--c: var(--violet)"><b>1,258</b><span>trading days of AAPL history in the training file, May 2015 to May 2020</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What the repo does</h2>
+    <div class="cols">
+      <div style="--c: var(--green)"><span class="k">Model &middot; Stock.ipynb</span><h3>A stacked LSTM on closing prices</h3><p>Loads AAPL.csv, scales the closing price to the range 0 to 1, and splits the series 70/30 in time order: 880 days to train, 378 to test. Sliding 200-day windows give 679 training and 177 test examples. Three LSTM layers of 50 units feed a single output, trained with mean squared error and Adam for 100 epochs at batch size 64, on TensorFlow 2.10. The trained model is saved for the API.</p></div>
+      <div style="--c: var(--blue)"><span class="k">API &middot; base.py</span><h3>Flask route that forecasts</h3><p>The <span class="mono">/predict</span> route downloads the last 1,200 days of AAPL prices from Yahoo Finance with yfinance, fits a scaler, loads the saved model with joblib, and runs a rolling forecast. It returns JSON with the past closes, the forecast and both date axes. CORS is open so the front end can call it.</p></div>
+      <div style="--c: var(--pink)"><span class="k">UI &middot; App.js</span><h3>React chart</h3><p>A Display Prediction button calls <span class="mono">/predict</span> through axios and the create-react-app proxy to Flask on port 5000. A Plotly line chart draws the history in red and the forecast in green on a black background.</p></div>
+    </div>
+  </section>
+
+  <figure id="fig-pipe">
+    <figcaption><h2>Pipeline</h2></figcaption>
+    <div class="scroll">
+      <svg viewBox="0 0 1100 320" role="img" aria-label="Training lane: AAPL.csv, min-max scaling, a 70/30 split into 200-day windows, a stacked LSTM, and a saved model. Serving lane: the React page calls the Flask predict route, which downloads prices with yfinance, scales them, runs a rolling forecast with the saved model, and returns JSON for a Plotly chart.">
+        <text x="30" y="24" class="d-note lane" style="fill: var(--green)">TRAIN &#183; STOCK.IPYNB</text>
+        <text x="30" y="184" class="d-note lane" style="fill: var(--blue)">SERVE &#183; BASE.PY + APP.JS</text>
+
+        <!-- lane 1 boxes -->
+        <rect x="30" y="36" width="190" height="80" class="d-box"/>
+        <rect x="242" y="36" width="190" height="80" class="d-box"/>
+        <rect x="454" y="36" width="190" height="80" class="d-box"/>
+        <rect x="666" y="36" width="190" height="80" class="d-box"/>
+        <rect x="878" y="36" width="190" height="80" class="d-box"/>
+        <text x="42" y="60" class="d-title">AAPL.csv</text>
+        <text x="42" y="80" class="d-sub">1,258 trading days</text>
+        <text x="42" y="96" class="d-sub">May 2015 to May 2020</text>
+        <text x="254" y="60" class="d-title">MinMax scaling</text>
+        <text x="254" y="80" class="d-sub">close price &#8594; 0 to 1</text>
+        <text x="254" y="96" class="d-sub">scikit-learn</text>
+        <text x="466" y="60" class="d-title">Split and window</text>
+        <text x="466" y="80" class="d-sub">70/30: 880 / 378 days</text>
+        <text x="466" y="96" class="d-sub">200 days in &#8594; next day</text>
+        <text x="678" y="60" class="d-title">Stacked LSTM</text>
+        <text x="678" y="80" class="d-sub">3 &#215; LSTM(50) &#8594; Dense(1)</text>
+        <text x="678" y="96" class="d-sub">MSE, Adam, 100 epochs</text>
+        <text x="890" y="60" class="d-title">Saved model</text>
+        <text x="890" y="80" class="d-sub">.h5 and joblib .ml files</text>
+        <text x="890" y="96" class="d-sub">50,851 parameters</text>
+        <g style="--c: var(--green)">
+          <line x1="222" y1="76" x2="236" y2="76" class="d-line"/><path d="M236,72 L241,76 L236,80 Z" class="d-arrow"/>
+          <line x1="434" y1="76" x2="448" y2="76" class="d-line"/><path d="M448,72 L453,76 L448,80 Z" class="d-arrow"/>
+          <line x1="646" y1="76" x2="660" y2="76" class="d-line"/><path d="M660,72 L665,76 L660,80 Z" class="d-arrow"/>
+          <line x1="858" y1="76" x2="872" y2="76" class="d-line"/><path d="M872,72 L877,76 L872,80 Z" class="d-arrow"/>
+        </g>
+
+        <!-- model handoff -->
+        <path d="M973,116 V152 H761 V189" class="d-line dash" style="--c: var(--copper)"/>
+        <path d="M757,189 L761,195 L765,189 Z" class="d-arrow" style="--c: var(--copper)"/>
+        <text x="867" y="145" text-anchor="middle" class="d-note">loaded with joblib</text>
+
+        <!-- lane 2 boxes -->
+        <rect x="30" y="196" width="190" height="80" class="d-box"/>
+        <rect x="242" y="196" width="190" height="80" class="d-box"/>
+        <rect x="454" y="196" width="190" height="80" class="d-box"/>
+        <rect x="666" y="196" width="190" height="80" class="d-box"/>
+        <rect x="878" y="196" width="190" height="80" class="d-box"/>
+        <text x="42" y="220" class="d-title">React page</text>
+        <text x="42" y="240" class="d-sub">Display Prediction button</text>
+        <text x="42" y="256" class="d-sub">axios GET /predict</text>
+        <text x="254" y="220" class="d-title">Flask /predict</text>
+        <text x="254" y="240" class="d-sub">yfinance download of</text>
+        <text x="254" y="256" class="d-sub">the last 1,200 days</text>
+        <text x="466" y="220" class="d-title">MinMax scaling</text>
+        <text x="466" y="240" class="d-sub">fit on fetched closes</text>
+        <text x="466" y="256" class="d-sub">inverted at the end</text>
+        <text x="678" y="220" class="d-title">Rolling forecast</text>
+        <text x="678" y="240" class="d-sub">last 100 closes in</text>
+        <text x="678" y="256" class="d-sub">1 day out, 30 times</text>
+        <text x="890" y="220" class="d-title">Plotly chart</text>
+        <text x="890" y="240" class="d-sub">history in red</text>
+        <text x="890" y="256" class="d-sub">forecast in green</text>
+        <g style="--c: var(--blue)">
+          <line x1="222" y1="236" x2="236" y2="236" class="d-line"/><path d="M236,232 L241,236 L236,240 Z" class="d-arrow"/>
+          <line x1="434" y1="236" x2="448" y2="236" class="d-line"/><path d="M448,232 L453,236 L448,240 Z" class="d-arrow"/>
+          <line x1="646" y1="236" x2="660" y2="236" class="d-line"/><path d="M660,232 L665,236 L660,240 Z" class="d-arrow"/>
+          <line x1="858" y1="236" x2="872" y2="236" class="d-line"/><path d="M872,232 L877,236 L872,240 Z" class="d-arrow"/>
+        </g>
+        <text x="30" y="304" class="d-note">The response is JSON: past closes, forecast values and both date axes, drawn in the same React page.</text>
+      </svg>
+    </div>
+  </figure>
+
+  <figure id="fig-roll">
+    <figcaption><h2>How the 30-day forecast is built</h2></figcaption>
+    <p>The model predicts one day at a time. To reach 30 days, the API appends each prediction to the input window, drops the oldest day, and predicts again.</p>
+    <div class="scroll">
+      <svg viewBox="0 0 540 200" role="img" aria-label="Step 1: a window of known closes goes into the LSTM, which predicts day 1. Step 2: the oldest day is dropped, day 1 is appended, and the LSTM predicts day 2. This repeats for 30 days by default, up to 90.">
+        <text x="16" y="56" class="d-note">STEP 1</text>
+        <text x="16" y="126" class="d-note">STEP 2</text>
+        <text x="189" y="30" text-anchor="middle" class="d-sub">input window of known closes</text>
+        <g class="d-box" style="stroke: var(--blue)">
+          <rect x="80" y="40" width="18" height="24"/><rect x="102" y="40" width="18" height="24"/><rect x="124" y="40" width="18" height="24"/><rect x="146" y="40" width="18" height="24"/><rect x="168" y="40" width="18" height="24"/>
+          <rect x="190" y="40" width="18" height="24"/><rect x="212" y="40" width="18" height="24"/><rect x="234" y="40" width="18" height="24"/><rect x="256" y="40" width="18" height="24"/><rect x="278" y="40" width="18" height="24"/>
+        </g>
+        <line x1="304" y1="52" x2="342" y2="52" class="d-line" style="--c: var(--blue)"/><path d="M342,48 L347,52 L342,56 Z" class="d-arrow" style="--c: var(--blue)"/>
+        <rect x="350" y="40" width="80" height="24" class="d-box"/>
+        <text x="390" y="56" text-anchor="middle" class="d-title">LSTM</text>
+        <line x1="432" y1="52" x2="452" y2="52" class="d-line" style="--c: var(--copper)"/><path d="M452,48 L457,52 L452,56 Z" class="d-arrow" style="--c: var(--copper)"/>
+        <rect x="460" y="40" width="18" height="24" fill="var(--copper)"/>
+        <text x="469" y="80" text-anchor="middle" class="d-sub">day 1</text>
+
+        <path d="M469,86 C469,100 309,92 309,106" class="d-line dash" style="--c: var(--copper)"/>
+
+        <rect x="80" y="110" width="18" height="24" class="d-box soft" stroke-dasharray="3 2" opacity=".6"/>
+        <g class="d-box" style="stroke: var(--blue)">
+          <rect x="102" y="110" width="18" height="24"/><rect x="124" y="110" width="18" height="24"/><rect x="146" y="110" width="18" height="24"/><rect x="168" y="110" width="18" height="24"/>
+          <rect x="190" y="110" width="18" height="24"/><rect x="212" y="110" width="18" height="24"/><rect x="234" y="110" width="18" height="24"/><rect x="256" y="110" width="18" height="24"/><rect x="278" y="110" width="18" height="24"/>
+        </g>
+        <rect x="300" y="110" width="18" height="24" fill="var(--copper)"/>
+        <line x1="324" y1="122" x2="342" y2="122" class="d-line" style="--c: var(--blue)"/><path d="M342,118 L347,122 L342,126 Z" class="d-arrow" style="--c: var(--blue)"/>
+        <rect x="350" y="110" width="80" height="24" class="d-box"/>
+        <text x="390" y="126" text-anchor="middle" class="d-title">LSTM</text>
+        <line x1="432" y1="122" x2="452" y2="122" class="d-line" style="--c: var(--copper)"/><path d="M452,118 L457,122 L452,126 Z" class="d-arrow" style="--c: var(--copper)"/>
+        <rect x="460" y="110" width="18" height="24" fill="var(--copper)"/>
+        <text x="469" y="150" text-anchor="middle" class="d-sub">day 2</text>
+        <text x="80" y="150" class="d-sub">oldest day dropped</text>
+        <text x="309" y="150" text-anchor="middle" class="d-sub">day 1 fed back</text>
+        <text x="80" y="186" class="d-note">&#8230; repeated for 30 days by default, up to 90</text>
+      </svg>
+    </div>
+  </figure>
+
+  <section>
+    <h2>The project on David's CV</h2>
+    <p>David's CV and LedbetterLM's project notes describe more than the public repo contains. The transformer, the sentiment model, the Go API and the R backtests are not in the repo, so this page shows none of their code or numbers.</p>
+    <div class="callouts">
+      <div class="callout" style="--c: var(--violet)">
+        <span class="tag">Model</span>
+        <h3>Hybrid transformer with headline sentiment</h3>
+        <p>Price time series and news-headline sentiment combined in a hybrid transformer built with PyTorch and NumPy, using a specialized encoding scheme to interpret market behavior and headlines.</p>
+      </div>
+      <div class="callout" style="--c: var(--yellow)">
+        <span class="tag">Horizon</span>
+        <h3>30- and 90-day movement</h3>
+        <p>The CV gives the forecast horizons as 30 and 90 days, the same default and cap as the forecast function in the repo's API.</p>
+      </div>
+      <div class="callout" style="--c: var(--blue)">
+        <span class="tag">Serving</span>
+        <h3>Flask/FastAPI and Go REST APIs</h3>
+        <p>Predictions served as JSON to a React UI on AWS. The project notes add model hosting on SageMaker with EC2 and Docker, and scheduled API calls that keep market data current.</p>
+      </div>
+      <div class="callout" style="--c: var(--green)">
+        <span class="tag">Evaluation</span>
+        <h3>Backtested in R</h3>
+        <p>Both the CV and the project notes list backtesting in R.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Questions about this project?</h2>
+    <p>LedbetterLM is an AI that knows David's work and reads his public GitHub repos live. Ask it how the rolling 30-day forecast works, how the Flask API serves the model, or how headline sentiment fits into the transformer version on David's CV.</p>
+    <a class="btn primary big" href="/projects/trade-companion">Ask LedbetterLM about this project &rarr;</a>
+  </section>
+
+  <section class="sources">
+    <span>Sources. Every number on this page comes from these:</span>
+    <a href="https://github.com/dledbetter123/trade-companion/blob/main/backend/Stock.ipynb" target="_blank" rel="noopener noreferrer">backend/Stock.ipynb: data, scaling, split, windows, model summary and training run</a>
+    <a href="https://github.com/dledbetter123/trade-companion/blob/main/backend/base.py" target="_blank" rel="noopener noreferrer">backend/base.py: the Flask API and the rolling forecast</a>
+    <a href="https://github.com/dledbetter123/trade-companion/blob/main/src/App.js" target="_blank" rel="noopener noreferrer">src/App.js and package.json: the React page, axios call and Plotly chart</a>
+    <a href="https://github.com/dledbetter123/trade-companion/blob/main/README_portfolio.md" target="_blank" rel="noopener noreferrer">README_portfolio.md: the hybrid transformer and sentiment description</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David's CV, Selected projects: Trade Companion, dates, horizons, serving and R backtesting</a>
+    <span>LedbetterLM's project notes, the knowledge base behind the site chat: SageMaker, EC2, Docker and scheduled market-data calls</span>
+  </section>
+  <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
+</div>
+<a class="ask-fab" href="/projects/trade-companion">Ask LedbetterLM</a>
+<script src="ask.js" defer></script>
+</body>
+</html>

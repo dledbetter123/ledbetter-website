@@ -22,3 +22,6 @@ frontend/node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Built from the portfolio pages by scripts/build_portfolio_context.py (prebuild)
+/public/portfolio/context/

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kernel Mailbox Simulation &middot; David Ledbetter</title>
+<meta name="description" content="An interprocess-communication mailbox written as Linux system calls in C: mailboxes kept in a binary search tree, a FIFO message queue per mailbox, and mutex locking, run in a Linux VM on IBM Cloud.">
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="portfolio.css">
+<style>
+/* Kernel mailbox page: the mailbox diagram and a small pipeline diagram for the prime finder. */
+#fig-mbox svg { min-width: 920px; }
+#fig-prime svg { min-width: 600px; max-width: 860px; }
+.lane { font-size: 10.5px; letter-spacing: .1em; }
+.callouts { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="Page">
+    <a class="back" href="/#portfolio">&larr; All projects</a>
+    <div class="actions">
+      <a class="btn primary" href="/projects/kernel-mailbox">Ask LedbetterLM about this</a>
+      <a class="btn" href="https://github.com/dledbetter123/kernel-bst" target="_blank" rel="noopener noreferrer">View the repo &#8599;</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">UMBC systems coursework &middot; C on Linux</div>
+    <h1>Kernel Mailbox Simulation</h1>
+    <p class="lede">An interprocess-communication mailbox written as Linux system calls in C. Mailboxes are nodes of a binary search tree, each node manages a FIFO queue of messages, and mutex locks protect the shared structures. David ran it in a Linux VM on IBM Cloud.</p>
+    <div class="meta"><span><b>Interface</b> Linux system calls</span><span><b>Language</b> C</span><span><b>Host</b> Linux VM on IBM Cloud</span></div>
+    <div class="tags"><span>C</span><span>Linux kernel</span><span>System calls</span><span>Binary search tree</span><span>FIFO queues</span><span>Mutex locking</span><span>IPC</span><span>IBM Cloud</span></div>
+  </header>
+
+  <section>
+    <h2>What David built</h2>
+    <ul class="points">
+      <li style="--c: var(--copper)">Mailbox operations as Linux system calls written in C, so processes exchange messages through the kernel.</li>
+      <li style="--c: var(--green)">Mailbox management in a binary search tree: every node of the tree is a mailbox.</li>
+      <li style="--c: var(--blue)">A FIFO queue of messages in each node, so a mailbox hands messages out in the order they arrived.</li>
+      <li style="--c: var(--pink)">Mutex locking around the shared tree and queues, so only one caller changes them at a time.</li>
+      <li style="--c: var(--violet)">A Linux virtual machine on IBM Cloud to build and run it.</li>
+    </ul>
+  </section>
+
+  <figure id="fig-mbox">
+    <figcaption><h2>How the parts fit</h2></figcaption>
+    <div class="scroll">
+      <svg viewBox="0 0 1120 380" role="img" aria-label="A sender process and a receiver process call into the kernel through Linux system calls. A mutex lock guards a binary search tree of mailboxes. A lookup walks one path from the root to a mailbox, whose FIFO queue takes new messages at the tail and gives them out from the head.">
+        <text x="16" y="40" class="d-note lane">USER SPACE</text>
+        <text x="256" y="40" class="d-note lane">KERNEL</text>
+        <line x1="226" y1="56" x2="226" y2="336" class="d-line dash" style="--c: var(--dim)"/>
+        <text x="226" y="360" text-anchor="middle" class="d-note">system call boundary</text>
+
+        <!-- user processes -->
+        <rect x="16" y="96" width="180" height="44" class="d-box"/>
+        <text x="28" y="116" class="d-title">Sender process</text>
+        <text x="28" y="131" class="d-sub">makes a send call</text>
+        <rect x="16" y="236" width="180" height="44" class="d-box"/>
+        <text x="28" y="256" class="d-title">Receiver process</text>
+        <text x="28" y="271" class="d-sub">makes a receive call</text>
+        <path d="M196,118 C232,118 220,176 250,176" class="d-line" style="--c: var(--blue)"/>
+        <path d="M250,172 L255,176 L250,180 Z" class="d-arrow" style="--c: var(--blue)"/>
+        <path d="M196,258 C232,258 220,196 250,196" class="d-line" style="--c: var(--pink)"/>
+        <path d="M250,192 L255,196 L250,200 Z" class="d-arrow" style="--c: var(--pink)"/>
+
+        <!-- mutex -->
+        <rect x="256" y="156" width="144" height="60" class="d-box" style="stroke: var(--copper)"/>
+        <text x="268" y="178" class="d-title">Mutex lock</text>
+        <text x="268" y="194" class="d-sub">one caller at a time</text>
+        <text x="268" y="207" class="d-sub">changes tree, queues</text>
+        <path d="M328,156 V85 H576" class="d-line" style="--c: var(--copper)"/>
+        <path d="M576,81 L581,85 L576,89 Z" class="d-arrow" style="--c: var(--copper)"/>
+
+        <!-- tree edges -->
+        <g class="d-line" style="--c: var(--dim)">
+          <line x1="620" y1="100" x2="530" y2="150"/>
+          <line x1="530" y1="180" x2="485" y2="230"/>
+          <line x1="530" y1="180" x2="575" y2="230"/>
+          <line x1="710" y1="180" x2="665" y2="230"/>
+        </g>
+        <g class="d-line" style="--c: var(--green)">
+          <line x1="620" y1="100" x2="710" y2="150"/>
+          <line x1="710" y1="180" x2="755" y2="230"/>
+        </g>
+
+        <!-- tree nodes -->
+        <rect x="582" y="70" width="76" height="30" class="d-box" style="stroke: var(--green)"/>
+        <rect x="492" y="150" width="76" height="30" class="d-box soft"/>
+        <rect x="672" y="150" width="76" height="30" class="d-box" style="stroke: var(--green)"/>
+        <rect x="447" y="230" width="76" height="30" class="d-box soft"/>
+        <rect x="537" y="230" width="76" height="30" class="d-box soft"/>
+        <rect x="627" y="230" width="76" height="30" class="d-box soft"/>
+        <rect x="717" y="230" width="76" height="30" class="d-box" style="stroke: var(--green)"/>
+        <g class="d-sub" text-anchor="middle">
+          <text x="620" y="89">mailbox</text>
+          <text x="530" y="169">mailbox</text>
+          <text x="710" y="169">mailbox</text>
+          <text x="485" y="249">mailbox</text>
+          <text x="575" y="249">mailbox</text>
+          <text x="665" y="249">mailbox</text>
+          <text x="755" y="249">mailbox</text>
+        </g>
+        <text x="620" y="56" text-anchor="middle" class="d-note lane">BINARY SEARCH TREE</text>
+        <text x="620" y="300" text-anchor="middle" class="d-sub" style="fill: var(--green)">a lookup walks one path from the root</text>
+
+        <!-- zoom: one mailbox -->
+        <line x1="793" y1="245" x2="846" y2="245" class="d-line dash" style="--c: var(--green)"/>
+        <rect x="846" y="140" width="258" height="160" class="d-box soft" stroke-dasharray="5 4"/>
+        <text x="860" y="164" class="d-note lane" style="fill: var(--copper)">ONE MAILBOX: FIFO QUEUE</text>
+        <rect x="890" y="186" width="38" height="30" class="d-box"/>
+        <rect x="930" y="186" width="38" height="30" class="d-box"/>
+        <rect x="970" y="186" width="38" height="30" class="d-box"/>
+        <rect x="1010" y="186" width="38" height="30" class="d-box"/>
+        <g class="d-sub" text-anchor="middle" style="fill: var(--ink)">
+          <text x="909" y="205">m1</text><text x="949" y="205">m2</text><text x="989" y="205">m3</text><text x="1029" y="205">m4</text>
+        </g>
+        <text x="909" y="232" text-anchor="middle" class="d-sub">head</text>
+        <text x="1029" y="232" text-anchor="middle" class="d-sub">tail</text>
+        <line x1="1096" y1="201" x2="1058" y2="201" class="d-line" style="--c: var(--blue)"/>
+        <path d="M1058,197 L1053,201 L1058,205 Z" class="d-arrow" style="--c: var(--blue)"/>
+        <line x1="886" y1="201" x2="866" y2="201" class="d-line" style="--c: var(--pink)"/>
+        <path d="M866,197 L861,201 L866,205 Z" class="d-arrow" style="--c: var(--pink)"/>
+        <text x="860" y="262" class="d-sub" style="fill: var(--blue)">send: add at the tail</text>
+        <text x="860" y="280" class="d-sub" style="fill: var(--pink)">receive: take from the head</text>
+      </svg>
+    </div>
+    <figcaption>Schematic: the tree's shape and the four messages are illustrative.</figcaption>
+  </figure>
+
+  <section>
+    <h2>Why each part</h2>
+    <div class="callouts">
+      <div class="callout" style="--c: var(--copper)">
+        <span class="tag">System calls</span>
+        <h3>The kernel holds the mailboxes</h3>
+        <p>Separate processes have separate memory, so the mailboxes live in the kernel, and every send or receive crosses into it through a system call.</p>
+      </div>
+      <div class="callout" style="--c: var(--green)">
+        <span class="tag">Binary search tree</span>
+        <h3>Ordered mailboxes</h3>
+        <p>A binary search tree keeps mailboxes in key order, so finding one walks a single path from the root instead of scanning every mailbox.</p>
+      </div>
+      <div class="callout" style="--c: var(--blue)">
+        <span class="tag">FIFO queue</span>
+        <h3>Messages in arrival order</h3>
+        <p>New messages join at the tail and receivers take from the head, so a mailbox delivers messages in the order they were sent.</p>
+      </div>
+      <div class="callout" style="--c: var(--pink)">
+        <span class="tag">Mutex</span>
+        <h3>One change at a time</h3>
+        <p>Two processes can call in at once. The lock lets one caller at a time change the tree or a queue.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Alongside it in the coursework</h2>
+    <p>David's distributed systems coursework also produced a distributed prime finder for CMSC 621: a gRPC and protobuf pipeline that splits binary files of up to 1 GB across dispatcher, worker and consolidator processes and computes prime counts over them.</p>
+    <div class="stats">
+      <div class="stat" style="--c: var(--yellow)"><b>1 GB</b><span>largest binary file the prime finder segments</span></div>
+      <div class="stat" style="--c: var(--violet)"><b>3</b><span>kinds of process in the pipeline: dispatcher, worker and consolidator</span></div>
+    </div>
+    <figure id="fig-prime">
+      <div class="scroll">
+        <svg viewBox="0 0 720 200" role="img" aria-label="Prime finder pipeline: a binary file of up to 1 GB goes to a dispatcher that splits it into segments, worker processes count primes in their segments, and a consolidator combines the counts. The processes talk over gRPC with protobuf messages.">
+          <rect x="16" y="76" width="140" height="48" class="d-box"/>
+          <text x="28" y="96" class="d-title">Binary file</text>
+          <text x="28" y="112" class="d-sub">up to 1 GB</text>
+          <rect x="196" y="76" width="140" height="48" class="d-box"/>
+          <text x="208" y="96" class="d-title">Dispatcher</text>
+          <text x="208" y="112" class="d-sub">splits into segments</text>
+          <rect x="376" y="16" width="140" height="44" class="d-box soft"/>
+          <rect x="376" y="78" width="140" height="44" class="d-box"/>
+          <rect x="376" y="140" width="140" height="44" class="d-box soft"/>
+          <text x="388" y="36" class="d-title">Worker</text><text x="388" y="51" class="d-sub">counts primes</text>
+          <text x="388" y="98" class="d-title">Worker</text><text x="388" y="113" class="d-sub">counts primes</text>
+          <text x="388" y="160" class="d-title">Worker</text><text x="388" y="175" class="d-sub">counts primes</text>
+          <rect x="556" y="76" width="148" height="48" class="d-box"/>
+          <text x="568" y="96" class="d-title">Consolidator</text>
+          <text x="568" y="112" class="d-sub">combines the counts</text>
+          <g style="--c: var(--yellow)">
+            <line x1="158" y1="100" x2="188" y2="100" class="d-line"/><path d="M188,96 L193,100 L188,104 Z" class="d-arrow"/>
+          </g>
+          <g style="--c: var(--violet)">
+            <path d="M338,100 C356,100 352,38 370,38" class="d-line"/><path d="M370,34 L375,38 L370,42 Z" class="d-arrow"/>
+            <line x1="338" y1="100" x2="368" y2="100" class="d-line"/><path d="M368,96 L373,100 L368,104 Z" class="d-arrow"/>
+            <path d="M338,100 C356,100 352,162 370,162" class="d-line"/><path d="M370,158 L375,162 L370,166 Z" class="d-arrow"/>
+            <path d="M518,38 C536,38 532,100 550,100" class="d-line"/>
+            <line x1="518" y1="100" x2="548" y2="100" class="d-line"/><path d="M548,96 L553,100 L548,104 Z" class="d-arrow"/>
+            <path d="M518,162 C536,162 532,100 550,100" class="d-line"/>
+          </g>
+        </svg>
+      </div>
+      <figcaption>Processes talk over gRPC with protobuf messages. The three worker boxes stand for the worker processes.</figcaption>
+    </figure>
+  </section>
+
+  <section class="cta">
+    <h2>Questions about this project?</h2>
+    <p>LedbetterLM is an AI that knows David's work and reads his public GitHub repos live. Ask it why the mailboxes sit in a binary search tree, how the mutex keeps the queues consistent, or how the prime finder splits its work.</p>
+    <a class="btn primary big" href="/projects/kernel-mailbox">Ask LedbetterLM about this project &rarr;</a>
+  </section>
+
+  <section class="sources">
+    <span>Sources. The public repo carries the project description; the C source is not published there.</span>
+    <a href="https://github.com/dledbetter123/kernel-bst/blob/main/README_portfolio.md" target="_blank" rel="noopener noreferrer">kernel-bst README_portfolio.md: binary search tree of nodes, a FIFO queue of messages per node</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David's CV, Distributed systems coursework projects: system calls in C, mutex locking, IBM Cloud VM, and the CMSC 621 prime finder</a>
+    <span>LedbetterLM's project notes, the knowledge base behind the site chat: the mailbox tree and the prime-count work over binary files</span>
+  </section>
+  <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
+</div>
+<a class="ask-fab" href="/projects/kernel-mailbox">Ask LedbetterLM</a>
+<script src="ask.js" defer></script>
+</body>
+</html>
