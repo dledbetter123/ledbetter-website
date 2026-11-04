@@ -22,7 +22,8 @@
 }
 
 /* The "Ask LedbetterLM" button, the same design as the portfolio pages' .ask-fab:
-   a solid Linux-console green block, black mono caps, a pulsing dot and a soft glow.
+   green mono caps on a see-through green gradient that fades into the page, a pulsing dot
+   and a soft glow.
    JetBrains Mono is declared in public/index.html from the portfolio's font file. */
 .chatToggle {
   pointer-events: auto;
@@ -35,16 +36,16 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #000;
-  background: rgba(0, 170, 0, 0.82); /* slightly translucent, with a blur behind it */
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  color: #2bff2b;
+  background: linear-gradient(180deg, rgba(0, 170, 0, 0.42) 0%, rgba(0, 170, 0, 0.12) 100%);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border: 0;
   border-radius: 0;
   padding: 14px 24px;
   cursor: pointer;
-  box-shadow: 0 0 0 1px #000, 0 0 28px rgba(0, 170, 0, 0.45);
-  transition: background-color 0.2s, color 0.2s;
+  box-shadow: inset 0 0 0 1px rgba(0, 220, 0, 0.55), 0 0 28px rgba(0, 170, 0, 0.35);
+  transition: background 0.2s, color 0.2s;
 }
 .chatToggle::before {
   content: '';
@@ -54,16 +55,16 @@
   background: currentColor;
   animation: chatTogglePulse 1.6s ease-in-out infinite;
 }
-.chatToggle:hover { background: rgba(0, 204, 0, 0.9); }
+.chatToggle:hover { background: linear-gradient(180deg, rgba(0, 204, 0, 0.58) 0%, rgba(0, 204, 0, 0.2) 100%); }
 
 /* While the chat panel is open, the button is a quiet "Close": green on black, no glow or pulse. */
 .chatToggle.open {
   color: #00aa00;
-  background: rgba(0, 0, 0, 0.82);
-  box-shadow: 0 0 0 1px #00aa00;
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(0, 170, 0, 0.7);
 }
 .chatToggle.open::before { animation: none; }
-.chatToggle.open:hover { color: #00cc00; background: rgba(0, 0, 0, 0.82); }
+.chatToggle.open:hover { color: #2bff2b; background: rgba(0, 0, 0, 0.6); }
 
 @keyframes chatTogglePulse { 50% { opacity: 0.25; } }
 @media (prefers-reduced-motion: reduce) {
