@@ -7,6 +7,7 @@ import ChatWidget from '../ChatWidget/ChatWidget';
 import usePortfolioDescription from '../../hooks/usePortfolioDescription';
 import ThesisDetail from './ThesisDetail';
 import { projectBySlug, portfolioUrl } from '../../data/projects';
+import { askQuestion, pageFromContext, projectGreeting, projectStoreKey } from '../../lib/askContext';
 import './ProjectPage.css';
 import './ThesisDetail.css';
 
@@ -24,19 +25,6 @@ const readAskContext = (slug) => {
   } catch (err) {
     return null;
   }
-};
-
-// The visible first question built from that context. Empty for the page's overview,
-// which falls back to the project's opener.
-const askQuestion = (project, c) => {
-  if (!c) return '';
-  if (c.selection) {
-    return `On the ${project.title} page I highlighted this: "${c.selection.replace(/[\s.,;:]+$/, '')}". Can you explain it?`;
-  }
-  if (c.heading) {
-    return `I'm on the ${project.title} page, looking at "${c.heading}"${c.state ? `, ${c.state}` : ''}. Can you walk me through it?`;
-  }
-  return '';
 };
 
 const ProjectPage = () => {
@@ -66,13 +54,8 @@ const ProjectPage = () => {
 
   const Detail = DETAILS[project.detail];
   const ctx = askCtx && askCtx.slug === project.slug ? askCtx : null;
-  const page = {
-    slug: project.slug,
-    section: ctx?.section || '',
-    state: ctx?.state || '',
-    selection: ctx?.selection || '',
-  };
-  const greeting = `Hi, I'm LedbetterLM, David Ledbetter's librarian. Ask me anything about ${project.title}: how it works, why he built it, what he learned.`;
+  const page = pageFromContext(project.slug, ctx);
+  const greeting = projectGreeting(project);
 
   return (
     <div className="main-container">
@@ -98,7 +81,7 @@ const ProjectPage = () => {
         <ChatWidget
           key={project.slug}
           embedded
-          storeKey={`ledbettergpt_chat_project_${project.slug}`}
+          storeKey={projectStoreKey(project.slug)}
           greeting={greeting}
           starter={project.opener}
           askNow={askQuestion(project, ctx)}

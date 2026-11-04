@@ -72,6 +72,8 @@ const gatherSummary = (log = []) => {
 // visitor brought from a portfolio page; it is sent on arrival even when an earlier
 // conversation was restored. `page` ({slug, section, state, selection}) rides along with
 // every request so the server can load that portfolio page's text for the answer.
+// `ask` ({id, question}) is for the floating chat over a portfolio page: each new id opens
+// the panel and sends `question`, or on a fresh conversation the `starter`.
 const ChatWidget = ({
   embedded = false,
   storeKey = CHAT_STORE_KEY,
@@ -79,6 +81,7 @@ const ChatWidget = ({
   starter = '',
   askNow = '',
   page = null,
+  ask = null,
   placeholder = 'Ask David…',
 }) => {
   // Restore a recent conversation (and its open/closed state) on refresh, else greet.
@@ -310,6 +313,19 @@ const ChatWidget = ({
     send({ messageOverride: question });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // The floating chat over a portfolio page: every click on an "Ask LedbetterLM" link
+  // arrives as a new ask. Open the panel and send its question, or the starter when there
+  // is no conversation yet.
+  const lastAskRef = useRef(null);
+  useEffect(() => {
+    if (embedded || !ask || lastAskRef.current === ask.id) return;
+    lastAskRef.current = ask.id;
+    setIsOpen(true);
+    const question = ask.question || (messages.length > 1 ? '' : starter);
+    if (question) send({ messageOverride: question });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ask?.id]);
 
   const onKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {

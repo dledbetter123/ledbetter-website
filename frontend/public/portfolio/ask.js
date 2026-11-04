@@ -1,9 +1,12 @@
-// "Ask LedbetterLM" from a portfolio page: when a visitor clicks any link to the project's
-// chat (/projects/<slug>), remember which section they were looking at, any text they had
-// selected, and page state the page reports through window.askState(). The chat page
-// reads this once from sessionStorage (same origin) and opens with a question about that
-// spot. The server loads the section's real text itself (portfolio/context/<slug>.json),
-// so nothing here is trusted as page content.
+// "Ask LedbetterLM" from a portfolio page: a click on any link to the project's chat
+// (/projects/<slug>) opens the chat right here, over the page. It reads which section the
+// visitor was looking at, any text they had selected, and page state the page reports
+// through window.askState(), and the chat opens with a question about that spot. The chat
+// is the site's own React widget: the first click loads the site bundle (named in
+// /asset-manifest.json) and calls window.LedbetterLM.mountOverlay. If that fails, or the
+// click opens a new tab, the link goes to the chat page as before, which reads the same
+// context once from sessionStorage. The server loads the section's real text itself
+// (portfolio/context/<slug>.json), so nothing here is trusted as page content.
 (() => {
   const KEY = 'ledbetter_ask_context';
   const slug = location.pathname.replace(/^.*\//, '').replace(/\.html$/, '');
@@ -41,16 +44,14 @@
     if (e.target.closest && e.target.closest('a[href^="/projects/"]')) pressedSelection = readSelection();
   }, true);
 
-  document.addEventListener('click', (e) => {
-    const link = e.target.closest && e.target.closest('a[href^="/projects/"]');
-    if (!link) return;
+  const contextNow = () => {
     const el = inView();
     const isOverview = !el || el.tagName === 'HEADER';
     const selection = pressedSelection || readSelection();
     pressedSelection = '';
     let state = '';
     try { state = typeof window.askState === 'function' ? String(window.askState() || '').slice(0, 120) : ''; } catch (err) { /* none */ }
-    const ctx = {
+    return {
       slug,
       section: isOverview ? 'overview' : slugify(headingOf(el)),
       heading: isOverview ? '' : headingOf(el),
@@ -58,6 +59,47 @@
       selection,
       at: Date.now(),
     };
+  };
+  const saveForChatPage = (ctx) => {
     try { sessionStorage.setItem(KEY, JSON.stringify(ctx)); } catch (err) { /* storage off: the chat uses its default opener */ }
+  };
+
+  // Load the site bundle once and mount the chat over this page.
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  let overlay = null;
+  const openOverlay = () => {
+    if (!overlay) {
+      overlay = fetch('/asset-manifest.json', { cache: 'no-store' })
+        .then((r) => { if (!r.ok) throw new Error('manifest ' + r.status); return r.json(); })
+        .then((m) => loadScript(m.files['main.js']).then(() => window.LedbetterLM.mountOverlay({ slug, cssHref: m.files['main.css'] })))
+        .then((chat) => {
+          const fab = document.querySelector('.ask-fab');
+          if (fab) fab.hidden = true; // the chat brings its own Ask LedbetterLM button
+          return chat;
+        });
+      overlay.catch(() => { overlay = null; });
+    }
+    return overlay;
+  };
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest && e.target.closest('a[href^="/projects/"]');
+    if (!link) return;
+    const ctx = contextNow();
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+      saveForChatPage(ctx); // a new tab or window: the chat page picks it up
+      return;
+    }
+    e.preventDefault();
+    withTimeout(openOverlay(), 10000)
+      .then((chat) => chat.ask(ctx))
+      .catch(() => { saveForChatPage(ctx); location.href = link.href; });
   }, true);
 })();
