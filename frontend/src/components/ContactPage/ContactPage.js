@@ -1,9 +1,10 @@
 // src/components/ContactPage/ContactPage.js
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import './ContactPage.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLinkedin, faGithub, faInstagram } from '@fortawesome/free-brands-svg-icons';
-import { faFileLines, faEnvelope, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faFileLines, faEnvelope, faGraduationCap, faPhone, faAddressCard } from '@fortawesome/free-solid-svg-icons';
 import TypingText from '../TypingText/TypingText';
 
 const RESUME_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/resume';
@@ -12,9 +13,57 @@ const RESUME_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/resume
 const CV_SHORT_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short';
 const CV_STANDARD_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard';
 
+// /exclusive (the QR-code link) is the same site plus a phone number and a contact card.
+// The number is read from the vCard in the portfolio bucket, so it never ships in this repo
+// or the public bundle. A visitor who came in through /exclusive keeps it for the session,
+// so a trip to a project page and back doesn't drop it.
+const VCARD_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/david-ledbetter.vcf';
+const CV_SHORT_EXCLUSIVE_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-exclusive';
+const EXCLUSIVE_KEY = 'ledbetter_exclusive';
+
+const useExclusive = () => {
+  const { pathname } = useLocation();
+  const onRoute = pathname.replace(/\/+$/, '') === '/exclusive';
+  let remembered = false;
+  try {
+    if (onRoute) sessionStorage.setItem(EXCLUSIVE_KEY, '1');
+    remembered = !!sessionStorage.getItem(EXCLUSIVE_KEY);
+  } catch (err) {
+    /* storage disabled */
+  }
+  const exclusive = onRoute || remembered;
+
+  const [phone, setPhone] = useState('');
+  useEffect(() => {
+    if (!exclusive) return undefined;
+    let live = true;
+    fetch(VCARD_URL)
+      .then((r) => (r.ok ? r.text() : ''))
+      .then((t) => {
+        const m = t.match(/^TEL[^:]*:(.+)$/m);
+        if (live && m) setPhone(m[1].trim());
+      })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [exclusive]);
+
+  // Unlisted page: keep it out of search results.
+  useEffect(() => {
+    if (!onRoute) return undefined;
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex, nofollow';
+    document.head.appendChild(meta);
+    return () => meta.remove();
+  }, [onRoute]);
+
+  return { exclusive, phone };
+};
+
 const label = { display: 'inline-block' };
 
 const ContactPage = () => {
+  const { exclusive, phone } = useExclusive();
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
   const [error, setError] = useState('');
@@ -126,7 +175,7 @@ const ContactPage = () => {
           </li>
           <li>
             <FontAwesomeIcon icon={faGraduationCap} className="icon" />
-            <a href={CV_SHORT_URL} className="contactLink" target="_blank" rel="noopener noreferrer">
+            <a href={exclusive ? CV_SHORT_EXCLUSIVE_URL : CV_SHORT_URL} className="contactLink" target="_blank" rel="noopener noreferrer">
               <TypingText as="span" speed={40} text="CV (short)" style={label} />
             </a>
           </li>
@@ -142,6 +191,22 @@ const ContactPage = () => {
               <TypingText as="span" speed={20} text="dledbetter456@gmail.com" style={label} />
             </a>
           </li>
+          {exclusive && phone && (
+            <li>
+              <FontAwesomeIcon icon={faPhone} className="icon" />
+              <a href={`tel:${phone.replace(/[^\d+]/g, '')}`} className="contactLink">
+                <TypingText as="span" speed={20} text={phone} style={label} />
+              </a>
+            </li>
+          )}
+          {exclusive && (
+            <li>
+              <FontAwesomeIcon icon={faAddressCard} className="icon" />
+              <a href={VCARD_URL} className="contactLink" download="David_Ledbetter.vcf">
+                <TypingText as="span" speed={40} text="Save contact" style={label} />
+              </a>
+            </li>
+          )}
         </ul>
 
         {resumePrompt && (

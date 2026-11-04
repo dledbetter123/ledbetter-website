@@ -32,6 +32,7 @@ const App = () => {
       <div className="App">
         <Routes>
           <Route path="/" element={<MainPage ref={mainPageRef} />} />
+          <Route path="/exclusive" element={<MainPage ref={mainPageRef} />} />
           <Route path="/inbox" element={<InboxPage />} />
           <Route path="/projects/:slug" element={<ProjectPage />} />
         </Routes>
