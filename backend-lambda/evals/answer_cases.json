@@ -502,7 +502,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -514,11 +514,11 @@
     "CV: poster 'Energy-Efficient Onboard Autonomous Drone Navigation: Wall Following and Obstacle Detection', URCAD 2022, UMBC."
    ],
    "must_include": [
-    "YOLO detection running onboard the drone (on the GAP8)",
+    "onboard obstacle detection, with YOLO object detection on a ground station for target tracking",
     "the I2C link and that it was re-created and verified in simulation"
    ],
    "must_not": [
-    "says YOLO did not run onboard the drone, or ran only on a ground station",
+    "says YOLO ran onboard the drone or on the GAP8",
     "presents the simulation results as hardware measurements",
     "says the original firmware still exists or was recovered"
    ]
@@ -531,7 +531,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -543,10 +543,40 @@
     "CV: poster 'Energy-Efficient Onboard Autonomous Drone Navigation: Wall Following and Obstacle Detection', URCAD 2022, UMBC."
    ],
    "must_include": [
-    "yes: YOLO ran onboard the drone, on the AI-deck's GAP8"
+    "no: YOLO ran on a ground station (David's streamer pulled and decoded the camera bits); the obstacle-detection network ran onboard"
    ],
    "must_not": [
-    "says YOLO did not run onboard the drone, or ran only on a ground station"
+    "says YOLO ran on the GAP8 or onboard the drone"
+   ]
+  },
+  {
+   "id": "cf-obstacle-onboard",
+   "project": "crazyflie-aideck",
+   "question": "What ran onboard the drone, and what was it used for?",
+   "reference": [
+    "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
+    "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
+    "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
+    "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
+    "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
+    "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
+    "KB/README: the original firmware was not recovered; the link was re-created in November 2026 and verified in a logic-level simulation only (public repo aideck-bitbang-link), not on hardware.",
+    "KB/README: SCL is the clock and SDA the data; SDA changes only while SCL is low, so the protocol never forms an I2C START and the EEPROM and sensor decks on the bus ignore it; each frame ends with a deliberate I2C STOP, which resets bystanders and clears the STM32 I2C BUSY flag.",
+    "Sim results (aideck-bitbang-link out/results.json, portfolio page): 200 of 200 frames byte-exact at 250 kHz, checked by the STM32-side receiver, a separate Python decoder and sigrok; 0 STARTs; 20,000-frame fault run: 8,036 corrupted frames all rejected, 0 false accepts, 11,964 clean frames delivered, recovered after all 1,011 garbage bursts; clean up to 500 kHz with typical interrupt latency and 100 kHz allowing rare 5 microsecond stalls (1.5 MHz with no latency).",
+    "Sim assumptions: 300 ns line rise time and modeled interrupt latency; frames are 17 bytes (sync word, length, 12-byte YOLO-style detection record, CRC-16).",
+    "Portfolio page/datasheets: Crazyflie 2.1 has an STM32F405 (Cortex-M4, 168 MHz) and an nRF51822 radio/power MCU; AI-deck has a GAP8 (8+1 RISC-V cores), HM01B0 320x320 camera, NINA-W102 ESP32 WiFi, HyperFlash and HyperRAM. GAP8 UART goes to the Crazyflie's UART1; the ESP32 to UART2; Lighthouse and Loco decks also use UART1; AI-deck errata: GAP8 UART TX does not work while HyperFlash is in use.",
+    "CV: poster 'Energy-Efficient Onboard Autonomous Drone Navigation: Wall Following and Obstacle Detection', URCAD 2022, UMBC."
+   ],
+   "must_include": [
+    "an obstacle-detection network and a sensor-driven flight state machine ran onboard (obstacle detection, wall following)",
+    "YOLO object detection for target tracking ran in parallel on a ground station",
+    "used for target tracking and building mapping"
+   ],
+   "must_not": [
+    "says YOLO ran onboard the drone or on the GAP8",
+    "invents a frame rate, accuracy, power draw, latency or model size for either detector",
+    "presents the simulation results as hardware measurements"
    ]
   },
   {
@@ -557,7 +587,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -583,7 +613,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -611,7 +641,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -637,7 +667,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -663,7 +693,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -690,7 +720,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -716,7 +746,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -742,7 +772,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -769,7 +799,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -2425,14 +2455,15 @@
     "KB Apple section (2026-11-04): the site's contact section shows the phone number and email with a Save contact button; the bot never recites them in chat (conflicts with the Contact line that both emails are fine to share). Pointing to the contact section is correct.",
     "CV/KB: Apple ML/Full Stack SWE since May 2024; Pathion developer; Ebiquity Lab researcher.",
     "CV/KB: Pathion's on-device LLM tutor (4-bit Qwen in the browser over WebGPU/WebNN).",
-    "David (2026-11-04) / KB: Crazyflie AI-deck: YOLO detection ran onboard the drone on the GAP8, plus GAP8 RISC-V firmware and camera streaming to a ground station.",
+    "David (2026-11-04) / KB: Crazyflie AI-deck: an obstacle-detection network ran onboard the drone; YOLO object detection ran on a ground station; plus GAP8 RISC-V firmware.",
     "CV/KB: distilled a GPT-4V model for a 96.7% latency reduction for agents such as drones; distilled Claude into a local Gemma 4 at Apple."
    ],
    "must_include": [
     "Pathion's in-browser on-device tutor"
    ],
    "must_not": [
-    "ties the Apple self-healing agent to embedded/on-device ML (the KB forbids that stretch)"
+    "ties the Apple self-healing agent to embedded/on-device ML (the KB forbids that stretch)",
+    "says YOLO ran onboard the drone"
    ],
    "page": "home"
   },
@@ -2694,7 +2725,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -2727,7 +2758,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -2760,7 +2791,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -2792,7 +2823,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -2824,7 +2855,7 @@
     "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
     "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
     "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
-    "David (2026-11-04) / KB: YOLO detection ran onboard the drone, on the AI-deck's GAP8. He also streamed the deck's camera over its ESP32 WiFi to a ground station running YOLO through OpenCV (public repo CF2-Computervision), so teams could work on any graphics platform. The ground-station repo is one part of the work, not evidence that detection ran only off the drone.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
     "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
     "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
     "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
@@ -3542,6 +3573,35 @@
    "page_ctx": {
     "selection": "The first design had the chat model flag probes itself through a rule in its long system prompt, and it flagged 0 of 8 subtle probes."
    }
+  },
+  {
+   "project": "crazyflie-aideck",
+   "reference": [
+    "KB (2026-11-04): the 40% reaction-time result is annotated as CARDS and EEHPC labs 2021-2022 work, not Ebiquity",
+    "CV: CARDS and EEHPC Labs, UMBC, Research Assistant, Autonomous Vehicles, October 2021 - September 2022.",
+    "CV: streamed the Crazyflie AI-deck camera into NumPy matrices over sockets for YOLO/OpenCV object detection, letting several autonomous-navigation teams progress regardless of graphics platform.",
+    "David (2026-11-04) / KB / page: two detectors ran in parallel. Onboard: an obstacle-detection network on the drone plus a flight state machine David coded, driven by the drone's sensors (obstacle detection and wall following). Ground station: YOLO object detection through OpenCV for target tracking, fed by a streamer David wrote by hand that pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into NumPy frames (public repo CF2-Computervision). YOLO did NOT run on the drone. Uses: target tracking and building mapping. The streamer was lightweight enough for a higher frame rate and annotated the live view with each object or obstacle the Crazyflie detected.",
+    "CV/KB: cut swarm reaction time 40% with a C/C++ state machine; built odometry-based maps of flight trajectories.",
+    "CV/KB: wrote C programs and RISC-V firmware for the GAP8 on the AI-deck (GreenWaves PMSIS SDK: dispatching work across its 8-core cluster, UART, status LED).",
+    "KB: when stacked decks used up the Crazyflie's UART ports, David carried the GAP8-to-STM32 link over the deck's I2C lines as a clocked, SPI-style protocol.",
+    "KB/README: the original firmware was not recovered; the link was re-created in November 2026 and verified in a logic-level simulation only (public repo aideck-bitbang-link), not on hardware.",
+    "KB/README: SCL is the clock and SDA the data; SDA changes only while SCL is low, so the protocol never forms an I2C START and the EEPROM and sensor decks on the bus ignore it; each frame ends with a deliberate I2C STOP, which resets bystanders and clears the STM32 I2C BUSY flag.",
+    "Sim results (aideck-bitbang-link out/results.json, portfolio page): 200 of 200 frames byte-exact at 250 kHz, checked by the STM32-side receiver, a separate Python decoder and sigrok; 0 STARTs; 20,000-frame fault run: 8,036 corrupted frames all rejected, 0 false accepts, 11,964 clean frames delivered, recovered after all 1,011 garbage bursts; clean up to 500 kHz with typical interrupt latency and 100 kHz allowing rare 5 microsecond stalls (1.5 MHz with no latency).",
+    "Sim assumptions: 300 ns line rise time and modeled interrupt latency; frames are 17 bytes (sync word, length, 12-byte YOLO-style detection record, CRC-16).",
+    "Portfolio page/datasheets: Crazyflie 2.1 has an STM32F405 (Cortex-M4, 168 MHz) and an nRF51822 radio/power MCU; AI-deck has a GAP8 (8+1 RISC-V cores), HM01B0 320x320 camera, NINA-W102 ESP32 WiFi, HyperFlash and HyperRAM. GAP8 UART goes to the Crazyflie's UART1; the ESP32 to UART2; Lighthouse and Loco decks also use UART1; AI-deck errata: GAP8 UART TX does not work while HyperFlash is in use.",
+    "CV: poster 'Energy-Efficient Onboard Autonomous Drone Navigation: Wall Following and Obstacle Detection', URCAD 2022, UMBC."
+   ],
+   "id": "cf-streamer",
+   "question": "How did the camera feed get from the drone to the YOLO model?",
+   "must_include": [
+    "David wrote the streamer by hand: it pulls the raw bits off the ESP32 WiFi link over sockets and decodes them into frames for YOLO on a ground station",
+    "the streamer was lightweight, ran at a higher frame rate, and annotated detected objects and obstacles on the live view"
+   ],
+   "must_not": [
+    "says YOLO ran onboard the drone or on the GAP8",
+    "credits the streamer to Bitcraze or a stock example instead of David",
+    "invents a specific frame rate number"
+   ]
   }
  ]
 }
