@@ -157,6 +157,7 @@ const (
 	warmWindowSec      = 180 // CF presumed warm if it served within this many seconds
 	cfColdProbeTimeout = 6   // seconds to wait on a cold-suspected CF call before Gemini
 	cfWarmTimeout      = 20  // seconds to wait on a CF call when CF is presumed warm
+	cfRetryTimeout     = 15  // seconds for one more CF try when the Gemini fallback fails too (6 + ~1 + 15 stays under API Gateway's 30)
 
 	// Workers AI bills in Neurons ($0.011/1k) with a daily free allowance. A turn is
 	// "functionally free" while the day's cumulative neuron usage stays under this.
@@ -1330,7 +1331,26 @@ func (t *turnLLM) call(ctx context.Context, contents []geminiContent, withTools 
 	markCold(ctx)
 	t.locked = "gemini"
 	t.used = "gemini"
-	return callGemini(ctx, contents, withTools, extra)
+	gc, gu, gerr := callGemini(ctx, contents, withTools, extra)
+	if gerr == nil {
+		return gc, gu, nil
+	}
+
+	// Gemini failed too (on 2026-11-04 its free daily quota ran out, so every cold-CF turn
+	// failed). The cold probe above already started CF's model load, so give CF one longer
+	// try before failing the turn.
+	fmt.Printf("gemini fallback failed (%v) — retrying workersai\n", gerr)
+	rctx, rcancel := context.WithTimeout(ctx, cfRetryTimeout*time.Second)
+	defer rcancel()
+	c, u, err = callWorkersAI(rctx, contents, withTools, extra)
+	if err != nil {
+		fmt.Printf("workersai retry failed (%v)\n", err)
+		return gc, gu, gerr
+	}
+	setWarm(ctx)
+	t.locked = "workersai"
+	t.used = "workersai"
+	return c, u, nil
 }
 
 // costForProvider prices one round's usage under the provider that actually served it,
