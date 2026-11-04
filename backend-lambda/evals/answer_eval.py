@@ -176,7 +176,9 @@ FENCED_CODE_RE = re.compile(r"(?s)```.*?(```|$)")
 CATALOGUER_INSTRUCTION = go_raw(CATALOG_GO, "cataloguerInstruction")
 CATALOG_TRIGGERS = go_string_list(CATALOG_GO, "catalogTriggers")
 CATALOG_PROJECT_NAMES = go_string_list(CATALOG_GO, "catalogProjectNames")
-CODE_ASKS = go_string_list(CATALOG_GO, "codeAsks")
+CODE_REQUEST_RE = go_regex(re.search(r"codeRequestRe\s*=\s*regexp\.MustCompile\(`(.*?)`\)", CATALOG_GO).group(1))
+QUOTED_RE = go_regex(re.sub(r"\\x\{([0-9A-Fa-f]{4})\}", r"\\u\1",
+                            re.search(r"quotedRe\s*=\s*regexp\.MustCompile\(`(.*?)`\)", CATALOG_GO).group(1)))
 # chatHandler: likely := catalogLikely(req.Message) && (pageBlock == "" || asksForCode(req.Message))
 assert "catalogLikely(req.Message) && (pageBlock == \"\" || asksForCode(req.Message))" in MAIN_GO, "chatHandler's cataloguer gate changed; update catalog_wanted()"
 HANDOFF_LINES = go_string_list(CATALOG_GO, "handoffLines")
@@ -206,14 +208,16 @@ STATE_KEEP_RE = re.compile(re.search(r"stateKeepRe\s*=\s*regexp\.MustCompile\(`(
 SLUG_RE = re.compile(re.search(r"slugRe\s*=\s*regexp\.MustCompile\(`(.*?)`\)", PC_GO).group(1))
 def _pc_lit(pattern):
     return json.loads('"' + re.search(pattern, PC_GO).group(1) + '"')
-PC_HEAD = _pc_lit(r'fmt\.Fprintf\(&b, "(--- THE PAGE THE VISITOR IS ON ---(?:[^"\\]|\\.)*)"\)')
+PC_HEAD = _pc_lit(r'fmt\.Fprintf\(&b, "(--- ABOUT THE PROJECT THE VISITOR IS READING ---(?:[^"\\]|\\.)*)"\)')
+PC_REPOS = _pc_lit(r'fmt\.Fprintf\(&b, "(Public GitHub repos this page links to: %s\\n)", strings\.Join\(page\.Repos, ", "\)\)')
+PC_NO_REPO = _pc_lit(r'b\.WriteString\("(This project has no public repo of its own(?:[^"\\]|\\.)*)"\)')
 PC_INTRO = _pc_lit(r'fmt\.Fprintf\(&b, "(This chat was opened(?:[^"\\]|\\.)*)", page\.Title, page\.URL\)')
 PC_LOOKING = _pc_lit(r'fmt\.Fprintf\(&b, "(They were looking at the section %q)", focus\.Heading\)')
 PC_SELECTED = _pc_lit(r'fmt\.Fprintf\(&b, "(They had selected this text on the page: %q(?:[^"\\]|\\.)*)", selection\)')
 PC_SECTION_FMT = _pc_lit(r'fmt\.Fprintf\(&b, "(\\n\[%s\]\\n%s\\n)", s\.Heading, t\)')
-PC_VIEWING = _pc_lit(r'b\.WriteString\("(\\nSECTION THEY WERE VIEWING:)"\)')
-PC_REST = _pc_lit(r'b\.WriteString\("(\\nREST OF THE PAGE:)"\)')
-PC_ALL = _pc_lit(r'b\.WriteString\("(\\nPAGE TEXT:)"\)')
+PC_VIEWING = _pc_lit(r'b\.WriteString\("(\\nTHE PART THEY WERE READING:)"\)')
+PC_REST = _pc_lit(r'b\.WriteString\("(\\nMORE ABOUT THE PROJECT:)"\)')
+PC_ALL = _pc_lit(r'b\.WriteString\("(\\nPROJECT FACTS:)"\)')
 CONTEXT_DIR = os.path.join(REPO, "frontend/public/portfolio/context")
 
 def go_quote(s):  # fmt %q / strconv.Quote for ordinary printable text
@@ -255,6 +259,7 @@ def build_page_context_block(page, pc):
         selection = ""
     state = cut_bytes(squash(STATE_KEEP_RE.sub("", pc.get("state") or "")), MAX_PAGE_STATE)
     b = [PC_HEAD, PC_INTRO.replace("%q", go_quote(page["title"]), 1).replace("%s", page["url"], 1)]
+    b.append(PC_REPOS.replace("%s", ", ".join(page["repos"]), 1) if page.get("repos") else PC_NO_REPO)
     if focus:
         b.append(PC_LOOKING.replace("%q", go_quote(focus["heading"]), 1))
         if state:
@@ -680,8 +685,7 @@ def classify_probe(history, msg):
         return False  # fails open, like production
 
 def asks_for_code(msg):
-    m = msg.lower()
-    return any(t in m for t in CODE_ASKS)
+    return bool(CODE_REQUEST_RE.search(QUOTED_RE.sub(" ", msg)))
 
 def catalog_wanted(msg, page_extra_text):
     """The widget path's cataloguer gate (a project page always sends a session)."""
