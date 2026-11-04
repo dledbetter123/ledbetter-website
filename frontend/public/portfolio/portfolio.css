@@ -15,16 +15,21 @@
   --dim: #4a4a4a;
   --line: #1e1e1e;
   --outline: #d9d9d9;
-  --copper: #ffb000;
+  /* Green is the site's theme: every accent is a shade of green on black. The seven category
+     greens keep their old names so the pages' markup is unchanged; each pair is at least 15
+     CIEDE2000 apart and every one is at least 4.5:1 on black, so categories stay separable.
+     Red marked failure modes; it is now the dimmest olive. */
+  --copper: #39d353;    /* the page accent: eyebrows, bullets, tags */
   --lm: #00aa00;        /* LedbetterLM buttons: Linux console green on black */
   --lm-hover: #00cc00;
-  --red: #ff3b30;
-  --yellow: #ffd60a;
-  --blue: #0a9bff;
-  --violet: #bf5af2;
-  --green: #30d158;
-  --pink: #ff2d92;
-  --orange: #ff8a00;
+  --link: #75ffd3;
+  --blue: #0aff74;      /* spring */
+  --green: #16bd00;     /* kelly */
+  --violet: #2fbc88;    /* jade */
+  --yellow: #d1ff75;    /* pale lime */
+  --pink: #75ffd3;      /* mint */
+  --orange: #078859;    /* deep teal-green */
+  --red: #5d8807;       /* olive */
   --f-display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
   --f-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -49,7 +54,6 @@ img, svg { max-width: 100%; }
 .btn:hover { border-color: var(--ink); }
 .btn.primary { color: #000; background: var(--lm); border-color: var(--lm); font-weight: 600; }
 .btn.primary:hover { background: var(--lm-hover); border-color: var(--lm-hover); }
-.btn.primary:hover { background: #ffc233; border-color: #ffc233; }
 a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 
 /* Hero */
@@ -60,7 +64,7 @@ h2 { font-family: var(--f-display); font-weight: 700; font-size: 22px; margin: 0
 h3 { font-family: var(--f-display); font-weight: 600; font-size: 19px; margin: 0; text-wrap: balance; }
 p { margin: 0; max-width: 68ch; }
 .lede { color: var(--muted); font-size: 17px; }
-a { color: var(--blue); text-underline-offset: 3px; }
+a { color: var(--link); text-underline-offset: 3px; }
 .meta { display: flex; flex-wrap: wrap; gap: 4px 22px; font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
 .meta b { color: var(--ink); font-weight: 600; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px 14px; font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .04em; color: var(--muted); }

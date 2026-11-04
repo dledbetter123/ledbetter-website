@@ -14,13 +14,10 @@
 <meta name="twitter:image" content="https://www.davidamosledbetter.com/og-image.jpg?v=3">
 <link rel="stylesheet" href="portfolio.css">
 <style>
-/* Crazyflie page: every accent is a shade of green. The seven bus greens are at least 15
-   CIEDE2000 apart from each other and at least 4.5:1 against black, so the lines stay separable.
-   The rest styles the two diagrams. */
+/* Crazyflie page: the bus colors map onto the portfolio's green palette; the rest styles the two diagrams. */
 :root {
-  --uart1: #16bd00; --uart2: #d1ff75; --i2c: #0aff74; --spi: #2fbc88;
-  --ctrl: #5d8807; --radio: #75ffd3; --mem: #078859; --gpio: #6e6e6e;
-  --copper: #39d353; --blue: #75ffd3;
+  --uart1: var(--green); --uart2: var(--yellow); --i2c: var(--blue); --spi: var(--violet);
+  --ctrl: var(--red); --radio: var(--pink); --mem: var(--orange); --gpio: #6e6e6e;
 }
 .filters { display: flex; flex-wrap: wrap; gap: 4px 22px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--bg); padding-block: 12px; border-bottom: 1px solid var(--line); }
 .filters button {
