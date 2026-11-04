@@ -180,3 +180,77 @@
   color: #0f0;
   font-size: 0.95rem;
 }
+
+/* Contact links: 2x2 tile grids, four per slide, inside the shared peek carousel. */
+.contactCarousel {
+  width: 100%;
+}
+.contactGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  align-content: start;
+}
+.contactPage .contactTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 96px;
+  padding: 12px 8px;
+  box-sizing: border-box;
+  min-width: 0;
+  border: 1px solid rgba(0, 255, 0, 0.55);
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.45);
+  color: #0F0;
+  text-decoration: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.contactPage .contactTile:hover,
+.contactPage .contactTile:focus-visible {
+  border-color: #0F0;
+  background-color: rgba(0, 255, 0, 0.12);
+  color: #FFF;
+  outline: none;
+}
+.contactPage .contactTile .tileIcon {
+  font-size: 1.5em;
+  margin: 0;
+}
+.contactTile .tileLabel {
+  display: block;
+}
+.contactTile .tileSub {
+  display: block;
+  font-size: 0.68em;
+  opacity: 0.8;
+  overflow-wrap: anywhere;
+}
+/* A slimmer peek than the project cards (a third tile column read as part of the grid),
+   and a trailing spacer so the last slide can snap flush instead of showing a sliver
+   of the previous one. The ::after isn't a DOM child, so Carousel.js offsets ignore it. */
+.contactCarousel .carousel-item {
+  flex-basis: 84%;
+}
+.contactCarousel .carousel-wrapper::after {
+  content: '';
+  flex: 0 0 16%;
+}
+.contactPage .contactTile {
+  padding: 12px 4px;
+}
+.contactTile .tileSub {
+  font-size: 0.6em;
+  letter-spacing: -0.02em;
+}
+@media (max-width: 600px) {
+  .contactCarousel .carousel-item {
+    flex-basis: 88%;
+  }
+  .contactCarousel .carousel-wrapper::after {
+    flex-basis: 11vw;
+  }
+}

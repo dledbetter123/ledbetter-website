@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLinkedin, faGithub, faInstagram } from '@fortawesome/free-brands-svg-icons';
 import { faFileLines, faEnvelope, faGraduationCap, faPhone, faAddressCard } from '@fortawesome/free-solid-svg-icons';
 import TypingText from '../TypingText/TypingText';
+import Carousel from '../SwipeableGridPage/Carousel';
 
 const RESUME_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/resume';
 // Two CVs beside the one-page résumé: a two-page short CV and the full standard CV
@@ -60,7 +61,6 @@ const useExclusive = () => {
   return { exclusive, phone };
 };
 
-const label = { display: 'inline-block' };
 
 const ContactPage = () => {
   const { exclusive, phone } = useExclusive();
@@ -145,69 +145,49 @@ const ContactPage = () => {
     openResume();
   };
 
+  // Contact links as 2x2 tile grids, four per slide, in the same swipe carousel as the
+  // project cards. Order is priority: on /exclusive the phone and contact card lead.
+  const tiles = [
+    exclusive && phone && {
+      key: 'phone', icon: faPhone, label: 'Phone', sub: phone,
+      href: `tel:${phone.replace(/[^\d+]/g, '')}`,
+    },
+    exclusive && { key: 'vcard', icon: faAddressCard, label: 'Save contact', href: VCARD_URL, download: 'David_Ledbetter.vcf' },
+    { key: 'email', icon: faEnvelope, label: 'Email', sub: 'dledbetter456@gmail.com', href: 'mailto:dledbetter456@gmail.com' },
+    { key: 'linkedin', icon: faLinkedin, label: 'LinkedIn', href: 'https://www.linkedin.com/in/david-ledbetter-umbc', external: true },
+    { key: 'github', icon: faGithub, label: 'GitHub', href: 'https://github.com/dledbetter123' },
+    { key: 'instagram', icon: faInstagram, label: 'Instagram', href: 'https://www.instagram.com/davbetter', external: true },
+    { key: 'resume', icon: faFileLines, label: 'Resume', href: RESUME_URL, external: true, onClick: onResumeClick },
+    { key: 'cv-short', icon: faGraduationCap, label: 'CV (short)', href: exclusive ? CV_SHORT_EXCLUSIVE_URL : CV_SHORT_URL, external: true },
+    { key: 'cv-standard', icon: faGraduationCap, label: 'CV (standard)', href: CV_STANDARD_URL, external: true },
+  ].filter(Boolean);
+
+  const tile = (t) => (
+    <a
+      key={t.key}
+      href={t.href}
+      className="contactTile"
+      download={t.download}
+      onClick={t.onClick}
+      {...(t.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+    >
+      <FontAwesomeIcon icon={t.icon} className="tileIcon" />
+      <TypingText as="span" speed={40} text={t.label} className="tileLabel" />
+      {t.sub && <TypingText as="span" speed={20} text={t.sub} className="tileSub" />}
+    </a>
+  );
+
+  const slides = [];
+  for (let i = 0; i < tiles.length; i += 4) {
+    slides.push({ content: <div className="contactGrid">{tiles.slice(i, i + 4).map(tile)}</div> });
+  }
+
   return (
     <div className="contactPage">
       <div className="contactContent">
-        <ul>
-          <li>
-            <FontAwesomeIcon icon={faLinkedin} className="icon" />
-            <a href="https://www.linkedin.com/in/david-ledbetter-umbc" className="contactLink" target="_blank" rel="noopener noreferrer">
-              <TypingText as="span" speed={40} text="LinkedIn" style={label} />
-            </a>
-          </li>
-          <li>
-            <FontAwesomeIcon icon={faGithub} className="icon" />
-            <a href="https://github.com/dledbetter123" className="contactLink">
-              <TypingText as="span" speed={40} text="GitHub" style={label} />
-            </a>
-          </li>
-          <li>
-            <FontAwesomeIcon icon={faInstagram} className="icon" />
-            <a href="https://www.instagram.com/davbetter" className="contactLink" target="_blank" rel="noopener noreferrer">
-              <TypingText as="span" speed={40} text="Instagram" style={label} />
-            </a>
-          </li>
-          <li>
-            <FontAwesomeIcon icon={faFileLines} className="icon" />
-            <a href={RESUME_URL} className="contactLink" target="_blank" rel="noopener noreferrer" onClick={onResumeClick}>
-              <TypingText as="span" speed={40} text="Resume" style={label} />
-            </a>
-          </li>
-          <li>
-            <FontAwesomeIcon icon={faGraduationCap} className="icon" />
-            <a href={exclusive ? CV_SHORT_EXCLUSIVE_URL : CV_SHORT_URL} className="contactLink" target="_blank" rel="noopener noreferrer">
-              <TypingText as="span" speed={40} text="CV (short)" style={label} />
-            </a>
-          </li>
-          <li>
-            <FontAwesomeIcon icon={faGraduationCap} className="icon" />
-            <a href={CV_STANDARD_URL} className="contactLink" target="_blank" rel="noopener noreferrer">
-              <TypingText as="span" speed={40} text="CV (standard)" style={label} />
-            </a>
-          </li>
-          <li>
-            <FontAwesomeIcon icon={faEnvelope} className="icon" />
-            <a href="mailto:dledbetter456@gmail.com" className="contactLink">
-              <TypingText as="span" speed={20} text="dledbetter456@gmail.com" style={label} />
-            </a>
-          </li>
-          {exclusive && phone && (
-            <li>
-              <FontAwesomeIcon icon={faPhone} className="icon" />
-              <a href={`tel:${phone.replace(/[^\d+]/g, '')}`} className="contactLink">
-                <TypingText as="span" speed={20} text={phone} style={label} />
-              </a>
-            </li>
-          )}
-          {exclusive && (
-            <li>
-              <FontAwesomeIcon icon={faAddressCard} className="icon" />
-              <a href={VCARD_URL} className="contactLink" download="David_Ledbetter.vcf">
-                <TypingText as="span" speed={40} text="Save contact" style={label} />
-              </a>
-            </li>
-          )}
-        </ul>
+        <div className="contactCarousel">
+          <Carousel items={slides} />
+        </div>
 
         {resumePrompt && (
           <div className="resumePrompt">
