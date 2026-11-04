@@ -2456,13 +2456,17 @@
     "CV/KB: Apple ML/Full Stack SWE since May 2024; Pathion developer; Ebiquity Lab researcher.",
     "CV/KB: Pathion's on-device LLM tutor (4-bit Qwen in the browser over WebGPU/WebNN).",
     "David (2026-11-04) / KB: Crazyflie AI-deck: an obstacle-detection network ran onboard the drone; YOLO object detection ran on a ground station; plus GAP8 RISC-V firmware.",
-    "CV/KB: distilled a GPT-4V model for a 96.7% latency reduction for agents such as drones; distilled Claude into a local Gemma 4 at Apple."
+    "CV/KB: distilled a GPT-4V model for a 96.7% latency reduction for agents such as drones.",
+    "David (2026-11-04) / KB / Apple page: at Apple he fine-tunes a Gemma 4 model on a Mac Studio, distilling Claude's performance from the self-healing agent's heals; the local model is deployed in the lab and saves his org $15,000 a month in token spend. This IS on-device / edge ML and belongs in edge-ML answers.",
+    "KB (2026-11-04): Crazyflie drones ran an obstacle-detection network onboard (earlier example, not the headline)."
    ],
    "must_include": [
+    "the Apple Gemma 4 fine-tune on a Mac Studio (local model, saves $15,000 a month in token spend)",
     "Pathion's in-browser on-device tutor"
    ],
    "must_not": [
-    "ties the Apple self-healing agent to embedded/on-device ML (the KB forbids that stretch)",
+    "says or implies the Apple work is not edge/on-device ML, or only 'likely' involves it",
+    "invents Apple details beyond the page, CV and KB (model sizes, internal names, hardware counts)",
     "says YOLO ran onboard the drone"
    ],
    "page": "home"

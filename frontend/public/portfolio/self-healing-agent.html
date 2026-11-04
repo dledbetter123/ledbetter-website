@@ -43,7 +43,7 @@ table.work td:first-child { width: 56%; }
     <h1>Self-Healing Coding Agent</h1>
     <p class="lede">David's flagship project at Apple, on Release Validation: an agent that repairs code on its own. Claude does the repair reasoning, a local Gemma 4 model handles tool calls to cut token cost, and an in-house harness and task queue run it all.</p>
     <div class="meta"><span><b>Role</b> ML/Full Stack Software Engineer</span><span><b>Dates</b> May 2024 &ndash; Present</span></div>
-    <div class="tags"><span>Claude</span><span>Gemma 4</span><span>Distillation</span><span>Local LLM serving</span><span>LangGraph</span><span>RAG</span><span>Vector DBs</span><span>Async Python</span><span>Swift</span></div>
+    <div class="tags"><span>Claude</span><span>Gemma 4</span><span>Distillation</span><span>On-device ML</span><span>Mac Studio fine-tuning</span><span>Local LLM serving</span><span>LangGraph</span><span>RAG</span><span>Vector DBs</span><span>Async Python</span><span>Swift</span></div>
   </header>
 
   <section>
@@ -64,7 +64,7 @@ table.work td:first-child { width: 56%; }
       <li>Explores code as a partially observable Markov decision process (POMDP), so the agent acts on true divergences and ignores false error reports.</li>
       <li>Reads through a RAG pipeline. Gemma 4 summarizes vision results and execution-flow traces into Claude's context.</li>
       <li>Gets its measurements from an async Python probe manager that runs outside the agent and delivers consistent raw metrics into the agent flow without adding latency.</li>
-      <li>Learned from its own heals. David built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4. <span>The distilled model is deployed in the lab and saves $15,000 a month in token spend.</span></li>
+      <li>Learned from its own heals. David built a training corpus from heals run by the harness and distilled Claude's performance into Gemma 4, fine-tuning it locally on a Mac Studio. <span>The distilled model is deployed in the lab and saves $15,000 a month in token spend.</span></li>
       <li>Reports to a dashboard David built, which monitors the agent's runs across the device gym. <span>Opened to the wider org, it lets teams schedule jobs and keep up with their automation, saving 3&ndash;6 hours per person.</span></li>
       <li>Runs alongside a fleet. David owned the deployment of a fleet of autonomous AI agents on an internal server spread across 3 Macs, and built a local load-balancing cluster of lightweight agents serving LLM capabilities across applications.</li>
     </ul>
