@@ -14,10 +14,10 @@ const RESUME_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/resume
 const CV_SHORT_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short';
 const CV_STANDARD_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard';
 
-// /exclusive (the QR-code link) is the same site plus a phone number and a contact card.
-// The number is read from the vCard in the portfolio bucket, so it never ships in this repo
-// or the public bundle. A visitor who came in through /exclusive keeps it for the session,
-// so a trip to a project page and back doesn't drop it.
+// The phone number, the contact card and the CV with the number show on every page of the
+// site (since 2026-11-04; they used to be limited to /exclusive, the QR-code link, which
+// still works). The number is read from the vCard in the portfolio bucket, so it never
+// ships in this repo or the public bundle.
 const VCARD_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/david-ledbetter.vcf';
 const CV_SHORT_EXCLUSIVE_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-exclusive';
 const EXCLUSIVE_KEY = 'ledbetter_exclusive';
@@ -25,14 +25,12 @@ const EXCLUSIVE_KEY = 'ledbetter_exclusive';
 const useExclusive = () => {
   const { pathname } = useLocation();
   const onRoute = pathname.replace(/\/+$/, '') === '/exclusive';
-  let remembered = false;
   try {
     if (onRoute) sessionStorage.setItem(EXCLUSIVE_KEY, '1');
-    remembered = !!sessionStorage.getItem(EXCLUSIVE_KEY);
   } catch (err) {
     /* storage disabled */
   }
-  const exclusive = onRoute || remembered;
+  const exclusive = true;
 
   const [phone, setPhone] = useState('');
   useEffect(() => {
