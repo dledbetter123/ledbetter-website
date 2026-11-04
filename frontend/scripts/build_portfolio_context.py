@@ -117,8 +117,14 @@ def build():
             sections.append({'id': sid, 'heading': heading, 'text': clean(b['text'])})
         if not p.title or not sections:
             raise SystemExit(f'{name}: no title or sections found')
+        with open(os.path.join(PORTFOLIO, name), encoding='utf-8') as f:
+            raw = f.read()
+        repos = []
+        for url in re.findall(r'href="(https://github\.com/dledbetter123/[A-Za-z0-9._-]+)/?"', raw):
+            if url not in repos:
+                repos.append(url)
         doc = {'slug': slug, 'title': p.title, 'url': f'https://davidamosledbetter.com/portfolio/{name}',
-               'sections': sections}
+               'repos': repos, 'sections': sections}
         with open(os.path.join(OUT, f'{slug}.json'), 'w', encoding='utf-8') as f:
             json.dump(doc, f, ensure_ascii=False, indent=1)
         built.append(f'{slug} ({len(sections)} sections)')

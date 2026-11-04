@@ -133,3 +133,19 @@ func TestPortfolioQuestionsSkipTheLibrarianUnlessCodeIsAsked(t *testing.T) {
 		}
 	}
 }
+
+func TestAsksForCodeIgnoresQuotedTextAndPartialWords(t *testing.T) {
+	cases := map[string]bool{
+		`I'm on the Trade Companion page, looking at "What the repo does". Can you walk me through it?`: false,
+		`On the This Website page I highlighted this: "the code lives in main.go". Can you explain it?`: false,
+		`How did the sigrok decoder check the frames?`:                                                  false,
+		`Show me the prediction code`:        true,
+		`Where is the receiver implemented?`: true,
+		`Which repo has it?`:                 true,
+	}
+	for q, want := range cases {
+		if got := asksForCode(q); got != want {
+			t.Errorf("asksForCode(%q) = %v, want %v", q, got, want)
+		}
+	}
+}

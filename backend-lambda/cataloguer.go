@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -119,22 +120,18 @@ func gatherPrompt(message string, history []chatTurn) string {
 	return message
 }
 
-// codeAsks are the catalogTriggers that ask for code itself, as opposed to how a project
-// works. A chat opened from a portfolio page already carries the page's text, so only
-// these send the librarian to the repos there.
-var codeAsks = []string{
-	"code", "implement", "show me", "source", "repo", "in the code", "function", "snippet",
-	"data structure", "line by line", "the file",
-}
+// codeRequestRe matches requests for code itself, as opposed to how a project works, as whole
+// words. A chat opened from a portfolio page already carries the page's text, so only
+// these send the librarian to the repos there. Quoted text (a section heading or a
+// highlighted sentence the chat page quotes) is not the visitor's own words, so it is
+// removed first: a heading like "What the repo does" is not a request for code.
+var (
+	codeRequestRe = regexp.MustCompile(`(?i)\b(code|codebase|implement(ed|ation)?|show me|source|repos?|repository|function|snippet|data structure|line by line|the file)\b`)
+	quotedRe      = regexp.MustCompile(`"[^"]*"|\x{201C}[^\x{201D}]*\x{201D}`)
+)
 
 func asksForCode(msg string) bool {
-	m := strings.ToLower(msg)
-	for _, t := range codeAsks {
-		if strings.Contains(m, t) {
-			return true
-		}
-	}
-	return false
+	return codeRequestRe.MatchString(quotedRe.ReplaceAllString(msg, " "))
 }
 
 func catalogLikely(msg string) bool {
