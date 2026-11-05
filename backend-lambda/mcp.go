@@ -169,7 +169,7 @@ const aboutDavid = `David Ledbetter is a machine-learning and full-stack softwar
 
 Projects
 - Self-Healing Coding Agent (Apple): his flagship project on Release Validation, an agent that repairs code on its own. Proprietary, so there is no public repo.
-- Pathion (https://pathion.dev): a learn-to-code and interview-prep platform where all code runs on-device in WebAssembly. He built the AI layer: an in-browser LLM tutor, the learning-data pipeline, and an adaptive Elo rating.
+- Pathion (https://pathion.dev): a platform that helps students and engineers strengthen their interview readiness and learn engineering concepts, with all code running on-device in WebAssembly. He built the AI layer: an in-browser LLM tutor, the learning-data pipeline, and an adaptive Elo rating.
 - This website and LedbetterLM (https://github.com/dledbetter123/ledbetter-website): serverless AWS, with a Go Lambda running the librarian you are talking to.
 - Sparse Geometric Signal Transport (https://github.com/dledbetter123/SparseGeometricSignalTransport): attention as parallel transport on a fiber bundle.
 - The Finsler Transformer (https://github.com/dledbetter123/LedbetterFinslerTransformer): attention as geodesic flow on a learned manifold.

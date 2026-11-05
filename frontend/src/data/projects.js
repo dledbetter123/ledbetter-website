@@ -23,7 +23,7 @@ const projects = [
     slug: 'self-healing-agent',
     title: 'Self-Healing Coding Agent (Apple)',
     description:
-      "My flagship project at Apple, on Release Validation: an agent that repairs code on its own. Its Claude runs, with a local Gemma 4 as the tool caller, became a corpus for instruction fine-tuning Gemma 4 on online plan repair, and the fine-tuned Gemma 4 now does everything, saving $15,000 a month in token spend.",
+      "My flagship project at Apple, on Release Validation, where I'm lead researcher and engineer: a self-healing coding agent built around a world model of screens and their transitions. My in-house harness performs the repair; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning Gemma 4, which now runs the agent on its own, saving $15,000 a month in token spend.",
     opener: "Tell me about David's self-healing coding agent at Apple.",
   },
   {
@@ -52,7 +52,7 @@ const projects = [
     linkUrl: 'https://pathion.dev',
     linkLabel: 'Visit pathion.dev',
     description:
-      'A browser-native platform that teaches kids to code, with every program running on-device in WebAssembly. As a developer there I built the AI layer: an in-browser LLM tutor (WebNN/WebGPU), a hint model trained with SFT and RL, and the learning-data pipeline behind an adaptive Elo that rates skill from every attempt.',
+      'A browser-native platform that helps students and engineers strengthen their interview readiness and learn engineering concepts, with every program running on-device in WebAssembly. As a developer there I built the AI layer: an in-browser LLM tutor (WebNN/WebGPU), a hint model trained with SFT and RL, and the learning-data pipeline behind an adaptive Elo that rates skill from every attempt.',
     opener: 'Tell me about Pathion and what David built for it.',
   },
   {

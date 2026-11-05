@@ -228,11 +228,6 @@ table.ts td.num, table.ts th.num { padding-left: 8px; }
         <h3>Within 1.6&times;, behind</h3>
         <p>V16, built on the idea that the inverse FFT is the mixing step, reached perplexity 275 against GPT-Nano's 173.</p>
       </div>
-      <div class="callout" style="--c: var(--red)">
-        <span class="tag">Caught and disqualified</span>
-        <h3>An apparent 18&times; win was a leak</h3>
-        <p>The variant V16b reached perplexity 36 at step 2,500, about 18&times; better than GPT at the same step. David traced it to non-causal leakage: a position FFT mixed every position, future tokens included, into each output. The result was disqualified.</p>
-      </div>
       <div class="callout" style="--c: var(--violet)">
         <span class="tag">Mid-project audit</span>
         <h3>The limit is memory</h3>
@@ -381,7 +376,6 @@ table.ts td.num, table.ts th.num { padding-left: 8px; }
     <span>Every number on this page comes from these sources:</span>
     <a href="https://github.com/dledbetter123/SparseGeometricSignalTransport/blob/main/README.md" target="_blank" rel="noopener noreferrer">SGST repository README (motivation, architecture, results, forward program)</a>
     <a href="https://github.com/dledbetter123/SparseGeometricSignalTransport/blob/main/README_portfolio.md" target="_blank" rel="noopener noreferrer">SGST portfolio summary (README_portfolio.md)</a>
-    <a href="https://github.com/dledbetter123/SparseGeometricSignalTransport/blob/main/v16/CHANGELOG.md" target="_blank" rel="noopener noreferrer">V16 changelog (the V16b leak: perplexity 36 at step 2,500, about 18&times; GPT at the same step)</a>
     <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David Ledbetter, CV (standard): Research, Sparse Geometric Signal Transport</a>
     <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short" target="_blank" rel="noopener noreferrer">David Ledbetter, CV (short): Research</a>
   </section>
