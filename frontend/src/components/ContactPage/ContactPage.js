@@ -60,39 +60,10 @@ const useExclusive = () => {
 };
 
 
-const ContactPage = () => {
+// The tile carousel (contact links, resume, CVs, Connect your Claude) sits right under the
+// intro so the calls to action are near the top; the message form stays at the bottom.
+export const ContactTiles = () => {
   const { exclusive, phone } = useExclusive();
-  const [form, setForm] = useState({ name: '', email: '', message: '' });
-  const [status, setStatus] = useState('idle'); // idle | sending | sent | error
-  const [error, setError] = useState('');
-
-  const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    if (status === 'sending') return;
-    setStatus('sending');
-    setError('');
-    const backendUri = (window.env && window.env.REACT_APP_BACKEND_URI) || '';
-    try {
-      const res = await fetch(`${backendUri}/api/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) {
-        setError((await res.text()) || 'Something went wrong. Please try again.');
-        setStatus('error');
-        return;
-      }
-      setStatus('sent');
-      setForm({ name: '', email: '', message: '' });
-    } catch (err) {
-      setError('Network error. Please try again.');
-      setStatus('error');
-    }
-  };
-
   const RESUME_ASKED_KEY = 'ledbettergpt_resume_asked';
   const [resumePrompt, setResumePrompt] = useState(false);
   const [recruiterNote, setRecruiterNote] = useState('');
@@ -183,7 +154,7 @@ const ContactPage = () => {
   }
 
   return (
-    <div className="contactPage">
+    <div className="contactPage contactPage--tiles">
       <div className="contactContent">
         <div className="contactCarousel">
           <Carousel items={slides} />
@@ -199,7 +170,46 @@ const ContactPage = () => {
           </div>
         )}
         {recruiterNote && <p className="resumeNote">{recruiterNote}</p>}
+      </div>
+    </div>
+  );
+};
 
+export const ContactForm = () => {
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [status, setStatus] = useState('idle'); // idle | sending | sent | error
+  const [error, setError] = useState('');
+
+  const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (status === 'sending') return;
+    setStatus('sending');
+    setError('');
+    const backendUri = (window.env && window.env.REACT_APP_BACKEND_URI) || '';
+    try {
+      const res = await fetch(`${backendUri}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        setError((await res.text()) || 'Something went wrong. Please try again.');
+        setStatus('error');
+        return;
+      }
+      setStatus('sent');
+      setForm({ name: '', email: '', message: '' });
+    } catch (err) {
+      setError('Network error. Please try again.');
+      setStatus('error');
+    }
+  };
+
+  return (
+    <div className="contactPage contactPage--form">
+      <div className="contactContent">
         <form className="contactForm" onSubmit={onSubmit}>
           <p className="contactPrompt">Leave your info and I'll reach out.</p>
           <input
@@ -245,5 +255,12 @@ const ContactPage = () => {
     </div>
   );
 };
+
+const ContactPage = () => (
+  <>
+    <ContactTiles />
+    <ContactForm />
+  </>
+);
 
 export default ContactPage;

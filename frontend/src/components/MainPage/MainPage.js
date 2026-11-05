@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import IntroPage from '../IntroPage/IntroPage';
 import Carousel from '../SwipeableGridPage/Carousel';
 import AboutPage from '../AboutPage/AboutPage';
-import ContactPage from '../ContactPage/ContactPage';
+import { ContactTiles, ContactForm } from '../ContactPage/ContactPage';
 import ProjectCard from '../ProjectCard/ProjectCard';
 import PublicationCard from '../PublicationCard/PublicationCard';
 import NavBar from '../NavBar/NavBar'; // Adjust the import path as necessary
@@ -152,6 +152,10 @@ const MainPage = () => {
       </button>
       <div className="content-layer">
         <div ref={homeRef}><IntroPage /></div>
+        <div ref={contactRef} className='contact-carousel-style'>
+          <h3 className='carousel-heading'>Contact</h3>
+          <ContactTiles />
+        </div>
         <div ref={portfolioRef} className='carousel-style'>
           <h3 className='carousel-heading'>Personal Projects &amp; Research</h3>
           <Carousel ref={carouselRef} items={carouselItems} />
@@ -161,7 +165,7 @@ const MainPage = () => {
           <Carousel ref={pubCarouselRef} items={publicationItems} />
         </div>
         <div ref={aboutRef}><AboutPage /></div>
-        <div ref={contactRef}><ContactPage /></div>
+        <ContactForm />
       </div>
       <ChatWidget />
     </div>

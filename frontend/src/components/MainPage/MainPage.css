@@ -171,3 +171,9 @@
                           fixed-layer punch-through that let the background paint over
                           content regardless of per-section z-index */
 }
+
+.contact-carousel-style {
+  z-index: 50;
+  position: relative;
+  margin-bottom: 48px;
+}

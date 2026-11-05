@@ -257,3 +257,15 @@
     flex-basis: 11vw;
   }
 }
+
+/* The tile carousel under the intro sizes to its tiles; only the form keeps a tall,
+   centered section at the bottom of the page. */
+.contactPage.contactPage--tiles {
+  height: auto;
+  padding-top: 0;
+  padding-bottom: 8px;
+}
+.contactPage.contactPage--form {
+  height: auto;
+  min-height: 70vh;
+}
