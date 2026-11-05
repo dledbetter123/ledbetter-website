@@ -5,6 +5,7 @@ import './App.css';
 import MainPage from './components/MainPage/MainPage'; // Assuming MainPage is now a component
 import InboxPage from './components/InboxPage/InboxPage';
 import ProjectPage from './components/ProjectPage/ProjectPage';
+import ConnectPage from './components/ConnectPage/ConnectPage';
 
 const App = () => {
   const [isNavbarOpen, setIsNavbarOpen] = useState(false);
@@ -35,6 +36,7 @@ const App = () => {
           <Route path="/exclusive" element={<MainPage ref={mainPageRef} />} />
           <Route path="/inbox" element={<InboxPage />} />
           <Route path="/projects/:slug" element={<ProjectPage />} />
+          <Route path="/connect" element={<ConnectPage />} />
         </Routes>
       </div>
     </Router>

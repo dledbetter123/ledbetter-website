@@ -67,7 +67,10 @@ curl -s -X POST https://www.davidamosledbetter.com/api/chat \
 LedbetterLM is also a remote MCP server (Streamable HTTP, no auth, no key):
 
 - URL: `https://www.davidamosledbetter.com/api/mcp`
+- claude.ai and Claude Desktop: Customize > Connectors > Add custom connector, paste the
+  URL, leave sign-in off, click Add; then turn it on in a chat under + > Connectors.
 - Claude Code: `claude mcp add --transport http ledbetter https://www.davidamosledbetter.com/api/mcp`
+- Human-readable steps: https://www.davidamosledbetter.com/connect
 - Tools: `about_david` (free overview), `ask_ledbetterlm` (ask anything; pass back the
   `conversation_id` to keep talking), `get_ledbetterlm_answer` (collect a code-level answer
   the librarian is still gathering), `get_resume`.

@@ -55,6 +55,10 @@
            talk to it directly over HTTP — see
            <a href="/llms.txt" style="color:#0F0">/llms.txt</a> (POST <code>/api/chat</code>,
            no auth required).</p>
+        <p>Connect your own Claude: add <code>https://www.davidamosledbetter.com/api/mcp</code>
+           as a custom connector (no sign-in), or run
+           <code>claude mcp add --transport http ledbetter https://www.davidamosledbetter.com/api/mcp</code>
+           in Claude Code. Steps: <a href="/connect" style="color:#0F0">/connect</a>.</p>
 
         <h2 style="color:#0F0">How it works (architecture)</h2>
         <p>Serverless on AWS: a React single-page app on S3 + CloudFront; a Go AWS Lambda

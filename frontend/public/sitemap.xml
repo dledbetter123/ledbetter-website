@@ -6,6 +6,11 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://www.davidamosledbetter.com/connect</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://www.davidamosledbetter.com/llms.txt</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

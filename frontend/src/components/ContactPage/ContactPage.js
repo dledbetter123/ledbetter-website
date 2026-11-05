@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import './ContactPage.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLinkedin, faGithub, faInstagram } from '@fortawesome/free-brands-svg-icons';
-import { faFileLines, faEnvelope, faGraduationCap, faPhone, faAddressCard } from '@fortawesome/free-solid-svg-icons';
+import { faFileLines, faEnvelope, faGraduationCap, faPhone, faAddressCard, faRobot } from '@fortawesome/free-solid-svg-icons';
 import TypingText from '../TypingText/TypingText';
 import Carousel from '../SwipeableGridPage/Carousel';
 
@@ -158,6 +158,8 @@ const ContactPage = () => {
     { key: 'resume', icon: faFileLines, label: 'Resume', href: RESUME_URL, external: true, onClick: onResumeClick },
     { key: 'cv-short', icon: faGraduationCap, label: 'CV (short)', href: exclusive ? CV_SHORT_EXCLUSIVE_URL : CV_SHORT_URL, external: true },
     { key: 'cv-standard', icon: faGraduationCap, label: 'CV (standard)', href: CV_STANDARD_URL, external: true },
+    // Adds LedbetterLM (the /api/mcp server) to the visitor's own Claude.
+    { key: 'claude', icon: faRobot, label: 'Connect your Claude', href: '/connect' },
   ].filter(Boolean);
 
   const tile = (t) => (

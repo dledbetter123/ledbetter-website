@@ -1,0 +1,103 @@
+/* /connect: the same glass cards as a project page, in a single readable column. */
+
+.connectPage {
+  box-sizing: border-box;
+  max-width: 720px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: calc(20px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  position: relative; /* above the fixed glyph wall */
+  z-index: 2;
+}
+
+.connectBack {
+  align-self: flex-start;
+  color: #0f0;
+  text-decoration: none;
+  font-size: 14px;
+}
+.connectBack:hover { text-decoration: underline; }
+
+/* App.css gives every <section> display:flex and a full viewport height. */
+.connectPage section.connectCard {
+  display: block;
+  height: auto;
+}
+
+.connectCard {
+  background-color: rgba(10, 10, 10, 0.42);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  padding: 20px;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+.connectCard h1 {
+  margin: 0 0 10px;
+  color: #0f0;
+  font-size: clamp(22px, 5vw, 30px);
+}
+.connectCard h2 {
+  margin: 0 0 10px;
+  color: #0f0;
+  font-size: 18px;
+}
+.connectCard p { margin: 0 0 12px; }
+.connectCard ol,
+.connectCard ul { margin: 0; padding-left: 22px; }
+.connectCard li + li { margin-top: 6px; }
+.connectCard a { color: #0f0; }
+
+.connectNote {
+  margin: 12px 0 0 !important;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+}
+
+.connectTools code,
+.connectCard li code { color: #0f0; }
+
+.connectCopy {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 4px;
+}
+.connectCopy code {
+  flex: 1 1 auto;
+  min-width: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(0, 255, 0, 0.45);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #0f0;
+  font-size: 14px;
+  overflow-x: auto;
+  white-space: nowrap;
+  user-select: all;
+  -webkit-user-select: all;
+}
+.connectCopy button {
+  flex: 0 0 auto;
+  min-width: 76px;
+  background: transparent;
+  border: 1px solid #0f0;
+  border-radius: 6px;
+  color: #0f0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 0 14px;
+}
+.connectCopy button:hover {
+  background-color: #0f0;
+  color: #000;
+}
