@@ -18,6 +18,16 @@
 figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; border-top: 1px solid var(--line); padding-top: 14px; }
 figcaption .note { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
 #fig-heal svg, #fig-tree svg, #fig-loop svg { min-width: 760px; }
+#fig-example svg { min-width: 900px; }
+.heal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 32px; }
+.heal-grid > div { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.heal-grid .note { font-size: 14px; }
+.heal-grid code { font-family: var(--f-mono); font-size: 13px; color: var(--ink); }
+table.packet td { font-family: var(--f-mono); font-size: 12px; }
+pre.code { margin: 0; font-family: var(--f-mono); font-size: 12px; line-height: 1.6; color: var(--muted); border: 1px solid var(--line); padding: 12px 14px; overflow-x: auto; }
+pre.code .ln { color: var(--dim); user-select: none; }
+pre.code .del { color: var(--yellow); text-decoration: line-through; }
+pre.code .add { color: var(--green); }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 8px; }
 .legend i { display: inline-block; width: 18px; height: 2px; background: var(--c); }
@@ -34,7 +44,6 @@ table.work td:first-child { width: 56%; }
     <a class="back" href="/#portfolio">&larr; All projects</a>
     <div class="actions">
       <a class="btn primary" href="/projects/self-healing-agent">Ask LedbetterLM about this</a>
-      <a class="btn" href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a>
     </div>
   </nav>
 
@@ -345,6 +354,59 @@ table.work td:first-child { width: 56%; }
       <li>The agent heals the code. The reasoning packet is delivered to the agent, which makes the edits and then recompiles.</li>
     </ul>
   </figure>
+
+  <!-- heal-example:start -->
+  <figure id="fig-example">
+    <figcaption>
+      <h2>A worked example: healing one test</h2>
+      <span class="note">Sample test written for this page; runs simulated. Not Apple code or Apple data.</span>
+    </figcaption>
+    <p>Here is one heal worked end to end. The tree is the real parse of a sample test from the public Swift compiler, standing in for David&rsquo;s parser. The plan prior is calculated from 50 passing runs on earlier builds: each step&rsquo;s expected screen, and the chance the run reaches it (the promo alert showed in 9 of 50 runs, so its branch carries 0.18). On the new build the Checkout button is renamed, and the run leaves the prior at line 12.</p>
+    <div class="scroll"><svg viewBox="0 0 1000 488" role="img" aria-label="Worked heal example. The real parse tree of a sample test, from the public Swift compiler, with the plan prior calculated from 50 simulated passing runs, a run on a new build that renames the Checkout button and so deviates at line 12, and the healed run. The heal changes one node of the tree, the string literal Checkout, to Continue to Checkout, and the healed run matches the prior at all 7 statements on its path."><text class="d-title" x="16" y="22">Syntax tree (swiftc -dump-parse, pruned)</text><text class="d-title" x="452" y="22">Line</text><text class="d-title" x="500" y="22">Plan prior (50 runs)</text><text class="d-title" x="682" y="22">Run on the new build</text><text class="d-title" x="852" y="22">After the heal</text><text class="d-sub" x="500" y="38">screen after · P(reach)</text><text class="d-sub" x="682" y="38">from its test logs</text><text class="d-sub" x="852" y="38">re-parsed, run again</text><path class="d-line" style="--c: var(--line)" d="M16,48 H984"/><text class="d-note" x="16" y="74.5">func_decl</text><text class="d-note" x="78" y="74.5" style="fill: var(--ink)">testCheckout()</text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M20,77 V97 H29"/><text class="d-note" x="32" y="100.5">brace_stmt</text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M36,103 V123 H45"/><text class="d-note" x="48" y="126.5">pattern_binding_decl</text><text class="d-note" x="176" y="126.5" style="fill: var(--ink)">let app = XCUIApplication()</text><text class="d-note" x="452" y="126.5">5</text><text class="d-note" x="500" y="126.5" style="fill: var(--blue)">1.00</text><text class="d-note" x="682" y="126.5" style="fill: var(--green)">✓ </text><text class="d-note" x="852" y="126.5" style="fill: var(--green)">✓ </text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M36,103 V149 H45"/><text class="d-note" x="48" y="152.5">call_expr</text><text class="d-note" x="110" y="152.5" style="fill: var(--ink)">app.launch()</text><text class="d-note" x="452" y="152.5">6</text><text class="d-note" x="500" y="152.5" style="fill: var(--blue)">Home · 1.00</text><text class="d-note" x="682" y="152.5" style="fill: var(--green)">✓ Home</text><text class="d-note" x="852" y="152.5" style="fill: var(--green)">✓ Home</text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M36,103 V175 H45"/><text class="d-note" x="48" y="178.5">call_expr</text><text class="d-note" x="110" y="178.5" style="fill: var(--ink)">app.buttons[&quot;Cart&quot;].tap()</text><text class="d-note" x="452" y="178.5">7</text><text class="d-note" x="500" y="178.5" style="fill: var(--blue)">Cart · 1.00</text><text class="d-note" x="682" y="178.5" style="fill: var(--green)">✓ Cart</text><text class="d-note" x="852" y="178.5" style="fill: var(--green)">✓ Cart</text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M36,103 V201 H45"/><text class="d-note" x="48" y="204.5">call_expr</text><text class="d-note" x="110" y="204.5" style="fill: var(--ink)">XCTAssertTrue(app.staticTexts[&quot;Your Car…</text><text class="d-note" x="452" y="204.5">8</text><text class="d-note" x="500" y="204.5" style="fill: var(--blue)">Cart · 1.00</text><text class="d-note" x="682" y="204.5" style="fill: var(--green)">✓ Cart</text><text class="d-note" x="852" y="204.5" style="fill: var(--green)">✓ Cart</text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M36,103 V227 H45"/><text class="d-note" x="48" y="230.5">if_stmt</text><text class="d-note" x="98" y="230.5" style="fill: var(--ink)">if app.alerts[&quot;Promo&quot;].exists {</text><text class="d-note" x="452" y="230.5">9</text><text class="d-note" x="500" y="230.5" style="fill: var(--blue)">alert 9/50 · 0.18</text><text class="d-note" x="682" y="230.5" style="fill: var(--muted)">no alert (0.82)</text><text class="d-note" x="852" y="230.5" style="fill: var(--muted)">no alert</text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M52,233 V253 H61"/><text class="d-note" x="64" y="256.5">brace_stmt</text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M68,259 V279 H77"/><text class="d-note" x="80" y="282.5">call_expr</text><text class="d-note" x="142" y="282.5" style="fill: var(--ink)">….buttons[&quot;Not Now&quot;].tap()</text><text class="d-note" x="452" y="282.5">10</text><text class="d-note" x="500" y="282.5" style="fill: var(--blue)">Cart · 0.18</text><text class="d-note" x="682" y="282.5" style="fill: var(--dim)">skipped</text><text class="d-note" x="852" y="282.5" style="fill: var(--dim)">skipped</text><rect x="10" y="294" width="980" height="22" style="fill: none; stroke: var(--yellow); stroke-width: 1; stroke-dasharray: 3 3"/><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M36,103 V305 H45"/><text class="d-note" x="48" y="308.5">call_expr</text><text class="d-note" x="110" y="308.5" style="fill: var(--ink)">app.buttons[&quot;Checkout&quot;].tap()</text><text class="d-note" x="452" y="308.5">12</text><text class="d-note" x="500" y="308.5" style="fill: var(--blue)">Checkout · 1.00</text><text class="d-note" x="682" y="308.5" style="fill: var(--yellow)">✗ no match</text><text class="d-note" x="852" y="308.5" style="fill: var(--green)">✓ Checkout</text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M52,311 V331 H61"/><text class="d-note" x="64" y="334.5">unresolved_dot_expr</text><text class="d-note" x="186" y="334.5" style="fill: var(--ink)">field=&quot;tap&quot;</text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M68,337 V357 H77"/><text class="d-note" x="80" y="360.5">subscript_expr</text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M84,363 V383 H93"/><text class="d-note" x="96" y="386.5">unresolved_dot_expr</text><text class="d-note" x="218" y="386.5" style="fill: var(--ink)">field=&quot;buttons&quot;</text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M84,363 V409 H93"/><text class="d-note" x="96" y="412.5">argument_list</text><rect x="10" y="424" width="980" height="22" style="fill: none; stroke: var(--yellow); stroke-width: 1; stroke-dasharray: 3 3"/><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M100,415 V435 H109"/><text class="d-note" x="112" y="438.5">string_literal_expr</text><text class="d-note" x="234" y="438.5" style="fill: var(--yellow)">value=&quot;Checkout&quot;</text><text class="d-note" x="852" y="438.5" style="fill: var(--green)">&quot;Continue to Checkout&quot;</text><text class="d-note" x="682" y="438.5" style="fill: var(--yellow)">predicate to adjust</text><path class="d-line" style="--c: var(--dim); stroke-width: 1" d="M36,103 V461 H45"/><text class="d-note" x="48" y="464.5">call_expr</text><text class="d-note" x="110" y="464.5" style="fill: var(--ink)">XCTAssertTrue(app.buttons[&quot;Pay&quot;].isEnab…</text><text class="d-note" x="452" y="464.5">13</text><text class="d-note" x="500" y="464.5" style="fill: var(--blue)">Checkout · 1.00</text><text class="d-note" x="682" y="464.5" style="fill: var(--dim)">not reached</text><text class="d-note" x="852" y="464.5" style="fill: var(--green)">✓ Checkout</text></svg></div>
+    <div class="legend">
+      <span style="--c: var(--blue)"><i></i>Plan prior</span>
+      <span style="--c: var(--green)"><i></i>Matches the prior</span>
+      <span style="--c: var(--yellow)"><i></i>Deviation and the predicate to adjust</span>
+    </div>
+    <div class="heal-grid">
+      <div>
+        <h3>The reasoning packet</h3>
+        <p class="note">Each element predicate on the charted path, checked against the screen the run&rsquo;s logs carried back.</p>
+        <div class="scroll"><table class="packet">
+          <thead><tr><th>Predicate</th><th>Line</th><th>On screen</th><th>Verdict</th></tr></thead>
+          <tbody>
+        <tr><td>buttons[&ldquo;Cart&rdquo;]</td><td>7</td><td>yes</td><td>matched</td></tr>
+        <tr><td>staticTexts[&ldquo;Your Cart&rdquo;]</td><td>8</td><td>yes</td><td>matched</td></tr>
+        <tr><td>alerts[&ldquo;Promo&rdquo;]</td><td>9</td><td>no</td><td>absent, as in 41 of 50 runs</td></tr>
+        <tr><td>buttons[&ldquo;Checkout&rdquo;]</td><td>12</td><td>no</td><td class="hi" style="--c: var(--yellow)">adjust: 100% of its words are in the on-screen &ldquo;Continue to Checkout&rdquo;</td></tr>
+        <tr><td>buttons[&ldquo;Pay&rdquo;]</td><td>13</td><td>–</td><td>not reached</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div>
+        <h3>The heal</h3>
+        <p class="note">One edit, then a re-parse: the tree changes in exactly one node, the <code>string_literal_expr</code> on line 12.</p>
+        <pre class="code"><span class="ln"> 1</span> import XCTest
+<span class="ln"> 2</span> 
+<span class="ln"> 3</span> final class CheckoutTests: XCTestCase {
+<span class="ln"> 4</span>     func testCheckout() {
+<span class="ln"> 5</span>         let app = XCUIApplication()
+<span class="ln"> 6</span>         app.launch()
+<span class="ln"> 7</span>         app.buttons[&quot;Cart&quot;].tap()
+<span class="ln"> 8</span>         XCTAssertTrue(app.staticTexts[&quot;Your Cart&quot;].waitForExistence(timeout: 5))
+<span class="ln"> 9</span>         if app.alerts[&quot;Promo&quot;].exists {
+<span class="ln">10</span>             app.alerts[&quot;Promo&quot;].buttons[&quot;Not Now&quot;].tap()
+<span class="ln">11</span>         }
+<span class="ln">12</span> <span class="del">        app.buttons[&quot;Checkout&quot;].tap()</span>
+<span class="ln">12</span> <span class="add">        app.buttons[&quot;Continue to Checkout&quot;].tap()</span>
+<span class="ln">13</span>         XCTAssertTrue(app.buttons[&quot;Pay&quot;].isEnabled)
+<span class="ln">14</span>     }
+<span class="ln">15</span> }</pre>
+      </div>
+    </div>
+    <p>Run again on the new build, the healed test matches the prior at all 7 statements on its path, and the run is back on a path the prior gives 0.82. At line 12 the unhealed run had stayed on the Cart screen, which none of the 50 earlier runs did.</p>
+  </figure>
+<!-- heal-example:end -->
 
   <section>
     <h2>The test infrastructure around it</h2>

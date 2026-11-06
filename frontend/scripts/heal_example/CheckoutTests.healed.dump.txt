@@ -1,0 +1,90 @@
+(source_file "CheckoutTests.healed.swift"
+  (import_decl decl_context=0x761326a008 range=[CheckoutTests.healed.swift:1:1 - line:1:8] module="XCTest")
+  (class_decl decl_context=0x761326a008 range=[CheckoutTests.healed.swift:3:7 - line:15:1] "CheckoutTests" final inherits="<null>"
+    (final_attr range=[CheckoutTests.healed.swift:3:1 - line:3:1])
+    (func_decl decl_context=0x761326a710 range=[CheckoutTests.healed.swift:4:5 - line:14:5] "testCheckout()"
+      (parameter "self" decl_context=0x761326a8d8) thrown_type="<null>"
+      (parameter_list range=[CheckoutTests.healed.swift:4:22 - line:4:23])
+      (brace_stmt range=[CheckoutTests.healed.swift:4:25 - line:14:5]
+        (pattern_binding_decl decl_context=0x761326a8d8 range=[CheckoutTests.healed.swift:5:9 - line:5:35]
+          (pattern_entry
+            (pattern_named "app")
+            (original_init=call_expr type="<null>" isolation_crossing="none"
+              (unresolved_decl_ref_expr type="<null>" name="XCUIApplication" function_ref=unapplied)
+              (argument_list))
+            (processed_init=call_expr type="<null>" isolation_crossing="none"
+              (unresolved_decl_ref_expr type="<null>" name="XCUIApplication" function_ref=unapplied)
+              (argument_list))))
+        (var_decl decl_context=0x761326a8d8 range=[CheckoutTests.healed.swift:5:13 - line:5:13] "app" let)
+        (call_expr type="<null>" isolation_crossing="none"
+          (unresolved_dot_expr type="<null>" field="launch" function_ref=unapplied
+            (unresolved_decl_ref_expr type="<null>" name="app" function_ref=unapplied))
+          (argument_list))
+        (call_expr type="<null>" isolation_crossing="none"
+          (unresolved_dot_expr type="<null>" field="tap" function_ref=unapplied
+            (subscript_expr type="<null>"
+              (unresolved_dot_expr type="<null>" field="buttons" function_ref=unapplied
+                (unresolved_decl_ref_expr type="<null>" name="app" function_ref=unapplied))
+              (argument_list
+                (argument
+                  (string_literal_expr type="<null>" encoding=utf8 value="Cart" builtin_initializer="**NULL**" initializer="**NULL**")))))
+          (argument_list))
+        (call_expr type="<null>" isolation_crossing="none"
+          (unresolved_decl_ref_expr type="<null>" name="XCTAssertTrue" function_ref=unapplied)
+          (argument_list
+            (argument
+              (call_expr type="<null>" isolation_crossing="none"
+                (unresolved_dot_expr type="<null>" field="waitForExistence" function_ref=unapplied
+                  (subscript_expr type="<null>"
+                    (unresolved_dot_expr type="<null>" field="staticTexts" function_ref=unapplied
+                      (unresolved_decl_ref_expr type="<null>" name="app" function_ref=unapplied))
+                    (argument_list
+                      (argument
+                        (string_literal_expr type="<null>" encoding=utf8 value="Your Cart" builtin_initializer="**NULL**" initializer="**NULL**")))))
+                (argument_list labels="timeout:"
+                  (argument label="timeout"
+                    (integer_literal_expr type="<null>" value="5" builtin_initializer="**NULL**" initializer="**NULL**")))))))
+        (if_stmt range=[CheckoutTests.healed.swift:9:9 - line:11:9]
+          (conditions=array
+            (unresolved_dot_expr type="<null>" field="exists" function_ref=unapplied
+              (subscript_expr type="<null>"
+                (unresolved_dot_expr type="<null>" field="alerts" function_ref=unapplied
+                  (unresolved_decl_ref_expr type="<null>" name="app" function_ref=unapplied))
+                (argument_list
+                  (argument
+                    (string_literal_expr type="<null>" encoding=utf8 value="Promo" builtin_initializer="**NULL**" initializer="**NULL**"))))))
+          (brace_stmt range=[CheckoutTests.healed.swift:9:39 - line:11:9]
+            (call_expr type="<null>" isolation_crossing="none"
+              (unresolved_dot_expr type="<null>" field="tap" function_ref=unapplied
+                (subscript_expr type="<null>"
+                  (unresolved_dot_expr type="<null>" field="buttons" function_ref=unapplied
+                    (subscript_expr type="<null>"
+                      (unresolved_dot_expr type="<null>" field="alerts" function_ref=unapplied
+                        (unresolved_decl_ref_expr type="<null>" name="app" function_ref=unapplied))
+                      (argument_list
+                        (argument
+                          (string_literal_expr type="<null>" encoding=utf8 value="Promo" builtin_initializer="**NULL**" initializer="**NULL**")))))
+                  (argument_list
+                    (argument
+                      (string_literal_expr type="<null>" encoding=utf8 value="Not Now" builtin_initializer="**NULL**" initializer="**NULL**")))))
+              (argument_list))))
+        (call_expr type="<null>" isolation_crossing="none"
+          (unresolved_dot_expr type="<null>" field="tap" function_ref=unapplied
+            (subscript_expr type="<null>"
+              (unresolved_dot_expr type="<null>" field="buttons" function_ref=unapplied
+                (unresolved_decl_ref_expr type="<null>" name="app" function_ref=unapplied))
+              (argument_list
+                (argument
+                  (string_literal_expr type="<null>" encoding=utf8 value="Continue to Checkout" builtin_initializer="**NULL**" initializer="**NULL**")))))
+          (argument_list))
+        (call_expr type="<null>" isolation_crossing="none"
+          (unresolved_decl_ref_expr type="<null>" name="XCTAssertTrue" function_ref=unapplied)
+          (argument_list
+            (argument
+              (unresolved_dot_expr type="<null>" field="isEnabled" function_ref=unapplied
+                (subscript_expr type="<null>"
+                  (unresolved_dot_expr type="<null>" field="buttons" function_ref=unapplied
+                    (unresolved_decl_ref_expr type="<null>" name="app" function_ref=unapplied))
+                  (argument_list
+                    (argument
+                      (string_literal_expr type="<null>" encoding=utf8 value="Pay" builtin_initializer="**NULL**" initializer="**NULL**"))))))))))))
