@@ -266,13 +266,123 @@ for i, line in enumerate(src, 1):
         code.append(f'<span class="ln">{i:>2}</span> {e(line)}')
 code = '\n'.join(code)
 
+# --- the animation: a fake app on the left, the agent on the right ------------------------------
+
+def btn(x, y, w, h, label, filled=False, ident=''):
+    fill = 'var(--green)' if filled else 'none'
+    stroke = 'var(--green)' if filled else 'var(--dim)'
+    color = '#000' if filled else 'var(--ink)'
+    weight = ' font-weight: 600;' if filled else ''
+    return (f'<rect{ident} x="{x}" y="{y}" width="{w}" height="{h}" rx="8" style="fill: {fill}; stroke: {stroke}"/>'
+            f'<text x="{x + w / 2:g}" y="{y + h / 2 + 4:g}" text-anchor="middle" style="fill: {color}; font-size: 11px;{weight}">{e(label)}</text>')
+
+
+def item(y, name, price):
+    return (f'<rect x="26" y="{y}" width="188" height="48" rx="6" style="fill: #0b0b0b; stroke: var(--line)"/>'
+            f'<rect x="36" y="{y + 10}" width="28" height="28" rx="4" style="fill: var(--line)"/>'
+            f'<text x="74" y="{y + 28}" style="fill: var(--ink); font-size: 11px">{e(name)}</text>'
+            f'<text x="204" y="{y + 28}" text-anchor="end" style="fill: var(--muted); font-size: 11px">{e(price)}</text>')
+
+
+def head(t):
+    return f'<text x="26" y="72" style="fill: var(--ink); font-size: 18px; font-weight: 700">{e(t)}</text>'
+
+
+NEW_LABEL = changed[0][2]
+phone_svg = (
+    '<svg viewBox="0 0 240 480" role="img" aria-label="A fake shop app on a phone, on the new build: Home, Cart and '
+    f'Checkout screens. On the Cart screen the button now reads {NEW_LABEL}.">'
+    '<rect x="3" y="3" width="234" height="474" rx="30" style="fill: #000; stroke: var(--dim); stroke-width: 2"/>'
+    '<rect x="92" y="12" width="56" height="16" rx="8" style="fill: var(--line)"/>'
+    '<text x="26" y="25" class="d-note">9:41</text>'
+    '<text x="214" y="25" text-anchor="end" class="d-note">new build</text>'
+    '<g data-screen="home">' + head('Shop')
+    + btn(164, 52, 52, 26, 'Cart') + item(100, 'Headphones', '$199') + item(158, 'Phone case', '$29')
+    + '<text x="26" y="236" class="d-sub">Free shipping over $50</text></g>'
+    '<g data-screen="cart">' + head('Your Cart') + '<text x="26" y="92" class="d-sub">2 items</text>'
+    + item(104, 'Headphones', '$199') + item(162, 'Phone case', '$29')
+    + '<text x="26" y="244" style="fill: var(--muted); font-size: 11px">Total</text>'
+      '<text x="214" y="244" text-anchor="end" style="fill: var(--ink); font-size: 11px">$228</text>'
+    + btn(26, 348, 188, 36, 'Edit') + btn(26, 394, 188, 42, NEW_LABEL, filled=True)
+    + '<g class="ha-toast"><rect x="22" y="282" width="196" height="46" rx="6" style="fill: #000; stroke: var(--yellow)"/>'
+      '<text x="120" y="301" text-anchor="middle" style="fill: var(--yellow); font-size: 10.5px">No button matches</text>'
+      '<text x="120" y="317" text-anchor="middle" style="fill: var(--yellow); font-size: 10.5px">&#8220;Checkout&#8221;</text></g></g>'
+    '<g data-screen="checkout">' + head('Checkout')
+    + ''.join(f'<text x="26" y="{y}" style="fill: var(--muted); font-size: 11px">{a}</text>'
+              f'<text x="214" y="{y}" text-anchor="end" style="fill: var(--ink); font-size: 11px">{b}</text>'
+              for y, a, b in ((112, 'Ship to', 'Home'), (140, 'Payment', 'Card'), (168, 'Total', '$228')))
+    + btn(26, 394, 188, 42, 'Pay $228', filled=True) + '</g>'
+    '<rect id="ha-hl" x="0" y="0" width="0" height="0" rx="9" class="ha-hl"/>'
+    '<circle id="ha-tap" cx="0" cy="0" r="16" class="ha-tap"/>'
+    '</svg>')
+
+CART, CONT, PAY, YOURCART = (190, 65), (120, 415), [22, 390, 196, 50], [20, 50, 116, 30]
+CONT_BOX = [22, 390, 196, 50]
+S = lambda **k: k
+steps = [
+    S(screen='home', line=6, status='run 51 · new build', ms=1900, kind='info',
+      log='Run 51 on the new build. Its test logs stream back over the serial protocol.'),
+    S(screen='home', line=6, status='run 51 · new build', ms=1500, kind='ok',
+      log='L6 app.launch(): Home. Prior: Home, 1.00. ✓'),
+    S(screen='home', line=7, tap=CART, status='run 51 · new build', ms=1300, kind='ok',
+      log='L7 tap buttons["Cart"]. ✓'),
+    S(screen='cart', line=8, hl=YOURCART, status='run 51 · new build', ms=1600, kind='ok',
+      log='L8 wait for staticTexts["Your Cart"]: Cart. Prior: Cart, 1.00. ✓'),
+    S(screen='cart', line=9, status='run 51 · new build', ms=1600, kind='ok',
+      log=f'L9 alerts["Promo"] absent: the {1 - p_promo:.2f} branch. ✓'),
+    S(screen='cart', line=12, toast=True, status='run 51 · deviation', ms=2800, kind='dev',
+      log=f'L12 tap buttons["Checkout"]: no match. Still on Cart, which {"none" if stayed_on_cart == 0 else stayed_on_cart} of {RUNS} runs did. ✗ Deviation from the prior.'),
+    S(screen='cart', line=12, hl=CONT_BOX, hlc='yellow', status='worker · reasoning packet', ms=3400, kind='info',
+      log=f'Worker: the screenshot shows the buttons "Edit" and "{NEW_LABEL}". Packet: adjust buttons["Checkout"]; '
+          f'100% of its words are in "{NEW_LABEL}".'),
+    S(screen='cart', line=12, code='new', status='agent · editing', ms=2200, kind='heal',
+      log=f'Agent edits line 12: buttons["{NEW_LABEL}"].'),
+    S(screen='cart', line=12, code='new', status='agent · recompiling', ms=2000, kind='heal',
+      log=f'Recompile and re-parse: 1 node changed ({changed[0][0]}). ✓'),
+    S(screen='home', line=6, code='new', status='run 52 · new build', ms=1500, kind='info',
+      log='Run 52 on the new build, with the healed test.'),
+    S(screen='home', line=7, code='new', tap=CART, status='run 52 · new build', ms=1300, kind='ok',
+      log='L6-L9 match the prior. ✓'),
+    S(screen='cart', line=12, code='new', tap=CONT, status='run 52 · new build', ms=1500, kind='ok',
+      log=f'L12 tap buttons["{NEW_LABEL}"]: Checkout. Prior: Checkout, 1.00. ✓'),
+    S(screen='checkout', line=13, code='new', hl=PAY, status='healed', ms=3000, kind='heal',
+      log=f'L13 buttons["Pay"].isEnabled. ✓ {matches} of {matches} statements match the prior. Healed.'),
+]
+for st in steps:
+    st.setdefault('code', 'old')
+
+import json
+code_lines = []
+for i, line in enumerate(src, 1):
+    if not line.strip() and i == len(src):
+        continue
+    if i == fail_line:
+        body_ = (f'<span class="old">{e(line)}</span><span class="new">{e(healed_src[i - 1])}</span>')
+    else:
+        body_ = e(line)
+    code_lines.append(f'<span data-line="{i}"><span class="ln">{i:>2}</span> {body_}</span>')
+log_items = '\n'.join(f'          <li class="k-{st["kind"]}">{e(st["log"])}</li>' for st in steps)
+anim = f"""    <div id="heal-anim" class="heal-anim">
+      <div class="phone" data-screen="cart">{phone_svg}</div>
+      <div class="agent">
+        <div class="agent-head"><span class="dot"></span><b>Agent</b><span class="ha-status">run 51 · new build</span></div>
+        <pre class="code">{''.join(code_lines)}</pre>
+        <ol class="ha-log" aria-label="The agent's log">
+{log_items}
+        </ol>
+        <div class="ha-controls"><button class="btn" type="button" data-act="play">Play</button><button class="btn" type="button" data-act="step">Step</button><button class="btn" type="button" data-act="reset">Restart</button><span class="ha-count"></span></div>
+      </div>
+    </div>
+    <script type="application/json" id="ha-steps">{json.dumps(steps, ensure_ascii=False)}</script>"""
+
 block = f"""{START}
   <figure id="fig-example">
     <figcaption>
       <h2>A worked example: healing one test</h2>
       <span class="note">Sample test written for this page; runs simulated. Not Apple code or Apple data.</span>
     </figcaption>
-    <p>Here is one heal worked end to end. The tree is the real parse of a sample test from the public Swift compiler, standing in for David&rsquo;s parser. The plan prior is calculated from {RUNS} passing runs on earlier builds: each step&rsquo;s expected screen, and the chance the run reaches it (the promo alert showed in {PROMO} of {RUNS} runs, so its branch carries {p_promo:.2f}). On the new build the Checkout button is renamed, and the run leaves the prior at line {fail_line}.</p>
+    <p>Here is one heal worked end to end. The tree is the real parse of a sample test from the public Swift compiler, standing in for David&rsquo;s parser. The plan prior is calculated from {RUNS} passing runs on earlier builds: each step&rsquo;s expected screen, and the chance the run reaches it (the promo alert showed in {PROMO} of {RUNS} runs, so its branch carries {p_promo:.2f}). On the new build the Checkout button is renamed, and the run leaves the prior at line {fail_line}. Press Play to watch the agent work through it.</p>
+{anim}
     <div class="scroll">{''.join(svg)}</div>
     <div class="legend">
       <span style="--c: var(--blue)"><i></i>Plan prior</span>
