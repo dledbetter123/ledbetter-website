@@ -2212,10 +2212,109 @@ func emailResumeClick(ip, userAgent, recruiter string) {
 	}
 }
 
+// cardClickHandler records a homepage card click (a project or a publication) and notifies
+// David, the same way a résumé open is handled. Every click is logged to S3; the email is
+// deduped to one per IP per card per day, with a global daily cap.
+func cardClickHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var rq struct {
+		Kind string `json:"kind"`
+		Card string `json:"card"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, 2048)).Decode(&rq); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	if rq.Kind != "project" && rq.Kind != "publication" {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	card := strings.TrimSpace(stripHeader(rq.Card))
+	if card == "" {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	if rs := []rune(card); len(rs) > 160 {
+		card = string(rs[:160])
+	}
+	ctx := r.Context()
+	today := time.Now().UTC().Format("2006-01-02")
+	ip := clientIP(r)
+	ua := r.Header.Get("User-Agent")
+	logCardClick(ip, ua, rq.Kind, card)
+	sum := sha256.Sum256([]byte(rq.Kind + "|" + card))
+	cardKey := hex.EncodeToString(sum[:])[:12]
+	if n, err := addN(ctx, "cardclick#ip#"+today+"#"+ip+"#"+cardKey, 1); err == nil && n == 1 {
+		if g, err := addN(ctx, "cardclick#global#"+today, 1); err == nil && g <= 100 {
+			emailCardClick(ip, ua, rq.Kind, card)
+		}
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func logCardClick(ip, ua, kind, card string) {
+	if s3c == nil || convBucket == "" {
+		return
+	}
+	now := time.Now().UTC()
+	rec := map[string]interface{}{"ts": now.Format(time.RFC3339), "event": "card_click", "kind": kind, "card": card, "ip": ip, "userAgent": ua}
+	body, _ := json.Marshal(rec)
+	sum := sha256.Sum256(append(body, []byte(now.Format(time.RFC3339Nano))...))
+	key := fmt.Sprintf("card-clicks/%s/%s.json", now.Format("2006-01-02"), hex.EncodeToString(sum[:])[:16])
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if _, err := s3c.PutObject(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(convBucket), Key: aws.String(key),
+		Body: bytes.NewReader(body), ContentType: aws.String("application/json"),
+	}); err != nil {
+		fmt.Printf("card click log error: %v\n", err)
+	}
+}
+
+func emailCardClick(ip, userAgent, kind, card string) {
+	if ses == nil || emailFrom == "" || emailTo == "" {
+		return
+	}
+	now := time.Now().UTC()
+	loc := geolocate(ip)
+	if ip == "" {
+		ip = "(none)"
+	}
+	if loc != "" {
+		ip += " (" + loc + ")"
+	}
+	if userAgent == "" {
+		userAgent = "(none)"
+	}
+	body := fmt.Sprintf("Someone clicked a %s card on davidamosledbetter.com.\n\nCard:  %s\nTime:  %s\nIP:    %s\nAgent: %s\n",
+		kind, card, now.Format("2006-01-02 15:04:05 MST"), ip, userAgent)
+	var raw bytes.Buffer
+	fmt.Fprintf(&raw, "From: %s\r\n", emailFrom)
+	fmt.Fprintf(&raw, "To: %s\r\n", emailTo)
+	fmt.Fprintf(&raw, "Subject: Card clicked: %s (%s)\r\n", card, stripHeader(ip))
+	fmt.Fprintf(&raw, "Date: %s\r\n", now.Format(time.RFC1123Z))
+	raw.WriteString("MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n")
+	raw.WriteString(body)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if _, err := ses.SendEmail(ctx, &sesv2.SendEmailInput{
+		Content: &sestypes.EmailContent{Raw: &sestypes.RawMessage{Data: raw.Bytes()}},
+	}); err != nil {
+		fmt.Printf("card-click email error: %v\n", err)
+	}
+}
+
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/status", statusHandler)
 	mux.HandleFunc("/api/resume-click", resumeClickHandler)
+	mux.HandleFunc("/api/card-click", cardClickHandler)
 	mux.HandleFunc("/api/chat", chatHandler)
 	mux.HandleFunc("/api/catalog-status", catalogStatusHandler)
 	mux.HandleFunc("/api/contact", contactHandler)

@@ -3,6 +3,7 @@ import '../ProjectCard/ProjectCard.css';
 import './PublicationCard.css';
 import useTypeOnVisible from '../../hooks/useTypeOnVisible';
 import useScrambleOnVisible from '../../hooks/useScrambleOnVisible';
+import { logCardClick } from '../../lib/cardClick';
 
 // A carousel card for a publication / presentation. Unlike ProjectCard it isn't
 // repo-backed — the citation is passed in directly. With a url it opens the paper
@@ -26,6 +27,7 @@ const PublicationCard = ({ title, citation, url, footer = 'Read the paper →' }
   }, [showHint]);
 
   const handleClick = () => {
+    logCardClick('publication', title);
     if (clickable) {
       window.open(url, '_blank');
     } else {

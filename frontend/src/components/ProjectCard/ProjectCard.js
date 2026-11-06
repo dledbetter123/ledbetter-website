@@ -4,6 +4,7 @@ import useTypeOnVisible from '../../hooks/useTypeOnVisible';
 import useScrambleOnVisible from '../../hooks/useScrambleOnVisible';
 import usePortfolioDescription from '../../hooks/usePortfolioDescription';
 import { portfolioUrl } from '../../data/projects';
+import { logCardClick } from '../../lib/cardClick';
 
 // A carousel card for one project (see data/projects.js). Clicking opens the project's
 // portfolio page (a static HTML page outside the React app, so it's a full page load);
@@ -24,7 +25,10 @@ const ProjectCard = ({ project }) => {
       className={`project-card ${isHovered ? 'hovered' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => window.location.assign(portfolioUrl(project))}
+      onClick={() => {
+        logCardClick('project', project.slug);
+        window.location.assign(portfolioUrl(project));
+      }}
     >
       <h2 ref={titleRef}>{titleText}</h2>
       <p ref={descRef} style={bidi}>{descriptionText}</p>

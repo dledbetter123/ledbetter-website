@@ -349,6 +349,7 @@ code { font-family: var(--f-mono); font-size: .88em; color: var(--ink); }
       <li style="--c: var(--orange)">Added ETag/304 caching and cursor pagination to read routes after staging replay moved 9.5 GB in 3 days, and made end-to-end CI hermetic with its own Go backend and Mongo container.</li>
       <li style="--c: var(--orange)">Deployed the Python TA hint service on Lambda to production in October 2026, with GitHub Actions deploys.</li>
       <li style="--c: var(--orange)">Built self-hosted CI on a company workstation while GitHub-hosted Actions were blocked: five Docker-in-Docker runners under an admission controller, running the full frontend gate green in ~30&ndash;35 min. <span>Root-caused two silent hangs along the way: an MTU mismatch and stale runner sessions.</span></li>
+      <li style="--c: var(--orange)">Built path-specific CI: each push runs only the test suites tied to the files it changes, so every deploy is gated on what its feature needs, with a flagged deploy-now path. <span>Prod deploys went from 22&ndash;70 min to ~5.</span></li>
       <li style="--c: var(--orange)">Built eng.pathion.dev, the company engineering-directives site (S3, CloudFront, Lambda, DynamoDB), rebuilt hourly from Jira with comment threads and gated by Cloudflare Access. Also runs the company file server and WireGuard VPN.</li>
     </ul>
   </section>
