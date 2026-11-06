@@ -45,7 +45,7 @@ var catalogTriggers = []string{
 	"in the code", "your stack for", "data structure", "design of", "built it",
 }
 var catalogProjectNames = []string{
-	"self-healing", "self healing", "finsler", "sgst", "sparse geometric", "trade-companion",
+	"finsler", "sgst", "sparse geometric", "trade-companion",
 	"trade companion", "ebpf", "kernel probe", "graph attention", "leo", "character-aware",
 }
 
@@ -132,6 +132,19 @@ var (
 
 func asksForCode(msg string) bool {
 	return codeRequestRe.MatchString(quotedRe.ReplaceAllString(msg, " "))
+}
+
+// noRepoTopics are projects with no public repo (proprietary Apple work). The librarian has
+// nothing to gather for them, so a handoff promising "the actual code" could never be kept:
+// the KB and the portfolio page are the whole story.
+var noRepoTopics = map[string]bool{"self-healing-agent": true}
+
+// wantsLibrarian reports whether this turn should send the librarian to the repos, and the
+// project it is about. With the portfolio page's text in hand, answer right away; send the
+// librarian only when the visitor actually asks for code. A no-repo project never sends it.
+func wantsLibrarian(msg string, history []chatTurn, pageBlock string) (bool, string) {
+	topic := detectTopic(msg, history)
+	return catalogLikely(msg) && (pageBlock == "" || asksForCode(msg)) && !noRepoTopics[topic], topic
 }
 
 func catalogLikely(msg string) bool {

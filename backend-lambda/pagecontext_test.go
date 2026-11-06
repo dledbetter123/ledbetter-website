@@ -149,3 +149,22 @@ func TestAsksForCodeIgnoresQuotedTextAndPartialWords(t *testing.T) {
 		}
 	}
 }
+
+func TestNoRepoProjectsNeverSendTheLibrarian(t *testing.T) {
+	selfHeal := []chatTurn{{Role: "user", Text: "Tell me about the self-healing agent."}, {Role: "model", Text: "It repairs test code."}}
+	cases := []struct {
+		msg     string
+		history []chatTurn
+		want    bool
+	}{
+		{"Tell me about David's self-healing coding agent at Apple.", nil, false},
+		{"Show me the code for the self-healing agent.", nil, false},
+		{"How does it work under the hood?", selfHeal, false},
+		{"Show me the code for trade companion's order router.", nil, true},
+	}
+	for _, c := range cases {
+		if got, _ := wantsLibrarian(c.msg, c.history, ""); got != c.want {
+			t.Errorf("wantsLibrarian(%q) = %v, want %v", c.msg, got, c.want)
+		}
+	}
+}

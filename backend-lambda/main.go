@@ -1546,10 +1546,7 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	if session != "anon" && guardReason == "" {
 		facts := getData(ctx, "catalog#"+session)
 		state := getData(ctx, "catalogstate#"+session)
-		// With the portfolio page's text in hand, answer right away; send the librarian
-		// to the repos only when the visitor actually asks for code.
-		likely := catalogLikely(req.Message) && (pageBlock == "" || asksForCode(req.Message))
-		topic := detectTopic(req.Message, req.History)
+		likely, topic := wantsLibrarian(req.Message, req.History, pageBlock)
 		storedTopic := getData(ctx, "catalogtopic#"+session)
 		// Re-gather when the code topic shifts to a DIFFERENT project than the cached fact
 		// sheet covers — otherwise the worker would answer an uncovered topic from a stale
