@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Self-Healing Coding Agent &middot; David Ledbetter</title>
-<meta name="description" content="David Ledbetter's flagship project at Apple: a self-healing coding agent that repairs the test code UI issues and OS quirks break on every release, freeing automation engineers for problems that need human reasoning. It is built around a world model of screens and their transitions. His in-house harness performs the repair; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning Gemma 4, which now runs the agent on its own.">
+<meta name="description" content="David Ledbetter's flagship project at Apple: a self-healing coding agent that repairs the test code UI issues and OS quirks break on every release, so engineers are freed up for other problems. It is built around a world model of screens and their transitions. His in-house harness performs the repair; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning Gemma 4, which now runs the agent on its own.">
 <link rel="icon" href="/favicon.ico">
 <meta property="og:image" content="https://www.davidamosledbetter.com/og-image.jpg?v=3">
 <meta property="og:image:width" content="1200">
@@ -17,7 +17,7 @@
 /* Self-healing agent page: the heal diagram, its legend and the two tables. */
 figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; border-top: 1px solid var(--line); padding-top: 14px; }
 figcaption .note { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
-#fig-heal svg { min-width: 760px; }
+#fig-heal svg, #fig-tree svg, #fig-loop svg { min-width: 760px; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 8px; }
 .legend i { display: inline-block; width: 18px; height: 2px; background: var(--c); }
@@ -41,7 +41,7 @@ table.work td:first-child { width: 56%; }
   <header class="hero">
     <div class="eyebrow">Apple, San Diego &middot; 2024&ndash;present</div>
     <h1>Self-Healing Coding Agent</h1>
-    <p class="lede">Releases can ship several times a day, and on each build UI issues and OS quirks break the automation engineering team&rsquo;s test code. David's flagship project at Apple, on Release Validation, where he is lead researcher and engineer, is the self-healing coding agent that repairs it, freeing automation engineers for the problems that need advanced, human reasoning. It is built around a world model that treats screens and the transitions between them as a sandbox to explore. The agent lives in a gym where writing code is its lever toward healing the team&rsquo;s test plans. David's in-house harness performs the repair and treats the model as a swappable reasoning engine; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning (IFT) Gemma 4, which now runs the agent on its own.</p>
+    <p class="lede">Releases can ship several times a day, and on each build UI issues and OS quirks break the automation engineering team&rsquo;s test code. David's flagship project at Apple, on Release Validation, where he is lead researcher and engineer, is the self-healing coding agent that repairs it, so engineers are freed up for other problems. It is built around a world model that treats screens and the transitions between them as a sandbox to explore. The agent lives in a gym where writing code is its lever toward healing the team&rsquo;s test plans. David's in-house harness performs the repair and treats the model as a swappable reasoning engine; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning (IFT) Gemma 4, which now runs the agent on its own.</p>
     <div class="meta"><span><b>Role</b> ML/Full Stack Software Engineer</span><span><b>Dates</b> May 2024 &ndash; Present</span></div>
     <div class="tags"><span>World model</span><span>Claude</span><span>Gemma 4</span><span>Instruction fine-tuning</span><span>On-device ML</span><span>Mac Studio</span><span>Local LLM serving</span><span>LangGraph</span><span>RAG</span><span>Vector DBs</span><span>Async Python</span><span>Swift</span></div>
   </header>
@@ -64,7 +64,7 @@ table.work td:first-child { width: 56%; }
       <li>One test piece can fail in several ways, and a larger plan in about a dozen.</li>
       <li>Hundreds of plans can run in a suite at a time, across several suites.</li>
     </ul>
-    <p>The agent takes on that repair work, so automation engineers are freed up for the problems that need more advanced, human reasoning.</p>
+    <p>The agent takes on that repair work, so engineers are freed up for other problems.</p>
   </section>
 
   <section>
@@ -191,7 +191,153 @@ table.work td:first-child { width: 56%; }
       <span style="--c: var(--green)"><i></i>Heals</span>
       <span style="--c: var(--yellow)"><i></i>Instruction fine-tuning back into Gemma 4</span>
     </div>
-    <p>One heal, in order:</p>
+  </figure>
+
+  <figure id="fig-tree">
+    <figcaption>
+      <h2>Charting a run on the syntax tree</h2>
+      <span class="note">Schematic with generic steps, not Apple code.</span>
+    </figcaption>
+    <div class="scroll"><svg viewBox="0 0 1000 340" role="img" aria-label="Diagram of charting a run on the syntax tree. David's parser turns the Swift test code into a syntax tree whose steps, in the order the code should run, form the control-flow prior: tap Next, wait for screen, if alert shown, continue, check Save. The run's position is charted on the tree like a stack trace: test plan, then test, then wait for screen, where the run is now. Screen data from the run's test logs shows a deviation from the prior there, so the wait's screen check is the predicate most likely to need adjustment, and it goes into the reasoning packet.">
+      <defs>
+        <marker id="tr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--blue)"/></marker>
+        <marker id="tr-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--violet)"/></marker>
+        <marker id="tr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--green)"/></marker>
+        <marker id="tr-yellow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--yellow)"/></marker>
+      </defs>
+
+      <!-- source -->
+      <rect class="d-box" x="16" y="40" width="170" height="64"/>
+      <text class="d-title" x="101" y="66" text-anchor="middle">Swift test code</text>
+      <text class="d-sub" x="101" y="84" text-anchor="middle">the team&#8217;s automation</text>
+      <path class="d-line" style="--c: var(--blue)" d="M186,72 H230" marker-end="url(#tr-blue)"/>
+      <text class="d-note" x="208" y="63" text-anchor="middle">parser</text>
+
+      <!-- syntax tree -->
+      <rect class="d-box soft" x="232" y="8" width="506" height="318" style="stroke-dasharray: 4 4"/>
+      <text class="d-title" x="248" y="32">Syntax tree (AST)</text>
+      <text class="d-sub" x="248" y="48">a tight projection of how</text>
+      <text class="d-sub" x="248" y="61">the code should behave</text>
+
+      <path class="d-line" style="--c: var(--dim)" d="M485,92 V120"/>
+      <path class="d-line" style="--c: var(--dim)" d="M485,152 L305,190 M485,152 L425,190 M485,152 L545,190 M485,152 L665,190"/>
+      <path class="d-line" style="--c: var(--dim)" d="M545,222 L500,260 M545,222 L610,260"/>
+      <path class="d-line thick" style="--c: var(--green)" d="M485,92 V120 M485,152 L425,190"/>
+      <path class="d-line dash" style="--c: var(--green)" d="M485,152 L305,190"/>
+
+      <rect class="d-box" x="430" y="60" width="110" height="32"/>
+      <text class="d-sub" x="485" y="80" text-anchor="middle" style="fill: var(--ink)">test plan</text>
+      <rect class="d-box" x="430" y="120" width="110" height="32"/>
+      <text class="d-sub" x="485" y="140" text-anchor="middle" style="fill: var(--ink)">test</text>
+      <rect class="d-box" x="250" y="190" width="110" height="32" style="stroke: var(--blue)"/>
+      <text class="d-sub" x="305" y="210" text-anchor="middle" style="fill: var(--ink)">tap Next</text>
+      <text class="d-note" x="254" y="185" style="fill: var(--blue)">1</text>
+      <rect class="d-box" x="370" y="190" width="110" height="32" style="stroke: var(--yellow); stroke-width: 2"/>
+      <text class="d-sub" x="425" y="210" text-anchor="middle" style="fill: var(--ink)">wait for screen</text>
+      <text class="d-note" x="374" y="185" style="fill: var(--blue)">2</text>
+      <rect class="d-box" x="490" y="190" width="110" height="32" style="stroke: var(--blue)"/>
+      <text class="d-sub" x="545" y="210" text-anchor="middle" style="fill: var(--ink)">if alert shown</text>
+      <text class="d-note" x="494" y="185" style="fill: var(--blue)">3</text>
+      <rect class="d-box" x="610" y="190" width="110" height="32" style="stroke: var(--blue)"/>
+      <text class="d-sub" x="665" y="210" text-anchor="middle" style="fill: var(--ink)">check Save</text>
+      <text class="d-note" x="614" y="185" style="fill: var(--blue)">5</text>
+      <rect class="d-box soft" x="450" y="260" width="100" height="32"/>
+      <text class="d-sub" x="500" y="280" text-anchor="middle" style="fill: var(--muted)">dismiss alert</text>
+      <rect class="d-box" x="560" y="260" width="100" height="32" style="stroke: var(--blue)"/>
+      <text class="d-sub" x="610" y="280" text-anchor="middle" style="fill: var(--ink)">continue</text>
+      <text class="d-note" x="564" y="255" style="fill: var(--blue)">4</text>
+
+      <text class="d-note" x="425" y="240" text-anchor="middle" style="fill: var(--yellow)">run is here</text>
+
+      <!-- the run -->
+      <rect class="d-box" x="770" y="23" width="214" height="104"/>
+      <text class="d-title" x="786" y="45">Stack trace of the run</text>
+      <text class="d-note" x="786" y="66">test plan</text>
+      <text class="d-note" x="786" y="82">&#9492; test</text>
+      <text class="d-note" x="798" y="98" style="fill: var(--yellow)">&#9492; wait for screen &#9664;</text>
+      <text class="d-sub" x="786" y="118">where the run is, exactly</text>
+
+      <rect class="d-box" x="870" y="143" width="114" height="62"/>
+      <text class="d-title" x="927" y="165" text-anchor="middle">Screen data</text>
+      <text class="d-sub" x="927" y="182" text-anchor="middle">screenshots, taps</text>
+      <text class="d-sub" x="927" y="195" text-anchor="middle">from test logs</text>
+
+      <path class="d-line" style="--c: var(--green)" d="M815,127 V229" marker-end="url(#tr-green)"/>
+      <path class="d-line" style="--c: var(--violet)" d="M927,205 V229" marker-end="url(#tr-violet)"/>
+
+      <rect class="d-box" x="770" y="231" width="214" height="80" style="stroke: var(--yellow)"/>
+      <text class="d-title" x="786" y="253">Deviation from the prior</text>
+      <text class="d-sub" x="786" y="271">likeliest predicate to adjust:</text>
+      <text class="d-sub" x="786" y="285">the wait&#8217;s screen check,</text>
+      <text class="d-sub" x="786" y="299">into the reasoning packet</text>
+    </svg></div>
+    <div class="legend">
+      <span style="--c: var(--blue)"><i></i>Control-flow prior: steps in the order the code should run</span>
+      <span style="--c: var(--green)"><i></i>The run&#8217;s position, charted like a stack trace</span>
+      <span style="--c: var(--yellow)"><i></i>Deviation: the predicate most likely to need adjustment</span>
+    </div>
+    <p>The parser gives the agent a map of the test code before it runs. As a run executes, its position is charted on that map like a stack trace, so where the run leaves the prior, together with the screen data, shows which predicates are likeliest to need adjustment.</p>
+  </figure>
+
+  <figure id="fig-loop">
+    <figcaption>
+      <h2>One heal, step by step</h2>
+      <span class="note">Schematic of the public description, not an internal design document.</span>
+    </figcaption>
+    <div class="scroll"><svg viewBox="0 0 1000 290" role="img" aria-label="Diagram of one heal. A test device, a VM in the device gym, runs the test plan. Over David's serial protocol, its test logs carry back screenshots and taps. A worker filters the metrics and applies context engineering over the syntax tree and the screen data; the syntax tree supplies the control-flow prior and the run's charted path. The worker produces a reasoning packet of the predicates most likely to need adjustment. The agent makes the edits and then recompiles, and the healed test code goes back to the test devices.">
+      <defs>
+        <marker id="lp-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--blue)"/></marker>
+        <marker id="lp-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--violet)"/></marker>
+        <marker id="lp-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--green)"/></marker>
+        <marker id="lp-yellow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--yellow)"/></marker>
+      </defs>
+
+      <rect class="d-box" x="418" y="16" width="164" height="62"/>
+      <text class="d-title" x="500" y="38" text-anchor="middle">Syntax tree (AST)</text>
+      <text class="d-sub" x="500" y="55" text-anchor="middle">control-flow prior and</text>
+      <text class="d-sub" x="500" y="68" text-anchor="middle">the run&#8217;s charted path</text>
+      <path class="d-line" style="--c: var(--blue)" d="M500,78 V116" marker-end="url(#lp-blue)"/>
+
+      <rect class="d-box" x="16" y="118" width="164" height="90"/>
+      <text class="d-title" x="98" y="142" text-anchor="middle">Test device</text>
+      <text class="d-sub" x="98" y="160" text-anchor="middle">a VM in the device gym</text>
+      <text class="d-sub" x="98" y="173" text-anchor="middle">runs the test plan</text>
+
+      <rect class="d-box" x="217" y="118" width="164" height="90"/>
+      <text class="d-title" x="299" y="142" text-anchor="middle">Serial protocol</text>
+      <text class="d-sub" x="299" y="160" text-anchor="middle">David&#8217;s own; test logs</text>
+      <text class="d-sub" x="299" y="173" text-anchor="middle">carry back screenshots</text>
+      <text class="d-sub" x="299" y="186" text-anchor="middle">and which taps occurred</text>
+
+      <rect class="d-box" x="418" y="118" width="164" height="90"/>
+      <text class="d-title" x="500" y="142" text-anchor="middle">Worker</text>
+      <text class="d-sub" x="500" y="160" text-anchor="middle">filters the metrics;</text>
+      <text class="d-sub" x="500" y="173" text-anchor="middle">context engineering over</text>
+      <text class="d-sub" x="500" y="186" text-anchor="middle">tree and screen data</text>
+
+      <rect class="d-box" x="619" y="118" width="164" height="90"/>
+      <text class="d-title" x="701" y="142" text-anchor="middle">Reasoning packet</text>
+      <text class="d-sub" x="701" y="160" text-anchor="middle">the predicates most</text>
+      <text class="d-sub" x="701" y="173" text-anchor="middle">likely to need</text>
+      <text class="d-sub" x="701" y="186" text-anchor="middle">adjustment</text>
+
+      <rect class="d-box" x="820" y="118" width="164" height="90"/>
+      <text class="d-title" x="902" y="142" text-anchor="middle">Agent</text>
+      <text class="d-sub" x="902" y="160" text-anchor="middle">makes the edits,</text>
+      <text class="d-sub" x="902" y="173" text-anchor="middle">then recompiles</text>
+
+      <path class="d-line" style="--c: var(--violet)" d="M180,163 H215" marker-end="url(#lp-violet)"/>
+      <path class="d-line" style="--c: var(--violet)" d="M381,163 H416" marker-end="url(#lp-violet)"/>
+      <path class="d-line" style="--c: var(--violet)" d="M582,163 H617" marker-end="url(#lp-violet)"/>
+      <path class="d-line" style="--c: var(--green)" d="M783,163 H818" marker-end="url(#lp-green)"/>
+      <path class="d-line dash" style="--c: var(--green)" d="M902,208 V252 H98 V210" marker-end="url(#lp-green)"/>
+      <text class="d-note" x="500" y="272" text-anchor="middle">healed test code</text>
+    </svg></div>
+    <div class="legend">
+      <span style="--c: var(--violet)"><i></i>Context back from the run</span>
+      <span style="--c: var(--blue)"><i></i>Syntax tree</span>
+      <span style="--c: var(--green)"><i></i>Heals</span>
+    </div>
     <ul class="points">
       <li>Runs report back. A test runs on a device in the gym, and over David&rsquo;s serial protocol its test logs carry context back to the agent, such as screenshots and which taps occurred.</li>
       <li>The run is charted. Each run&rsquo;s position in the code is recorded exactly against the syntax tree, like a stack trace charted as a path, and compared with the control-flow prior.</li>
