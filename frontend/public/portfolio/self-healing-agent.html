@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Self-Healing Coding Agent &middot; David Ledbetter</title>
-<meta name="description" content="David Ledbetter's flagship project at Apple: a self-healing coding agent built around a world model of screens and their transitions. His in-house harness performs the repair; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning Gemma 4, which now runs the agent on its own.">
+<meta name="description" content="David Ledbetter's flagship project at Apple: a self-healing coding agent that repairs the test code UI issues and OS quirks break on every release, freeing automation engineers for problems that need human reasoning. It is built around a world model of screens and their transitions. His in-house harness performs the repair; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning Gemma 4, which now runs the agent on its own.">
 <link rel="icon" href="/favicon.ico">
 <meta property="og:image" content="https://www.davidamosledbetter.com/og-image.jpg?v=3">
 <meta property="og:image:width" content="1200">
@@ -41,7 +41,7 @@ table.work td:first-child { width: 56%; }
   <header class="hero">
     <div class="eyebrow">Apple, San Diego &middot; 2024&ndash;present</div>
     <h1>Self-Healing Coding Agent</h1>
-    <p class="lede">David's flagship project at Apple, on Release Validation, where he is lead researcher and engineer: a self-healing coding agent built around a world model that treats screens and the transitions between them as a sandbox to explore. The agent lives in a gym where writing code is its lever toward healing the automation engineering team&rsquo;s test plans. David's in-house harness performs the repair and treats the model as a swappable reasoning engine; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning (IFT) Gemma 4, which now runs the agent on its own.</p>
+    <p class="lede">Releases can ship several times a day, and on each build UI issues and OS quirks break the automation engineering team&rsquo;s test code. David's flagship project at Apple, on Release Validation, where he is lead researcher and engineer, is the self-healing coding agent that repairs it, freeing automation engineers for the problems that need advanced, human reasoning. It is built around a world model that treats screens and the transitions between them as a sandbox to explore. The agent lives in a gym where writing code is its lever toward healing the team&rsquo;s test plans. David's in-house harness performs the repair and treats the model as a swappable reasoning engine; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning (IFT) Gemma 4, which now runs the agent on its own.</p>
     <div class="meta"><span><b>Role</b> ML/Full Stack Software Engineer</span><span><b>Dates</b> May 2024 &ndash; Present</span></div>
     <div class="tags"><span>World model</span><span>Claude</span><span>Gemma 4</span><span>Instruction fine-tuning</span><span>On-device ML</span><span>Mac Studio</span><span>Local LLM serving</span><span>LangGraph</span><span>RAG</span><span>Vector DBs</span><span>Async Python</span><span>Swift</span></div>
   </header>
@@ -57,7 +57,41 @@ table.work td:first-child { width: 56%; }
   </section>
 
   <section>
+    <h2>The problem it solves</h2>
+    <p class="lede" style="font-size:15px">Several releases can come out in a day, and the cadence keeps increasing. On each build, UI issues and OS quirks break the automation engineering team&rsquo;s test code.</p>
+    <ul class="points">
+      <li>Every break was an engineer&rsquo;s ticket: grab it, triage the failure mode, then code and validate the change.</li>
+      <li>One test piece can fail in several ways, and a larger plan in about a dozen.</li>
+      <li>Hundreds of plans can run in a suite at a time, across several suites.</li>
+    </ul>
+    <p>The agent takes on that repair work, so automation engineers are freed up for the problems that need more advanced, human reasoning.</p>
+  </section>
+
+  <section>
+    <h2>Earlier versions</h2>
+    <p class="lede" style="font-size:15px">Before the current agent, David built three earlier versions, each aimed at the same break-and-fix work.</p>
+    <div class="callouts">
+      <div class="callout" style="--c: var(--blue)">
+        <span class="tag">Earlier version</span>
+        <h3>LLM debugging assistant</h3>
+        <p>Identified, classified and resolved live automation bugs, adapting scripts to high-volume UI changes.</p>
+      </div>
+      <div class="callout" style="--c: var(--violet)">
+        <span class="tag">Earlier version</span>
+        <h3>Automated coding agent</h3>
+        <p>Ingested failure cases from the cloud, inspected test results and UI tree bundles, and fixed the underlying code.</p>
+      </div>
+      <div class="callout" style="--c: var(--orange)">
+        <span class="tag">Earlier version</span>
+        <h3>Fine-tuned foundation model</h3>
+        <p>Fine-tuned an internal foundation language model to automate simple code fixes and avoid ticket overload.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
     <h2>What the agent does</h2>
+    <p class="lede" style="font-size:15px">Each piece serves that loop: telling which failures are real, and writing the code that heals them.</p>
     <ul class="points">
       <li>Explores a world model. David developed a world model that treats screens and the transitions between them as a sandbox to explore; the agent lives in a gym where writing code is its lever toward healing the automation engineering team&rsquo;s test plans.</li>
       <li>Repairs code through David's harness. He designed the in-house harness, modeled after LangGraph, that performs the repair, treating the model as a swappable reasoning engine with a local Gemma 4 as the tool caller.</li>
@@ -158,28 +192,6 @@ table.work td:first-child { width: 56%; }
       <span style="--c: var(--yellow)"><i></i>Instruction fine-tuning back into Gemma 4</span>
     </div>
   </figure>
-
-  <section>
-    <h2>Earlier versions</h2>
-    <p class="lede" style="font-size:15px">Before the current agent, David built three earlier versions of it.</p>
-    <div class="callouts">
-      <div class="callout" style="--c: var(--blue)">
-        <span class="tag">Earlier version</span>
-        <h3>LLM debugging assistant</h3>
-        <p>Identified, classified and resolved live automation bugs, adapting scripts to high-volume UI changes.</p>
-      </div>
-      <div class="callout" style="--c: var(--violet)">
-        <span class="tag">Earlier version</span>
-        <h3>Automated coding agent</h3>
-        <p>Ingested failure cases from the cloud, inspected test results and UI tree bundles, and fixed the underlying code.</p>
-      </div>
-      <div class="callout" style="--c: var(--orange)">
-        <span class="tag">Earlier version</span>
-        <h3>Fine-tuned foundation model</h3>
-        <p>Fine-tuned an internal foundation language model to automate simple code fixes and avoid ticket overload.</p>
-      </div>
-    </div>
-  </section>
 
   <section>
     <h2>The test infrastructure around it</h2>
