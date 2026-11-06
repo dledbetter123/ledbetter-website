@@ -41,7 +41,7 @@ table.work td:first-child { width: 56%; }
   <header class="hero">
     <div class="eyebrow">Apple, San Diego &middot; 2024&ndash;present</div>
     <h1>Self-Healing Coding Agent</h1>
-    <p class="lede">David's flagship project at Apple, on Release Validation, where he is lead researcher and engineer: a self-healing coding agent built around a world model that treats screens and the transitions between them as a sandbox to explore. The agent lives in a gym where writing code is its lever toward healing a test plan. David's in-house harness performs the repair and treats the model as a swappable reasoning engine; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning (IFT) Gemma 4, which now runs the agent on its own.</p>
+    <p class="lede">David's flagship project at Apple, on Release Validation, where he is lead researcher and engineer: a self-healing coding agent built around a world model that treats screens and the transitions between them as a sandbox to explore. The agent lives in a gym where writing code is its lever toward healing the automation engineering team&rsquo;s test plans. David's in-house harness performs the repair and treats the model as a swappable reasoning engine; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning (IFT) Gemma 4, which now runs the agent on its own.</p>
     <div class="meta"><span><b>Role</b> ML/Full Stack Software Engineer</span><span><b>Dates</b> May 2024 &ndash; Present</span></div>
     <div class="tags"><span>World model</span><span>Claude</span><span>Gemma 4</span><span>Instruction fine-tuning</span><span>On-device ML</span><span>Mac Studio</span><span>Local LLM serving</span><span>LangGraph</span><span>RAG</span><span>Vector DBs</span><span>Async Python</span><span>Swift</span></div>
   </header>
@@ -59,14 +59,14 @@ table.work td:first-child { width: 56%; }
   <section>
     <h2>What the agent does</h2>
     <ul class="points">
-      <li>Explores a world model. David developed a world model that treats screens and the transitions between them as a sandbox to explore; the agent lives in a gym where writing code is its lever toward healing a test plan.</li>
+      <li>Explores a world model. David developed a world model that treats screens and the transitions between them as a sandbox to explore; the agent lives in a gym where writing code is its lever toward healing the automation engineering team&rsquo;s test plans.</li>
       <li>Repairs code through David's harness. He designed the in-house harness, modeled after LangGraph, that performs the repair, treating the model as a swappable reasoning engine with a local Gemma 4 as the tool caller.</li>
       <li>Repairs its plan online. The agent ingests the parsed, assembled form of the compiled Swift code to build a control-flow prior, is taught to measure incoming automation for deviations from that prior, and heals them.</li>
       <li>Explores code as a partially observable Markov decision process (POMDP), so the agent acts on true divergences and ignores false error reports.</li>
       <li>Reads through a RAG pipeline. Gemma 4 summarizes vision results and execution-flow traces into Claude's context.</li>
       <li>Gets its measurements from an async Python probe manager that runs outside the agent and delivers consistent raw metrics into the agent flow without adding latency.</li>
       <li>Learned from its own heals. David built a corpus by running the harness with Claude as the reasoning engine, which let him perform instruction fine-tuning (IFT) of Gemma 4 on online plan repair on a Mac Studio. <span>The fine-tuned Gemma 4 now runs the agent on its own in place of Claude; it is deployed in the lab and saves $15,000 a month in token spend.</span></li>
-      <li>Reports to a dashboard David built, which monitors the agent's runs across the device gym. <span>Opened to the wider org, it lets teams schedule jobs and keep up with their automation, saving 3&ndash;6 hours per person, per day, across the organization.</span></li>
+      <li>Reports to a dashboard David built, which monitors the agent's runs across the device gym. <span>Opened to the greater QA org, it lets teams schedule jobs and keep up with their automation, saving 3&ndash;6 hours per person, per day, across the organization.</span></li>
       <li>Runs alongside a fleet. David owned the deployment of a fleet of autonomous AI agents on an internal server spread across 3 Macs: the 3 Mac Studios act as ML-capable operators over a virtual distributed computing environment where tests run on deployed VMs that act as test devices and can talk to each other. He also built a local load-balancing cluster of lightweight agents serving LLM capabilities across applications.</li>
     </ul>
   </section>
