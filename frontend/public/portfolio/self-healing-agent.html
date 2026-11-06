@@ -94,8 +94,8 @@ table.work td:first-child { width: 56%; }
     <p class="lede" style="font-size:15px">Each piece serves that loop: telling which failures are real, and writing the code that heals them.</p>
     <ul class="points">
       <li>Explores a world model. David developed a world model that treats screens and the transitions between them as a sandbox to explore; the agent lives in a gym where writing code is its lever toward healing the automation engineering team&rsquo;s test plans.</li>
-      <li>Repairs code through David's harness. He designed the in-house harness, modeled after LangGraph, that performs the repair, treating the model as a swappable reasoning engine with a local Gemma 4 as the tool caller.</li>
-      <li>Repairs its plan online. The agent ingests the parsed, assembled form of the compiled Swift code to build a control-flow prior, is taught to measure incoming automation for deviations from that prior, and heals them.</li>
+      <li>Repairs code through David's harness. He designed the in-house harness, modeled after LangGraph, that performs the repair, treating the model as a swappable reasoning engine with a local Gemma 4 as the tool caller. LangGraph itself could not be used: the way the test devices communicate with the agent kept it from working in quick succession, so David developed his own serial communication protocol for them.</li>
+      <li>Repairs its plan online. David's parser turns the Swift test code into its syntax tree (AST), a tight projection of how the code should behave that serves as a control-flow prior. The agent is taught to measure incoming automation for deviations from that prior, and heals them.</li>
       <li>Explores code as a partially observable Markov decision process (POMDP), so the agent acts on true divergences and ignores false error reports.</li>
       <li>Gets its measurements from an async Python probe manager that runs outside the agent and delivers consistent raw metrics into the agent flow without adding latency.</li>
       <li>Learned from its own heals. David built a corpus by running the harness with Claude as the reasoning engine, which let him perform instruction fine-tuning (IFT) of Gemma 4 on online plan repair on a Mac Studio. <span>The fine-tuned Gemma 4 now runs the agent on its own in place of Claude; it is deployed in the lab and saves $15,000 a month in token spend.</span></li>
@@ -107,9 +107,9 @@ table.work td:first-child { width: 56%; }
   <figure id="fig-heal">
     <figcaption>
       <h2>How a heal runs</h2>
-      <span class="note">Schematic drawn from the public CV, not an internal design document.</span>
+      <span class="note">Schematic of the public description, not an internal design document.</span>
     </figcaption>
-    <div class="scroll"><svg viewBox="0 0 1000 470" role="img" aria-label="Diagram of the self-healing agent. Incoming automation and compiled Swift feed a control-flow prior inside an in-house harness modeled after LangGraph. A probe manager feeds raw metrics to a local Gemma 4 model, which does online plan repair and serves as the tool caller in Claude runs. The harness performs the repair, calling Claude as its reasoning engine in Claude runs, and produces healed code. A dashboard monitors runs. Running the harness with Claude builds a corpus for instruction fine-tuning Gemma 4 on online plan repair, and the fine-tuned Gemma 4 then runs the agent on its own.">
+    <div class="scroll"><svg viewBox="0 0 1000 470" role="img" aria-label="Diagram of the self-healing agent. Incoming automation and the parsed syntax tree of the Swift test code feed a control-flow prior inside an in-house harness modeled after LangGraph. A probe manager feeds raw metrics to a local Gemma 4 model, which does online plan repair and serves as the tool caller in Claude runs. The harness performs the repair, calling Claude as its reasoning engine in Claude runs, and produces healed code. A dashboard monitors runs. Running the harness with Claude builds a corpus for instruction fine-tuning Gemma 4 on online plan repair, and the fine-tuned Gemma 4 then runs the agent on its own.">
       <defs>
         <marker id="ah-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--blue)"/></marker>
         <marker id="ah-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--violet)"/></marker>
@@ -124,8 +124,8 @@ table.work td:first-child { width: 56%; }
       <text class="d-sub" x="116" y="111" text-anchor="middle">the device gym</text>
 
       <rect class="d-box" x="16" y="150" width="200" height="64"/>
-      <text class="d-title" x="116" y="174" text-anchor="middle">Compiled Swift</text>
-      <text class="d-sub" x="116" y="192" text-anchor="middle">parsed, assembled form</text>
+      <text class="d-title" x="116" y="174" text-anchor="middle">Swift test code</text>
+      <text class="d-sub" x="116" y="192" text-anchor="middle">parsed syntax tree (AST)</text>
 
       <rect class="d-box" x="16" y="244" width="200" height="80"/>
       <text class="d-title" x="116" y="268" text-anchor="middle">Probe manager</text>
@@ -191,6 +191,13 @@ table.work td:first-child { width: 56%; }
       <span style="--c: var(--green)"><i></i>Heals</span>
       <span style="--c: var(--yellow)"><i></i>Instruction fine-tuning back into Gemma 4</span>
     </div>
+    <p>One heal, in order:</p>
+    <ul class="points">
+      <li>Runs report back. A test runs on a device in the gym, and over David&rsquo;s serial protocol its test logs carry context back to the agent, such as screenshots and which taps occurred.</li>
+      <li>The run is charted. Each run&rsquo;s position in the code is recorded exactly against the syntax tree, like a stack trace charted as a path, and compared with the control-flow prior.</li>
+      <li>A worker builds a reasoning packet. It reasons over the filtered metrics, and heavy context engineering exposes the predicates (the conditions the test code checks) most likely to need adjustment, based on the syntax tree and the screen data.</li>
+      <li>The agent heals the code. The reasoning packet is delivered to the agent, which makes the edits and then recompiles.</li>
+    </ul>
   </figure>
 
   <section>
