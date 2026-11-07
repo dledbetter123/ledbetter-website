@@ -18,7 +18,7 @@
     "Prompt rule: Apple projects were built after David joined in May 2024, so they cannot be why he was hired; no hiring story is documented."
    ],
    "must_include": [
-    "Claude runs with a local Gemma 4 as tool caller, and the fine-tuned Gemma 4 that now does everything (or the $15,000-a-month token savings)"
+    "Claude runs with a local Gemma 4 as tool caller, and the fine-tuned Gemma 4 that now does everything (or the projected $15,000-a-month token savings)"
    ],
    "must_not": [
     "invents internal Apple project names, team names other than Release Validation, or internal tools",
@@ -89,7 +89,7 @@
     "Prompt rule: Apple projects were built after David joined in May 2024, so they cannot be why he was hired; no hiring story is documented."
    ],
    "must_include": [
-    "$15,000 a month in token spend (from instruction fine-tuning Gemma 4 on online plan repair)"
+    "a projected $15,000 a month in token spend (from instruction fine-tuning Gemma 4 on online plan repair)"
    ],
    "must_not": [
     "states any savings figure other than $15,000 a month in token spend for the distillation (3-6 hours per person for the dashboard is also sourced)",
@@ -2462,7 +2462,7 @@
     "KB (2026-11-04): Crazyflie drones ran an obstacle-detection network onboard (earlier example, not the headline)."
    ],
    "must_include": [
-    "the Apple Gemma 4 fine-tune on a Mac Studio (local model, saves $15,000 a month in token spend)",
+    "the Apple Gemma 4 fine-tune on a Mac Studio (local model, projected to save $15,000 a month in token spend)",
     "Pathion's in-browser on-device tutor"
    ],
    "must_not": [
@@ -2537,7 +2537,7 @@
    ],
    "must_include": [
     "in Claude runs Claude repairs code in an in-house harness modeled after LangGraph and a local Gemma 4 can be the tool caller; the fine-tuned Gemma 4 does the whole job",
-    "the fine-tuned Gemma 4 model saves about $15,000 a month in token spend"
+    "the fine-tuned Gemma 4 model is projected to save about $15,000 a month in token spend"
    ],
    "must_not": [
     "invents numbers, components or results that are not in the page, CV or KB",
