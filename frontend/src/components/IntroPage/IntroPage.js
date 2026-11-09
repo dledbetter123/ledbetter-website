@@ -11,7 +11,8 @@ const INTRO_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/intro.t
 const DEFAULT_INTRO =
   "I'm David Ledbetter, I'm a machine learning and full-stack software engineer at Apple, building agentic AI systems. I hold BS and MS degrees in Computer Science from UMBC. Scroll the cards below to see my projects… or ask LedbetterLM in the corner anything about my work.";
 
-const IntroPage = () => {
+// `footer` renders at the bottom of the welcome screen (MainPage puts the contact tiles there).
+const IntroPage = ({ footer = null }) => {
   const [backendStatus, setBackendStatus] = useState('loading');
   const [hoverTitle, setHoverTitle] = useState('');
   const [welcomeText, setWelcomeText] = useState('');
@@ -132,6 +133,7 @@ const IntroPage = () => {
           </span>
         </p>
       </div>
+      {footer && <div className="introFooter">{footer}</div>}
     </section>
   );
 };

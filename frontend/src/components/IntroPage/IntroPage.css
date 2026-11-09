@@ -2,9 +2,10 @@
 
 .introPage {
     display: flex;
+    flex-direction: column; /* the centered intro, then the footer (contact tiles) at the bottom */
     justify-content: center;
-    align-items: stretch; /* let .content span the full height */
-    height: 100vh; /* Full viewport height */
+    align-items: center;
+    min-height: 100vh; /* at least the full viewport; grows if the footer doesn't fit */
     color: white; /* White text */
     background-color: transparent; /* the fixed glyph wall + black body are the backdrop */
     /* image fills to the bezels (viewport-fit=cover); keep the TEXT out of the safe areas */
@@ -13,6 +14,7 @@
     box-sizing: border-box;
   }
 .introPage .content {
+  flex: 1 1 auto; /* takes the space above the footer, so the text centers in it */
   max-width: 600px; /* Maximum width of the content */
   width: 100%;
   z-index: 2; /* Ensure the text is above the image */
@@ -84,4 +86,16 @@
     max-width: 600px; /* Maximum width of the content */
     z-index: 2; /* Ensure the text is above the image */
   }
+}
+
+/* The contact tiles at the bottom of the welcome screen. The bottom padding keeps them
+   clear of the floating "Ask LedbetterLM" button. */
+.introFooter {
+  width: 100%;
+  max-width: 880px;
+  padding: 24px 0 56px;
+  z-index: 50;
+}
+.introFooter .contact-carousel-style {
+  margin-bottom: 0;
 }

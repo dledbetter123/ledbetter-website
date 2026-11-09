@@ -151,10 +151,16 @@ const MainPage = () => {
         <div className="bar"></div>
       </button>
       <div className="content-layer">
-        <div ref={homeRef}><IntroPage /></div>
-        <div ref={contactRef} className='contact-carousel-style'>
-          <h3 className='carousel-heading'>Contact</h3>
-          <ContactTiles />
+        {/* The contact tiles sit at the bottom of the welcome screen. */}
+        <div ref={homeRef}>
+          <IntroPage
+            footer={
+              <div ref={contactRef} className='contact-carousel-style'>
+                <h3 className='carousel-heading'>Contact</h3>
+                <ContactTiles />
+              </div>
+            }
+          />
         </div>
         <div ref={portfolioRef} className='carousel-style'>
           <h3 className='carousel-heading'>Personal Projects &amp; Research</h3>
