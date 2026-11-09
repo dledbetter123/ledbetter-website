@@ -23,7 +23,7 @@ const projects = [
     slug: 'self-healing-agent',
     title: 'Self-Healing Automation (Apple)',
     description:
-      "My flagship project at Apple, where I'm lead researcher and engineer. UI issues and OS quirks break test code on every release; Self-Healing Automation is the dynamic system I built so those test plans heal themselves, around a world model of screens and their transitions.",
+      "My flagship project at Apple, where I lead research and engineering. UI issues and OS quirks break test code on every release; Self-Healing Automation is the dynamic system I built so those test plans heal themselves, around a world model of screens and their transitions.",
     opener: "Tell me about David's Self-Healing Automation project at Apple.",
   },
   {
