@@ -3,6 +3,7 @@ import './ProjectCard.css';
 import useTypeOnVisible from '../../hooks/useTypeOnVisible';
 import useScrambleOnVisible from '../../hooks/useScrambleOnVisible';
 import usePortfolioDescription from '../../hooks/usePortfolioDescription';
+import useFitCardText from '../../hooks/useFitCardText';
 import { portfolioUrl } from '../../data/projects';
 import { logCardClick } from '../../lib/cardClick';
 
@@ -19,10 +20,13 @@ const ProjectCard = ({ project }) => {
   const [titleRef, titleText] = useTypeOnVisible(project.title, 45, { onDone: () => setTitleDone(true) });
   const [descRef, descriptionText] = useScrambleOnVisible(fullDescription, 700, 0, { start: titleDone });
   const bidi = { unicodeBidi: 'bidi-override', direction: 'ltr' };
+  const { cardRef, ghostRef, fontSize } = useFitCardText(project.title, fullDescription);
 
   return (
     <div
+      ref={cardRef}
       className={`project-card ${isHovered ? 'hovered' : ''}`}
+      style={{ fontSize }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => {
@@ -33,6 +37,11 @@ const ProjectCard = ({ project }) => {
       <h2 ref={titleRef}>{titleText}</h2>
       <p ref={descRef} style={bidi}>{descriptionText}</p>
       <div className="project-card-footer">Open the project →</div>
+      <div ref={ghostRef} className="card-fit-ghost" aria-hidden="true">
+        <h2>{project.title}</h2>
+        <p>{fullDescription || ''}</p>
+        <div className="project-card-footer">Open the project →</div>
+      </div>
     </div>
   );
 };

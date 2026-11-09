@@ -177,3 +177,20 @@
   position: relative;
   margin-bottom: 48px;
 }
+
+/* Project and publication cards are fixed 4:5 portraits (ProjectCard.css), so each
+   slide is narrow: about two and a half cards show in the 880px frame on desktop,
+   and one card plus the next card's edge on a phone. */
+.carousel-style .carousel-item,
+.pub-carousel-style .carousel-item {
+  flex-basis: 40%;
+  padding: 0 10px;
+}
+
+@media (max-width: 600px) {
+  .carousel-style .carousel-item,
+  .pub-carousel-style .carousel-item {
+    flex-basis: 88%;
+    padding: 0 8px;
+  }
+}

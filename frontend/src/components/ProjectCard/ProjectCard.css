@@ -1,24 +1,66 @@
-/* ProjectCard.css */
+/* ProjectCard.css (also used by PublicationCard) */
+
+/* Every card is a fixed 4:5 portrait. A longer text never grows the card: the font
+   shrinks instead (useFitCardText sets font-size on the card, and everything inside
+   is sized in em so it scales together). */
 .project-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    box-sizing: border-box;
+    overflow: hidden;
     background-color: rgba(10, 10, 10, 0.42);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
     border: 1px solid rgba(255, 255, 255, 0.18);
     color: white;
     padding: 20px;
-    margin: 10px;
+    margin: 10px 0;
     cursor: pointer;
     border-radius: 20px;
+    line-height: 1.4;
     transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
   }
-  
+
+  .project-card h2 {
+    font-size: 1.3em;
+    line-height: 1.25;
+    margin: 0 0 0.6em;
+  }
+
+  .project-card p {
+    font-size: 1em;
+    margin: 0;
+  }
+
+  .project-card h2, .project-card p {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
   .project-card-footer {
     color: #00FF00;
-    margin-top: 20px;
+    margin-top: auto;
+    padding-top: 0.8em;
+    font-size: 0.95em;
     font-weight: bold;
     text-align: center;
   }
-  
+
+  /* Hidden copy of the final text, laid out in the card's content box, that
+     useFitCardText measures. Same flex column as the card so the fit is exact. */
+  .card-fit-ghost {
+    position: absolute;
+    inset: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
   .project-card.hovered, .project-card:hover {
     transform: scale(1.05);
     background-color: white;
@@ -29,25 +71,8 @@
     }
   }
 
-  .project-card h2, .project-card p {
-    word-wrap: break-word; 
-  }
-
-/* ProjectCard.css adjustment for mobile */
 @media (max-width: 600px) {
     .project-card {
-      /* Fill the carousel slide: the next card's peek (see Carousel.css) is the
-         swipe cue now, so the card no longer needs side gutters — full width
-         keeps long descriptions from reading as a narrow column. */
       margin: 20px 0;
-      width: 100%;
-      box-sizing: border-box;
-    }
-  
-    .project-card h2, .project-card p {
-      font-size: 16px;
-      line-height: 1.5;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
     }
   }

@@ -3,6 +3,7 @@ import '../ProjectCard/ProjectCard.css';
 import './PublicationCard.css';
 import useTypeOnVisible from '../../hooks/useTypeOnVisible';
 import useScrambleOnVisible from '../../hooks/useScrambleOnVisible';
+import useFitCardText from '../../hooks/useFitCardText';
 import { logCardClick } from '../../lib/cardClick';
 
 // A carousel card for a publication / presentation. Unlike ProjectCard it isn't
@@ -18,6 +19,7 @@ const PublicationCard = ({ title, citation, url, footer = 'Read the paper →' }
   const [titleRef, titleText] = useTypeOnVisible(title, 45, { onDone: () => setTitleDone(true) });
   const [descRef, citationText] = useScrambleOnVisible(citation, 700, 0, { start: titleDone });
   const bidi = { unicodeBidi: 'bidi-override', direction: 'ltr' };
+  const { cardRef, ghostRef, fontSize } = useFitCardText(title, citation);
 
   // Auto-dismiss the hint shortly after it shows.
   useEffect(() => {
@@ -37,16 +39,22 @@ const PublicationCard = ({ title, citation, url, footer = 'Read the paper →' }
 
   return (
     <div
+      ref={cardRef}
       className={`project-card ${isHovered ? 'hovered' : ''}`}
       onMouseEnter={() => clickable && setIsHovered(true)}
       onMouseLeave={() => clickable && setIsHovered(false)}
       onClick={handleClick}
-      style={{ position: 'relative', ...(clickable ? {} : { cursor: 'default' }) }}
+      style={{ fontSize, ...(clickable ? {} : { cursor: 'default' }) }}
     >
       <h2 ref={titleRef}>{titleText}</h2>
       <p ref={descRef} style={bidi}>{citationText}</p>
       <div className="project-card-footer">{footer}</div>
       {showHint && <div className="pub-hint">no online link</div>}
+      <div ref={ghostRef} className="card-fit-ghost" aria-hidden="true">
+        <h2>{title}</h2>
+        <p>{citation}</p>
+        <div className="project-card-footer">{footer}</div>
+      </div>
     </div>
   );
 };
