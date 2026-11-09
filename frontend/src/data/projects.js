@@ -21,10 +21,10 @@ const projects = [
   {
     // Proprietary Apple work: no public repo, so the card carries its own description.
     slug: 'self-healing-agent',
-    title: 'Self-Healing Coding Agent (Apple)',
+    title: 'Self-Healing Automation (Apple)',
     description:
-      "My flagship project at Apple, on Release Validation, where I'm lead researcher and engineer. Releases can ship several times a day, and UI issues and OS quirks break the automation team's test code on each one; my self-healing coding agent repairs it, so engineers are freed up for other problems. It's built around a world model of screens and their transitions, and my in-house harness performs the repair.",
-    opener: "Tell me about David's self-healing coding agent at Apple.",
+      "My flagship project at Apple, on Release Validation, where I'm lead researcher and engineer. Releases can ship several times a day, and UI issues and OS quirks break the automation team's test code on each one. Self-Healing Automation is the dynamic system I built so those test plans heal themselves, freeing engineers up for other problems. It's built around a world model of screens and their transitions, and my in-house harness performs the repair.",
+    opener: "Tell me about David's Self-Healing Automation project at Apple.",
   },
   {
     // The full abstract, contributions and figures live in data/thesis.js.

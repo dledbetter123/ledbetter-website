@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Self-Healing Coding Agent &middot; David Ledbetter</title>
-<meta name="description" content="David Ledbetter's flagship project at Apple: a self-healing coding agent that repairs the test code UI issues and OS quirks break on every release, so engineers are freed up for other problems. It is built around a world model of screens and their transitions. His in-house harness performs the repair; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning Gemma 4, which now runs the agent on its own.">
+<title>Self-Healing Automation &middot; David Ledbetter</title>
+<meta name="description" content="David Ledbetter's flagship project at Apple. Self-Healing Automation is a dynamic system through which the automation team's test plans heal themselves when UI issues and OS quirks break them on a release, so engineers are freed up for other problems. It is built around a world model of screens and their transitions. His in-house harness performs the repair; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning Gemma 4, which now runs the agent on its own.">
 <link rel="icon" href="/favicon.ico">
 <meta property="og:image" content="https://www.davidamosledbetter.com/og-image.jpg?v=3">
 <meta property="og:image:width" content="1200">
@@ -83,8 +83,8 @@ table.work td:first-child { width: 56%; }
 
   <header class="hero">
     <div class="eyebrow">Apple, San Diego &middot; 2024&ndash;present</div>
-    <h1>Self-Healing Coding Agent</h1>
-    <p class="lede">Releases can ship several times a day, and on each build UI issues and OS quirks break the automation engineering team&rsquo;s test code. David's flagship project at Apple, on Release Validation, where he is lead researcher and engineer, is the self-healing coding agent that repairs it, so engineers are freed up for other problems. It is built around a world model that treats screens and the transitions between them as a sandbox to explore. The agent lives in a gym where writing code is its lever toward healing the team&rsquo;s test plans. David's in-house harness performs the repair and treats the model as a swappable reasoning engine; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning (IFT) Gemma 4, which now runs the agent on its own.</p>
+    <h1>Self-Healing Automation</h1>
+    <p class="lede">Releases can ship several times a day, and on each build UI issues and OS quirks break the automation engineering team&rsquo;s test code. David's flagship project at Apple, on Release Validation, where he is lead researcher and engineer, is Self-Healing Automation, a dynamic system through which those test plans heal themselves, so engineers are freed up for other problems. It is built around a world model that treats screens and the transitions between them as a sandbox to explore. The agent lives in a gym where writing code is its lever toward healing the team&rsquo;s test plans. David's in-house harness performs the repair and treats the model as a swappable reasoning engine; running it with Claude as the reasoning engine built the corpus for instruction fine-tuning (IFT) Gemma 4, which now runs the agent on its own.</p>
     <div class="meta"><span><b>Role</b> ML/Full Stack Software Engineer</span><span><b>Dates</b> May 2024 &ndash; Present</span></div>
     <div class="tags"><span>World model</span><span>Claude</span><span>Gemma 4</span><span>Instruction fine-tuning</span><span>On-device ML</span><span>Mac Studio</span><span>Local LLM serving</span><span>LangGraph</span><span>RAG</span><span>Vector DBs</span><span>Async Python</span><span>Swift</span></div>
   </header>
@@ -112,7 +112,7 @@ table.work td:first-child { width: 56%; }
 
   <section>
     <h2>Earlier versions</h2>
-    <p class="lede" style="font-size:15px">Before the current agent, David built three earlier versions, each aimed at the same break-and-fix work.</p>
+    <p class="lede" style="font-size:15px">Before Self-Healing Automation, David built three earlier versions, each aimed at the same break-and-fix work.</p>
     <div class="callouts">
       <div class="callout" style="--c: var(--blue)">
         <span class="tag">Earlier version</span>
@@ -152,7 +152,7 @@ table.work td:first-child { width: 56%; }
       <h2>How a heal runs</h2>
       <span class="note">Schematic of the public description, not an internal design document.</span>
     </figcaption>
-    <div class="scroll"><svg viewBox="0 0 1000 470" role="img" aria-label="Diagram of the self-healing agent. Incoming automation and the parsed syntax tree of the Swift test code feed a control-flow prior inside an in-house harness modeled after LangGraph. A probe manager feeds raw metrics to a local Gemma 4 model, which does online plan repair and serves as the tool caller in Claude runs. The harness performs the repair, calling Claude as its reasoning engine in Claude runs, and produces healed code. A dashboard monitors runs. Running the harness with Claude builds a corpus for instruction fine-tuning Gemma 4 on online plan repair, and the fine-tuned Gemma 4 then runs the agent on its own.">
+    <div class="scroll"><svg viewBox="0 0 1000 470" role="img" aria-label="Diagram of Self-Healing Automation. Incoming automation and the parsed syntax tree of the Swift test code feed a control-flow prior inside an in-house harness modeled after LangGraph. A probe manager feeds raw metrics to a local Gemma 4 model, which does online plan repair and serves as the tool caller in Claude runs. The harness performs the repair, calling Claude as its reasoning engine in Claude runs, and produces healed code. A dashboard monitors runs. Running the harness with Claude builds a corpus for instruction fine-tuning Gemma 4 on online plan repair, and the fine-tuned Gemma 4 then runs the agent on its own.">
       <defs>
         <marker id="ah-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--blue)"/></marker>
         <marker id="ah-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-arrow" style="--c: var(--violet)"/></marker>
@@ -489,7 +489,7 @@ table.work td:first-child { width: 56%; }
 
   <section class="sources">
     <span>This is proprietary Apple work with no public repo. Everything on this page comes from the public CV and the project card:</span>
-    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David's CV, standard (PDF): Apple entry, self-healing coding agent and test infrastructure bullets</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David's CV, standard (PDF): Apple entry, Self-Healing Automation and test infrastructure bullets</a>
     <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short" target="_blank" rel="noopener noreferrer">David's CV, short (PDF): Apple entry</a>
     <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/resume" target="_blank" rel="noopener noreferrer">David's r&eacute;sum&eacute; (PDF): Apple entry</a>
     <a href="/#portfolio">Project card on davidamosledbetter.com</a>

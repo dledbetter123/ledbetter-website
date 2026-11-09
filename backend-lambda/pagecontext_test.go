@@ -127,7 +127,7 @@ func TestPortfolioQuestionsSkipTheLibrarianUnlessCodeIsAsked(t *testing.T) {
 			t.Fatalf("%q asks for code", q)
 		}
 	}
-	for _, q := range []string{"Tell me about David's self-healing coding agent at Apple.", "What is Sparse Geometric Signal Transport, and what did it find?"} {
+	for _, q := range []string{"Tell me about David's Self-Healing Automation project at Apple.", "What is Sparse Geometric Signal Transport, and what did it find?"} {
 		if asksForCode(q) {
 			t.Fatalf("%q is a project question, not a code request", q)
 		}
@@ -157,7 +157,7 @@ func TestNoRepoProjectsNeverSendTheLibrarian(t *testing.T) {
 		history []chatTurn
 		want    bool
 	}{
-		{"Tell me about David's self-healing coding agent at Apple.", nil, false},
+		{"Tell me about David's Self-Healing Automation project at Apple.", nil, false},
 		{"Show me the code for the self-healing agent.", nil, false},
 		{"How does it work under the hood?", selfHeal, false},
 		{"Show me the code for trade companion's order router.", nil, true},

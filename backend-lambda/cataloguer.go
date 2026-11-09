@@ -69,7 +69,7 @@ var catalogTopics = []struct {
 	key   string
 	words []string
 }{
-	{"self-healing-agent", []string{"self-healing", "self healing", "self-heal"}},
+	{"self-healing-agent", []string{"self-healing", "self healing", "self-heal", "healing automation"}},
 	{"finsler", []string{"finsler"}},
 	{"sgst", []string{"sgst", "sparse geometric"}},
 	{"trade-companion", []string{"trade-companion", "trade companion", "trading companion", "algorithmic trading"}},
