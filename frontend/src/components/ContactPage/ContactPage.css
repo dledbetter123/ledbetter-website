@@ -234,6 +234,10 @@
    of the previous one. The ::after isn't a DOM child, so Carousel.js offsets ignore it. */
 .contactCarousel .carousel-item {
   flex-basis: 84%;
+  /* Slack above and below the tiles: the scroller clips with overflow:hidden, and at
+     2x density Safari rounded the bottom tiles' border just past the clip edge. */
+  padding-top: 3px;
+  padding-bottom: 6px;
 }
 .contactCarousel .carousel-wrapper::after {
   content: '';
