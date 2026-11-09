@@ -20,6 +20,8 @@ const CV_STANDARD_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/c
 // not in this repo or the public bundle, and the bucket allows GetObject but not listing,
 // so a wrong id simply finds no vCard and the page shows the public tiles. A visitor who
 // opened the link keeps it for the browser session, so going back to / still shows them.
+// The "Leave your info" form at the bottom of the main page; the general page's Email tile scrolls to it.
+const CONTACT_FORM_ID = 'leave-your-info';
 const PORTFOLIO_BUCKET = 'https://davidamosledbetter-portfolio.s3.amazonaws.com';
 const LINK_KEY = 'ledbetter_contact_link';
 const LINK_ROUTE = /^\/c\/([A-Za-z0-9_-]{8,64})\/?$/;
@@ -93,6 +95,11 @@ export const ContactTiles = () => {
     }
   };
   const openResume = () => window.open(RESUME_URL, '_blank', 'noopener,noreferrer');
+  const onEmailClick = (e) => {
+    e.preventDefault();
+    const form = document.getElementById(CONTACT_FORM_ID);
+    if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
 
   // First résumé open in this session asks whether they're a recruiter; after that, opens directly.
   const onResumeClick = (e) => {
@@ -133,7 +140,11 @@ export const ContactTiles = () => {
       href: `tel:${phone.replace(/[^\d+]/g, '')}`,
     },
     exclusive && { key: 'vcard', icon: faAddressCard, label: 'Save contact', href: vcardUrl, download: 'David_Ledbetter.vcf' },
-    { key: 'email', icon: faEnvelope, label: 'Email', sub: 'dledbetter456@gmail.com', href: 'mailto:dledbetter456@gmail.com' },
+    // The address shows only on the private link; on the general page the tile scrolls to
+    // the "Leave your info" form at the bottom.
+    exclusive
+      ? { key: 'email', icon: faEnvelope, label: 'Email', sub: 'dledbetter456@gmail.com', href: 'mailto:dledbetter456@gmail.com' }
+      : { key: 'email', icon: faEnvelope, label: 'Email', href: `#${CONTACT_FORM_ID}`, onClick: onEmailClick },
     { key: 'linkedin', icon: faLinkedin, label: 'LinkedIn', href: 'https://www.linkedin.com/in/david-ledbetter-umbc', external: true },
     { key: 'github', icon: faGithub, label: 'GitHub', href: 'https://github.com/dledbetter123' },
     { key: 'instagram', icon: faInstagram, label: 'Instagram', href: 'https://www.instagram.com/davbetter', external: true },
@@ -220,7 +231,7 @@ export const ContactForm = () => {
   };
 
   return (
-    <div className="contactPage contactPage--form">
+    <div id={CONTACT_FORM_ID} className="contactPage contactPage--form">
       <div className="contactContent">
         <form className="contactForm" onSubmit={onSubmit}>
           <p className="contactPrompt">Leave your info and I'll reach out.</p>
