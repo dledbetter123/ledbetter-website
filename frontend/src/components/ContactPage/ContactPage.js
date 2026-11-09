@@ -14,29 +14,33 @@ const RESUME_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/resume
 const CV_SHORT_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short';
 const CV_STANDARD_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard';
 
-// The phone number, the contact card and the CV with the number show on every page of the
-// site (since 2026-11-04; they used to be limited to /exclusive, the QR-code link, which
-// still works). The number is read from the vCard in the portfolio bucket, so it never
-// ships in this repo or the public bundle.
-const VCARD_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/david-ledbetter.vcf';
-const CV_SHORT_EXCLUSIVE_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-exclusive';
-const EXCLUSIVE_KEY = 'ledbetter_exclusive';
+// The phone number, the contact card and the CV with the number show only on a private
+// link, /c/<link id> (David's call, 2026-11-09; before that they were on every page). The
+// files live in the portfolio bucket under x/<link id>/, so the id is the only key: it is
+// not in this repo or the public bundle, and the bucket allows GetObject but not listing,
+// so a wrong id simply finds no vCard and the page shows the public tiles. A visitor who
+// opened the link keeps it for the browser session, so going back to / still shows them.
+const PORTFOLIO_BUCKET = 'https://davidamosledbetter-portfolio.s3.amazonaws.com';
+const LINK_KEY = 'ledbetter_contact_link';
+const LINK_ROUTE = /^\/c\/([A-Za-z0-9_-]{8,64})\/?$/;
 
-const useExclusive = () => {
+const usePrivateContact = () => {
   const { pathname } = useLocation();
-  const onRoute = pathname.replace(/\/+$/, '') === '/exclusive';
+  const routeId = (pathname.match(LINK_ROUTE) || [])[1] || null;
+  let linkId = routeId;
   try {
-    if (onRoute) sessionStorage.setItem(EXCLUSIVE_KEY, '1');
+    if (routeId) sessionStorage.setItem(LINK_KEY, routeId);
+    else linkId = sessionStorage.getItem(LINK_KEY);
   } catch (err) {
     /* storage disabled */
   }
-  const exclusive = true;
+  const base = linkId ? `${PORTFOLIO_BUCKET}/x/${linkId}` : null;
 
   const [phone, setPhone] = useState('');
   useEffect(() => {
-    if (!exclusive) return undefined;
+    if (!base) return undefined;
     let live = true;
-    fetch(VCARD_URL)
+    fetch(`${base}/david-ledbetter.vcf`)
       .then((r) => (r.ok ? r.text() : ''))
       .then((t) => {
         const m = t.match(/^TEL[^:]*:(.+)$/m);
@@ -44,26 +48,33 @@ const useExclusive = () => {
       })
       .catch(() => {});
     return () => { live = false; };
-  }, [exclusive]);
+  }, [base]);
 
   // Unlisted page: keep it out of search results.
   useEffect(() => {
-    if (!onRoute) return undefined;
+    if (!routeId) return undefined;
     const meta = document.createElement('meta');
     meta.name = 'robots';
     meta.content = 'noindex, nofollow';
     document.head.appendChild(meta);
     return () => meta.remove();
-  }, [onRoute]);
+  }, [routeId]);
 
-  return { exclusive, phone };
+  // Only a link whose vCard actually loaded counts.
+  const exclusive = Boolean(base && phone);
+  return {
+    exclusive,
+    phone,
+    vcardUrl: exclusive ? `${base}/david-ledbetter.vcf` : null,
+    cvShortUrl: exclusive ? `${base}/cv-exclusive` : CV_SHORT_URL,
+  };
 };
 
 
 // The tile carousel (contact links, resume, CVs, Connect your Claude) sits right under the
 // intro so the calls to action are near the top; the message form stays at the bottom.
 export const ContactTiles = () => {
-  const { exclusive, phone } = useExclusive();
+  const { exclusive, phone, vcardUrl, cvShortUrl } = usePrivateContact();
   const RESUME_ASKED_KEY = 'ledbettergpt_resume_asked';
   const [resumePrompt, setResumePrompt] = useState(false);
   const [recruiterNote, setRecruiterNote] = useState('');
@@ -115,19 +126,19 @@ export const ContactTiles = () => {
   };
 
   // Contact links as 2x2 tile grids, four per slide, in the same swipe carousel as the
-  // project cards. Order is priority: on /exclusive the phone and contact card lead.
+  // project cards. Order is priority: on the private link the phone and contact card lead.
   const tiles = [
-    exclusive && phone && {
+    exclusive && {
       key: 'phone', icon: faPhone, label: 'Phone', sub: phone,
       href: `tel:${phone.replace(/[^\d+]/g, '')}`,
     },
-    exclusive && { key: 'vcard', icon: faAddressCard, label: 'Save contact', href: VCARD_URL, download: 'David_Ledbetter.vcf' },
+    exclusive && { key: 'vcard', icon: faAddressCard, label: 'Save contact', href: vcardUrl, download: 'David_Ledbetter.vcf' },
     { key: 'email', icon: faEnvelope, label: 'Email', sub: 'dledbetter456@gmail.com', href: 'mailto:dledbetter456@gmail.com' },
     { key: 'linkedin', icon: faLinkedin, label: 'LinkedIn', href: 'https://www.linkedin.com/in/david-ledbetter-umbc', external: true },
     { key: 'github', icon: faGithub, label: 'GitHub', href: 'https://github.com/dledbetter123' },
     { key: 'instagram', icon: faInstagram, label: 'Instagram', href: 'https://www.instagram.com/davbetter', external: true },
     { key: 'resume', icon: faFileLines, label: 'Resume', href: RESUME_URL, external: true, onClick: onResumeClick },
-    { key: 'cv-short', icon: faGraduationCap, label: 'CV (short)', href: exclusive ? CV_SHORT_EXCLUSIVE_URL : CV_SHORT_URL, external: true },
+    { key: 'cv-short', icon: faGraduationCap, label: 'CV (short)', href: cvShortUrl, external: true },
     { key: 'cv-standard', icon: faGraduationCap, label: 'CV (standard)', href: CV_STANDARD_URL, external: true },
     // Adds LedbetterLM (the /api/mcp server) to the visitor's own Claude.
     { key: 'claude', icon: faRobot, label: 'Connect your Claude', href: '/connect' },
@@ -156,6 +167,7 @@ export const ContactTiles = () => {
   return (
     <div className="contactPage contactPage--tiles">
       <div className="contactContent">
+        {exclusive && <p className="privateLinkNote">Only your link shows this contact info.</p>}
         <div className="contactCarousel">
           <Carousel items={slides} />
         </div>

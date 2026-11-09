@@ -181,6 +181,17 @@
   font-size: 0.95rem;
 }
 
+/* Tagline above the tiles, shown only on the private /c/<link id> page. */
+.privateLinkNote {
+  margin: 0 0 10px;
+  text-align: center;
+  color: #0F0;
+  opacity: 0.75;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
 /* Contact links: 2x2 tile grids, four per slide, inside the shared peek carousel. */
 .contactCarousel {
   width: 100%;

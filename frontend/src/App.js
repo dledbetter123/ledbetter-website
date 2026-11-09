@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import NavBar from './components/NavBar/NavBar';
 import './App.css';
 import MainPage from './components/MainPage/MainPage'; // Assuming MainPage is now a component
@@ -33,7 +33,8 @@ const App = () => {
       <div className="App">
         <Routes>
           <Route path="/" element={<MainPage ref={mainPageRef} />} />
-          <Route path="/exclusive" element={<MainPage ref={mainPageRef} />} />
+          <Route path="/c/:linkId" element={<MainPage ref={mainPageRef} />} />
+          <Route path="/exclusive" element={<Navigate to="/" replace />} />
           <Route path="/inbox" element={<InboxPage />} />
           <Route path="/projects/:slug" element={<ProjectPage />} />
           <Route path="/connect" element={<ConnectPage />} />
