@@ -23,7 +23,7 @@ const projects = [
     slug: 'self-healing-agent',
     title: 'Self-Healing Automation (Apple)',
     description:
-      "My flagship project at Apple, on Release Validation, where I'm lead researcher and engineer. Releases can ship several times a day, and UI issues and OS quirks break the automation team's test code on each one. Self-Healing Automation is the dynamic system I built so those test plans heal themselves, freeing engineers up for other problems. It's built around a world model of screens and their transitions, and my in-house harness performs the repair.",
+      "My flagship project at Apple, where I'm lead researcher and engineer. UI issues and OS quirks break test code on every release; Self-Healing Automation is the dynamic system I built so those test plans heal themselves, around a world model of screens and their transitions.",
     opener: "Tell me about David's Self-Healing Automation project at Apple.",
   },
   {
@@ -31,7 +31,7 @@ const projects = [
     slug: 'thesis',
     title: "Master's Thesis: Lingual-First Host Intrusion Detection",
     description:
-      'Can a language model catch an attack from a host\'s audit log? I serialize system provenance into a compact, readable language and measure what the representation gives versus what learning adds. The result: frequency counts go surprisingly far, they stop where entities interact, and SENTINEL, a model over named relations, picks up there.',
+      'Can a language model catch an attack from a host\'s audit log? I serialize system provenance into a compact language and measure what representation gives versus what learning adds. Frequency counts go far, they stop where entities interact, and SENTINEL picks up there.',
     detail: 'thesis',
     opener: "What is David's master's thesis about, and what did he find?",
   },
@@ -42,7 +42,7 @@ const projects = [
     title: 'Crazyflie AI-Deck',
     githubUrl: 'https://github.com/dledbetter123/aideck-bitbang-link',
     description:
-      "Autonomous nano-drones for target tracking and building mapping at UMBC's CARDS/EEHPC Labs. I ran obstacle detection onboard, wrote a streamer that pulls and decodes the AI-deck camera's bits for a ground station running YOLO for target tracking, wrote RISC-V firmware for its GAP8 processor, and carried the GAP8-to-STM32 link over the deck's I2C lines when the decks ran out of serial ports. That link is re-created and verified in simulation.",
+      "Autonomous nano-drones for target tracking and building mapping at UMBC's CARDS/EEHPC Labs. I ran obstacle detection onboard, streamed the AI-deck camera to a ground station running YOLO, wrote GAP8 RISC-V firmware, and carried the GAP8-to-STM32 link over I2C.",
     opener: "Tell me about David's Crazyflie AI-deck drone work: the obstacle detection he ran onboard, the YOLO target tracking, and the link he ran over the I2C lines.",
   },
   {
@@ -52,7 +52,7 @@ const projects = [
     linkUrl: 'https://pathion.dev',
     linkLabel: 'Visit pathion.dev',
     description:
-      'A browser-native platform that helps students and engineers strengthen their interview readiness and learn engineering concepts, with every program running on-device in WebAssembly. As a developer there I built the AI layer: an in-browser LLM tutor (WebNN/WebGPU), a hint model trained with SFT and RL, and the learning-data pipeline behind an adaptive Elo that rates skill from every attempt.',
+      'A browser-native platform that helps students and engineers prepare for interviews and learn engineering concepts, running every program on-device. As lead researcher I built its AI layer: an in-browser LLM tutor, a hint model trained with SFT and RL, and an adaptive Elo.',
     opener: 'Tell me about Pathion and what David built for it.',
   },
   {
