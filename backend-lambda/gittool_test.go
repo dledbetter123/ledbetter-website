@@ -167,3 +167,36 @@ func TestRunGitLiveRepo(t *testing.T) {
 		t.Fatal(out)
 	}
 }
+
+func TestHistoryQuestionsGoToTheLibrarian(t *testing.T) {
+	for _, q := range []string{
+		"when was this website made and how long did it take to build?",
+		"you have the github repo access and its public, you can easily look at the commit history to see major milestones",
+		"What were the major milestones?",
+		"Can you show the timeline of this project?",
+	} {
+		if !catalogLikely(q) {
+			t.Errorf("%q should send the librarian", q)
+		}
+	}
+	if !asksForCode("what do the commits say about when this started?") {
+		t.Error("a commit question on a portfolio page should send the librarian")
+	}
+	if catalogLikely("When did David join Apple?") {
+		t.Error("a plain career date isn't a repo-history question")
+	}
+}
+
+func TestSignForGemini(t *testing.T) {
+	in := []geminiContent{
+		{Role: "model", Parts: []geminiPart{{FunctionCall: &fnCall{Name: "run_git"}}}},
+		{Role: "model", Parts: []geminiPart{{FunctionCall: &fnCall{Name: "run_git"}, ThoughtSignature: "real"}}},
+	}
+	out := signForGemini(in)
+	if out[0].Parts[0].ThoughtSignature != "skip_thought_signature_validator" || out[1].Parts[0].ThoughtSignature != "real" {
+		t.Fatalf("signatures: %q, %q", out[0].Parts[0].ThoughtSignature, out[1].Parts[0].ThoughtSignature)
+	}
+	if in[0].Parts[0].ThoughtSignature != "" {
+		t.Fatal("signForGemini changed the caller's history")
+	}
+}

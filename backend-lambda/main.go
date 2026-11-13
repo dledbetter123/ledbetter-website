@@ -983,6 +983,25 @@ func callGemini(ctx context.Context, contents []geminiContent, withTools bool, e
 
 // geminiRaw is the low-level Gemini call with an explicit system prompt, shared by the
 // public chat (callGemini) and the cataloguer (which needs a different system prompt).
+// signForGemini fills in the thought signature Gemini requires on every function call in the
+// history. A call Scout made earlier in the turn has none, so a mid-turn fallback to Gemini
+// was refused with 400 "Function call is missing a thought_signature". Google's documented
+// placeholder for calls from another model skips the check (tested 2026-11-13). Gemini's own
+// calls keep their real signature.
+func signForGemini(contents []geminiContent) []geminiContent {
+	out := make([]geminiContent, len(contents))
+	for i, c := range contents {
+		parts := append([]geminiPart(nil), c.Parts...)
+		for j := range parts {
+			if parts[j].FunctionCall != nil && parts[j].ThoughtSignature == "" {
+				parts[j].ThoughtSignature = "skip_thought_signature_validator"
+			}
+		}
+		out[i] = geminiContent{Role: c.Role, Parts: parts}
+	}
+	return out
+}
+
 func geminiRaw(ctx context.Context, sysText string, contents []geminiContent, withTools bool) (geminiContent, geminiUsage, error) {
 	var tools []geminiTool
 	if withTools {
@@ -990,7 +1009,7 @@ func geminiRaw(ctx context.Context, sysText string, contents []geminiContent, wi
 	}
 	reqBody, _ := json.Marshal(geminiRequest{
 		SystemInstruction: geminiContent{Parts: []geminiPart{{Text: sysText}}},
-		Contents:          contents,
+		Contents:          signForGemini(contents),
 		Tools:             tools,
 		GenerationConfig: map[string]interface{}{
 			"maxOutputTokens": maxOutputTokens,

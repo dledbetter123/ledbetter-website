@@ -43,6 +43,11 @@ var catalogTriggers = []string{
 	"architecture", "algorithm", "walk me through", "show me", "technical detail",
 	"internals", "deep dive", "deep-dive", "repo", "repository", "source code",
 	"in the code", "your stack for", "data structure", "design of", "built it",
+	// History: answered from the commits (run_git). A worker turn can't fit a git round plus
+	// an answer under API Gateway's 30 s on Scout, so these go to the librarian too.
+	"commit", "git log", "milestone", "timeline", "how long did it take", "how long it took",
+	"how long to build", "first built", "first commit", "when was this site", "when was this website",
+	"when was it built", "when did you start", "when did he start",
 }
 var catalogProjectNames = []string{
 	"finsler", "sgst", "sparse geometric", "trade-companion",
@@ -126,7 +131,7 @@ func gatherPrompt(message string, history []chatTurn) string {
 // highlighted sentence the chat page quotes) is not the visitor's own words, so it is
 // removed first: a heading like "What the repo does" is not a request for code.
 var (
-	codeRequestRe = regexp.MustCompile(`(?i)\b(code|codebase|implement(ed|ation)?|show me|source|repos?|repository|function|snippet|data structure|line by line|the file)\b`)
+	codeRequestRe = regexp.MustCompile(`(?i)\b(code|codebase|implement(ed|ation)?|show me|source|repos?|repository|function|snippet|data structure|line by line|the file|commits?|git|milestones?|timeline)\b`)
 	quotedRe      = regexp.MustCompile(`"[^"]*"|\x{201C}[^\x{201D}]*\x{201D}`)
 )
 
@@ -192,7 +197,7 @@ func runCataloguer(ctx context.Context, session, message string) {
 	contents := []geminiContent{{
 		Role: "user",
 		Parts: []geminiPart{{Text: "Visitor's opening message: " + message +
-			"\n\nExplore my repos and produce the fact sheet for the code/implementation topics this conversation is likely to cover."}},
+			"\n\nExplore my repos and produce the fact sheet for the code/implementation topics this conversation is likely to cover. If it asks about history (when something was built, how long it took, milestones, what changed when), run_git the relevant repo (this website's own repo is ledbetter-website) and put the dated timeline from the commits in the fact sheet."}},
 	}}
 
 	start := time.Now()
