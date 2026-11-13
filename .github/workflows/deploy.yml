@@ -87,7 +87,11 @@ jobs:
           CGO_ENABLED: '0'
         run: |
           go build -tags lambda.norpc -o bootstrap .
-          zip lambda.zip bootstrap
+          # run_git's git binary and its two libraries, from Amazon Linux 2023 (pinned, sha256-checked)
+          sudo apt-get update -qq && sudo apt-get install -y -qq libarchive-tools >/dev/null
+          ./gitbin/fetch.sh
+          cp -R gitbin/out/bin gitbin/out/lib .
+          zip -r lambda.zip bootstrap bin lib
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE }}

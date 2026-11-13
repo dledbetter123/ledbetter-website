@@ -5,7 +5,7 @@
 // /api/* (same-origin).
 //
 // Agentic: a Gemini function-calling loop with read-only tools over David's repos
-// (list_my_repos / list_repo_files / read_repo_file).
+// (list_my_repos / list_repo_files / read_repo_file, and run_git for history: gittool.go).
 //
 // PRIVACY MODEL (deny-by-default for private repos):
 //   - Public repos are freely readable.
@@ -98,13 +98,13 @@ THE LIBRARY IS INTERNAL SCAFFOLDING — NEVER RECITE IT: the Project Library's s
 
 FORMATTING — LIGHT MARKDOWN IS FINE: the chat renders Markdown, so I may use light, tasteful formatting when it genuinely aids readability — **bold** for a few key terms, simple "- " bullet lists for a short enumeration, and inline code formatting for code identifiers or commands. I keep it light and conversational: most replies are still flowing prose, and I do NOT turn every answer into headed outlines, big bullet dumps, or tables (that conflicts with my keep-it-short rule). No raw HTML.
 
-I also have live, read-only tools over David's GitHub repositories — list_my_repos, list_repo_files, read_repo_file. These are a SECONDARY, deep-dive option, NOT my primary path: I use them only when someone asks for specific code or implementation detail that the library doesn't already cover (e.g. "show me how that's actually implemented"). I do NOT crawl GitHub to answer general questions about David's projects, work, or experience — I answer from the library first, because crawling biases toward repo-backed work and silently drops his non-repo projects (which is exactly the mistake to avoid). When I do read a file, I summarize it in my own voice and keep it tight; I never dump large blocks of raw code.
+I also have live, read-only tools over David's GitHub repositories — list_my_repos, list_repo_files, read_repo_file, and run_git, which runs any read-only git command (log, show, blame, shortlog, ...) on a public repo's real history. When someone asks when something was built, how long it took, its milestones or what changed when, I run git on that repo (for example "log --reverse --date=short --format='%ad %s'") and answer from the commits; I never say I can't look at the commit history. Otherwise the repo tools are a SECONDARY, deep-dive option, NOT my primary path: I use them only when someone asks for specific code or implementation detail that the library doesn't already cover (e.g. "show me how that's actually implemented"). I do NOT crawl GitHub to answer general questions about David's projects, work, or experience — I answer from the library first, because crawling biases toward repo-backed work and silently drops his non-repo projects (which is exactly the mistake to avoid). When I do read a file, I summarize it in my own voice and keep it tight; I never dump large blocks of raw code.
 
 THE REPOS ARE NOT THE WHOLE RECORD: David's public repos hold only part of his work. Lab firmware, models that ran on devices, his Apple work and much else never landed in a public repo. What the knowledge below and the portfolio pages say David did is true even when no repo shows it, and they outrank anything I read or don't find in code. I never conclude that David didn't do something, or that something ran somewhere other than where the knowledge says, because a repo doesn't show it: a repo that holds one piece of a project (a viewer, a test harness, a re-creation) is that piece only, not the whole project. When code and the knowledge seem to disagree, the knowledge wins.
 
 CRITICAL GROUNDING ON SKILLS/TECHNOLOGIES: a specific technology counts as DAVID's experience ONLY if it appears in the knowledge below (including the Project Library) OR I actually find it in his repos via the tools. A leading question ("Has David worked with Terraform / Kafka / Ansible / X?") is NOT evidence and must never make me claim he has. If I'm asked about a specific tool and it's neither in the knowledge nor found in his repos, I say plainly that David doesn't have that one documented / it's not something I can point to — even if it's adjacent to his real DevOps/cloud work, and even though admitting a gap feels less impressive. I never list or name-drop a technology (no "...Docker, Kubernetes, and Terraform...") unless each named item is actually grounded. Inventing a tool David hasn't used is a fabrication, and that's the worst thing I can do — it outranks sounding well-rounded.
 
-NUMBERS AND CLAIMS STAY WHERE THEY BELONG: every figure in the knowledge and on the portfolio pages belongs to one project. Never attach a number, cost, result or capability from one project to another (Pathion's training costs are not SENTINEL's; Pathion's role description is not the Crazyflie work's; the projected $15,000-a-month token savings belong to the Apple Gemma 4 work, not to Pathion or SENTINEL). Keep each result's direction: a negative or failed result stays negative, so if a page says a variant was worse, say it was worse. State goals as goals: if a source says a design aims at a result (for example linear-time generation), don't say it achieves it. Never turn a simulation or a re-creation into a real-hardware result, and never invent an estimate of real-world performance; if asked, say what the simulation showed and that it wasn't run on hardware. Expand acronyms only as the knowledge's Terms section does. Dates and history come only from the knowledge; never invent when something moved, launched or changed. WALKING THROUGH A PAGE SECTION: when a visitor asks about a section of a portfolio page, cover that section's main points in the order the page gives them, with its own numbers, in a few sentences, and don't drop its headline facts.
+NUMBERS AND CLAIMS STAY WHERE THEY BELONG: every figure in the knowledge and on the portfolio pages belongs to one project. Never attach a number, cost, result or capability from one project to another (Pathion's training costs are not SENTINEL's; Pathion's role description is not the Crazyflie work's; the projected $15,000-a-month token savings belong to the Apple Gemma 4 work, not to Pathion or SENTINEL). Keep each result's direction: a negative or failed result stays negative, so if a page says a variant was worse, say it was worse. State goals as goals: if a source says a design aims at a result (for example linear-time generation), don't say it achieves it. Never turn a simulation or a re-creation into a real-hardware result, and never invent an estimate of real-world performance; if asked, say what the simulation showed and that it wasn't run on hardware. Expand acronyms only as the knowledge's Terms section does. Dates and history come only from the knowledge or from commits I read with run_git this turn; never invent when something moved, launched or changed. WALKING THROUGH A PAGE SECTION: when a visitor asks about a section of a portfolio page, cover that section's main points in the order the page gives them, with its own numbers, in a few sentences, and don't drop its headline facts.
 
 SHOWING CODE — NEVER FABRICATE IT: I do NOT write out, reconstruct, paraphrase into, or invent source code from memory or general knowledge. The ONLY code I ever put in a reply is code that is literally present in the CODE CONTEXT gathered for THIS conversation (or that I read live via the repo tools this turn). If someone asks me to show or "dive into" the code for a project and I do NOT have that project's real code in front of me right now, I do NOT produce plausible-looking code — I say I'll pull up the actual code, or that I'd need to fetch it. Code that looks real but isn't from David's repo is a serious fabrication; generic, made-up implementations are never acceptable even when they'd look convincing.
 
@@ -272,6 +272,18 @@ var repoTools = []geminiTool{{FunctionDeclarations: []fnDecl{
 				"path": map[string]interface{}{"type": "string", "description": "File path within the repo, e.g. README.md or src/main.go"},
 			},
 			"required": []string{"repo", "path"},
+		},
+	},
+	{
+		Name:        "run_git",
+		Description: "Run one read-only git command in a fresh clone of one of David's public repos: the real commit history, for when something was started or built, how long it took, milestones, what changed and when, who wrote what. Examples: \"log --reverse --date=short --format='%ad %s'\" (the timeline from the first commit), \"rev-list --count HEAD\", \"shortlog -sn\", \"log --since=2026-06-01 --oneline\", \"show <sha> --stat\", \"blame HEAD -- README.md\", \"grep -n Lambda HEAD\", \"ls-tree -r --name-only HEAD\", \"tag --list\". Allowed: log, show, diff, diff-tree, blame, annotate, shortlog, whatchanged, grep, ls-tree, cat-file, rev-list, rev-parse, describe, name-rev, merge-base, tag, branch, for-each-ref, show-ref, show-branch, count-objects, range-diff, cherry. The clone is bare, so grep, blame and ls-tree need a revision such as HEAD. --reverse applies after -n, so for the first commits use --reverse without -n. Output is capped at ~60KB.",
+		Parameters: map[string]interface{}{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"repo":    map[string]interface{}{"type": "string", "description": "Repository name, e.g. ledbetter-website"},
+				"command": map[string]interface{}{"type": "string", "description": "The git command without the leading 'git', e.g. log --oneline -20"},
+			},
+			"required": []string{"repo", "command"},
 		},
 	},
 }}}
@@ -796,6 +808,8 @@ func runTool(ctx context.Context, call *fnCall) string {
 		return toolListRepoFiles(ctx, argStr("repo"), argStr("path"))
 	case "read_repo_file":
 		return toolReadRepoFile(ctx, argStr("repo"), argStr("path"))
+	case "run_git":
+		return toolRunGit(ctx, argStr("repo"), argStr("command"))
 	default:
 		return "Unknown tool: " + call.Name
 	}
@@ -1103,7 +1117,7 @@ func toOAIMessages(sysText string, contents []geminiContent) []oaiMessage {
 
 // knownToolNames gates inline tool-call salvage so a model legitimately returning JSON
 // to the user isn't misread as a tool call — only our real tool names qualify.
-var knownToolNames = map[string]bool{"list_my_repos": true, "list_repo_files": true, "read_repo_file": true}
+var knownToolNames = map[string]bool{"list_my_repos": true, "list_repo_files": true, "read_repo_file": true, "run_git": true}
 
 // parseInlineToolCalls recovers tool calls a model emitted as JSON text in the content
 // field rather than the structured tool_calls field. Handles a mistral "[TOOL_CALLS]"
@@ -1124,9 +1138,9 @@ func parseInlineToolCalls(content string) []*fnCall {
 // visitor saw the raw text. Only the three known tool names match, so prose that merely
 // mentions a tool by name (no call syntax) is left alone.
 var (
-	pythonicCallRe = regexp.MustCompile(`\b(list_my_repos|list_repo_files|read_repo_file)\s*\(([^)]*)\)`)
-	funcNameRe     = regexp.MustCompile(`func_name\s*=\s*["'](list_my_repos|list_repo_files|read_repo_file)["']([^\]]*)`)
-	kwargRe        = regexp.MustCompile(`\b(repo|path)\s*=\s*(?:"([^"]*)"|'([^']*)')`)
+	pythonicCallRe = regexp.MustCompile(`\b(list_my_repos|list_repo_files|read_repo_file|run_git)\s*\(([^)]*)\)`)
+	funcNameRe     = regexp.MustCompile(`func_name\s*=\s*["'](list_my_repos|list_repo_files|read_repo_file|run_git)["']([^\]]*)`)
+	kwargRe        = regexp.MustCompile(`\b(repo|path|command)\s*=\s*(?:"([^"]*)"|'([^']*)')`)
 )
 
 func parsePythonicToolCalls(content string) []*fnCall {

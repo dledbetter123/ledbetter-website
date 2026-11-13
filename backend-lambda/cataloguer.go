@@ -29,7 +29,7 @@ const (
 	catalogMaxBytes   = 8000             // cap the fact sheet injected into Scout's context
 )
 
-const cataloguerInstruction = `You are the CATALOGUER — a research agent for David Ledbetter's portfolio chat. You are NOT talking to the visitor. Your job: given the visitor's opening message, work out which of David's GitHub projects/repos are most relevant to where this conversation is likely headed, then USE your repo tools (list_my_repos, list_repo_files, read_repo_file) to actually explore those repos and read the key files.
+const cataloguerInstruction = `You are the CATALOGUER — a research agent for David Ledbetter's portfolio chat. You are NOT talking to the visitor. Your job: given the visitor's opening message, work out which of David's GitHub projects/repos are most relevant to where this conversation is likely headed, then USE your repo tools (list_my_repos, list_repo_files, read_repo_file, and run_git for a repo's commit history) to actually explore those repos and read the key files.
 
 Then output a CONCISE FACT SHEET in plain text (no Markdown) capturing the real, specific implementation details you found: which repos are relevant and why, their structure, the key files and what each does, concrete techniques/algorithms/configs/libraries actually used, and a few short illustrative code excerpts (a handful of lines each, never whole files). Another model will be handed this fact sheet as background context so it can answer code-level questions accurately and specifically.
 
@@ -318,6 +318,10 @@ func catalogStatusFor(calls []*fnCall) string {
 			}
 		case "list_my_repos":
 			return "Looking through my repositories…"
+		case "run_git":
+			if repo != "" {
+				return "Reading the history of " + repo + "…"
+			}
 		}
 	}
 	return "Gathering details from my code…"
