@@ -43,6 +43,9 @@ const (
 	gitTimeout   = 12 * time.Second
 	gitMaxRepoKB = 100 * 1024 // GitHub's size field; a 70 MB repo peaks near 205 MB of memory to clone
 	gitMaxCached = 4          // clones kept in /tmp at once
+	// gitMaxOutput keeps a turn under API Gateway's 30 s: every later model call carries the
+	// output, and the site's whole log (24 KB) pushed a three-round turn to 34 s.
+	gitMaxOutput = 16 * 1024
 )
 
 var (
@@ -339,13 +342,13 @@ func toolRunGit(ctx context.Context, repo, command string) (out string) {
 		"TZ=UTC",
 	}
 	var buf bytes.Buffer
-	cmd.Stdout = &limitWriter{w: &buf, n: maxFileBytes + 1}
+	cmd.Stdout = &limitWriter{w: &buf, n: gitMaxOutput + 1}
 	cmd.Stderr = cmd.Stdout
 	runErr := cmd.Run()
 
 	text := buf.String()
-	if len(text) > maxFileBytes {
-		text = text[:maxFileBytes] + "\n\n…[output truncated; narrow the command, e.g. -n, --since, a path]"
+	if len(text) > gitMaxOutput {
+		text = text[:gitMaxOutput] + "\n\n…[output truncated; narrow the command, e.g. -n, --since/--until, a path]"
 	}
 	if strings.Contains(text, "must be run in a work tree") || strings.Contains(text, "Cannot lstat") {
 		text += "\n(The clone is bare: name a revision, e.g. `grep -n foo HEAD`, `blame HEAD -- README.md`, `ls-tree -r --name-only HEAD`.)"
