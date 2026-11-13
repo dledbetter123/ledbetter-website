@@ -167,6 +167,12 @@ func catalogLikely(msg string) bool {
 	return false
 }
 
+// geminiBusy reports a Gemini error worth retrying: overloaded (503) or rate-limited (429).
+func geminiBusy(err error) bool {
+	m := err.Error()
+	return strings.Contains(m, "gemini status 503") || strings.Contains(m, "gemini status 429")
+}
+
 // enqueueCatalogue fires the cataloguer as an async (Event) self-invoke so it runs in its
 // own Lambda invocation, fully isolated from this request and from the SQS turn pipeline.
 func enqueueCatalogue(ctx context.Context, session, message string) {
@@ -218,6 +224,14 @@ func runCataloguer(ctx context.Context, session, message string) {
 			withTools = false // out of time → force the final fact sheet
 		}
 		mc, usage, err := geminiRaw(ctx, sys, contents, withTools)
+		// Gemini's "high demand" 503s (and per-minute 429s) pass in seconds, and the librarian
+		// has a 95 s budget, so it waits and retries instead of serving nothing. On 2026-11-13
+		// one 503 on round 2 cost a history question its whole gather.
+		for wait := 3 * time.Second; err != nil && geminiBusy(err) && wait <= 12*time.Second && time.Since(start)+wait < catalogWallBudget; wait *= 2 {
+			fmt.Printf("cataloguer: Gemini busy (round %d), retrying in %v\n", round, wait)
+			time.Sleep(wait)
+			mc, usage, err = geminiRaw(ctx, sys, contents, withTools)
+		}
 		costMicros += costMicro(usage)
 		if err != nil {
 			gatherErr = err
