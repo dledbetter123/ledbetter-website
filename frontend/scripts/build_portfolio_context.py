@@ -47,7 +47,7 @@ class Page(HTMLParser):
             if tag == 'div' and 'wrap' in cls.split():
                 self.wrap_depth = 0
             return
-        if tag in ('br', 'img', 'meta', 'link', 'input', 'hr'):
+        if tag in ('br', 'img', 'meta', 'link', 'input', 'hr', 'source', 'wbr', 'area', 'col', 'embed', 'track'):
             return
         self.wrap_depth += 1
         if self.wrap_depth == 1 and tag in ('header', 'section', 'figure'):

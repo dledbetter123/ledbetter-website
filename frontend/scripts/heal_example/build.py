@@ -1,15 +1,19 @@
-"""Build the worked heal example on the self-healing agent's portfolio page.
+"""Build the heal replays on the Self-Healing Automation portfolio page.
 
-The sample test (CheckoutTests.swift) was written for the page; it is not Apple code. Its tree
-is the real parse the public Swift compiler prints, saved here so the build needs no Swift:
+The sample test (CheckoutTests.swift) was written for the page; it is not Apple code. Its trees
+are the real parses the public Swift compiler prints, saved here so the build needs no Swift:
 
     swiftc -dump-parse CheckoutTests.swift > CheckoutTests.dump.txt 2>/dev/null
     swiftc -dump-parse CheckoutTests.healed.swift > CheckoutTests.healed.dump.txt 2>/dev/null
+    swiftc -dump-parse CheckoutTests.alert-healed.swift > CheckoutTests.alert-healed.dump.txt 2>/dev/null
 
-The runs are simulated: 50 passing runs on earlier builds give the plan prior, and on the new
-build the Checkout button is renamed "Continue to Checkout". Every number on the figure is
-computed below from those runs and the two parse trees. The output replaces the block between
-the heal-example markers in public/portfolio/self-healing-agent.html. Run: python3 build.py
+The runs are simulated: 50 passing runs on earlier builds give the plan prior. Three replays:
+a new build renames the Checkout button ("Continue to Checkout"); a new OS build puts a system
+alert in front of the app (the heal inserts a guard); and a run whose runner reports a failure
+from teardown while every step matches the prior (no edit). Every number is computed below from
+those runs and the parse trees. The output replaces the block between the heal-example markers
+in public/portfolio/self-healing-agent.html. Run: python3 build.py, then python3 record.py to
+re-record the replay GIFs.
 """
 import html
 import os
@@ -266,14 +270,41 @@ for i, line in enumerate(src, 1):
         code.append(f'<span class="ln">{i:>2}</span> {e(line)}')
 code = '\n'.join(code)
 
-# --- the animation: a fake app on the left, the agent on the right ------------------------------
 
-def btn(x, y, w, h, label, filled=False, ident=''):
+# --- the second heal: a system alert on a new OS build ------------------------------------------
+
+def stmts(t):
+    """The test function's top-level statements, without the var_decl swiftc prints beside each let."""
+    f = find(t, 'func_decl')
+    b = f['kids'][[k['kind'] for k in f['kids']].index('brace_stmt')]
+    return [k for k in b['kids'] if k['kind'] != 'var_decl']
+
+
+def sig(node):
+    clean = lambda s: re.sub(r'decl_context=0x[0-9a-f]+|range=\[[^\]]*\]|"[^"]*\.swift"', '', s)
+    return [(x['kind'], clean(x['attrs'])) for x in flatten(node)]
+
+
+alert_src = open(os.path.join(HERE, 'CheckoutTests.alert-healed.swift')).read().split('\n')
+alert_tree = parse_dump(open(os.path.join(HERE, 'CheckoutTests.alert-healed.dump.txt')).read())
+orig_st, alert_st = stmts(tree), stmts(alert_tree)
+n_added = len(alert_st) - len(orig_st)
+at = next(i for i, (a, b) in enumerate(zip(orig_st, alert_st)) if sig(a) != sig(b))
+assert all(sig(a) == sig(b) for a, b in zip(orig_st, alert_st[:at] + alert_st[at + n_added:])), 'an original statement changed'
+added_kinds = [s['kind'] for s in alert_st[at:at + n_added]]
+inserted = alert_src[6:6 + 4]  # the guard, after line 6 (app.launch())
+assert alert_src[:6] == src[:6] and alert_src[10:] == src[6:], 'the guard is not a pure insertion after line 6'
+SYS_ALERTS = 0  # of the 50 runs, how many showed a system alert at launch
+
+
+# --- the replays: a fake app on the left, the agent on the right ---------------------------------
+
+def btn(x, y, w, h, label, filled=False):
     fill = 'var(--green)' if filled else 'none'
     stroke = 'var(--green)' if filled else 'var(--dim)'
     color = '#000' if filled else 'var(--ink)'
     weight = ' font-weight: 600;' if filled else ''
-    return (f'<rect{ident} x="{x}" y="{y}" width="{w}" height="{h}" rx="8" style="fill: {fill}; stroke: {stroke}"/>'
+    return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="8" style="fill: {fill}; stroke: {stroke}"/>'
             f'<text x="{x + w / 2:g}" y="{y + h / 2 + 4:g}" text-anchor="middle" style="fill: {color}; font-size: 11px;{weight}">{e(label)}</text>')
 
 
@@ -288,136 +319,267 @@ def head(t):
     return f'<text x="26" y="72" style="fill: var(--ink); font-size: 18px; font-weight: 700">{e(t)}</text>'
 
 
-NEW_LABEL = changed[0][2]
-phone_svg = (
-    '<svg viewBox="0 0 240 480" role="img" aria-label="A fake shop app on a phone, on the new build: Home, Cart and '
-    f'Checkout screens. On the Cart screen the button now reads {NEW_LABEL}.">'
-    '<rect x="3" y="3" width="234" height="474" rx="30" style="fill: #000; stroke: var(--dim); stroke-width: 2"/>'
-    '<rect x="92" y="12" width="56" height="16" rx="8" style="fill: var(--line)"/>'
-    '<text x="26" y="25" class="d-note">9:41</text>'
-    '<text x="214" y="25" text-anchor="end" class="d-note">new build</text>'
-    '<g data-screen="home">' + head('Shop')
-    + btn(164, 52, 52, 26, 'Cart') + item(100, 'Headphones', '$199') + item(158, 'Phone case', '$29')
-    + '<text x="26" y="236" class="d-sub">Free shipping over $50</text></g>'
-    '<g data-screen="cart">' + head('Your Cart') + '<text x="26" y="92" class="d-sub">2 items</text>'
-    + item(104, 'Headphones', '$199') + item(162, 'Phone case', '$29')
-    + '<text x="26" y="244" style="fill: var(--muted); font-size: 11px">Total</text>'
-      '<text x="214" y="244" text-anchor="end" style="fill: var(--ink); font-size: 11px">$228</text>'
-    + btn(26, 348, 188, 36, 'Edit') + btn(26, 394, 188, 42, NEW_LABEL, filled=True)
-    + '<g class="ha-toast"><rect x="22" y="282" width="196" height="46" rx="6" style="fill: #000; stroke: var(--yellow)"/>'
-      '<text x="120" y="301" text-anchor="middle" style="fill: var(--yellow); font-size: 10.5px">No button matches</text>'
-      '<text x="120" y="317" text-anchor="middle" style="fill: var(--yellow); font-size: 10.5px">&#8220;Checkout&#8221;</text></g></g>'
-    '<g data-screen="checkout">' + head('Checkout')
-    + ''.join(f'<text x="26" y="{y}" style="fill: var(--muted); font-size: 11px">{a}</text>'
-              f'<text x="214" y="{y}" text-anchor="end" style="fill: var(--ink); font-size: 11px">{b}</text>'
-              for y, a, b in ((112, 'Ship to', 'Home'), (140, 'Payment', 'Card'), (168, 'Total', '$228')))
-    + btn(26, 394, 188, 42, 'Pay $228', filled=True) + '</g>'
-    '<rect id="ha-hl" x="0" y="0" width="0" height="0" rx="9" class="ha-hl"/>'
-    '<circle id="ha-tap" cx="0" cy="0" r="16" class="ha-tap"/>'
-    '</svg>')
+def ctext(y, t, size=11, fill='var(--ink)', bold=False):
+    w = ' font-weight: 700;' if bold else ''
+    return f'<text x="120" y="{y}" text-anchor="middle" style="fill: {fill}; font-size: {size}px;{w}">{e(t)}</text>'
 
-CART, CONT, PAY, YOURCART = (190, 65), (120, 415), [22, 390, 196, 50], [20, 50, 116, 30]
-CONT_BOX = [22, 390, 196, 50]
+
+BACKDROP = '<rect x="3" y="3" width="234" height="474" rx="30" style="fill: rgba(0, 0, 0, .62)"/>'
+
+
+def dialog(y, h, lines, left, right):
+    """An alert box: centered lines, then two buttons split by hairlines."""
+    sep = y + h - 50
+    return (BACKDROP + f'<rect x="30" y="{y}" width="180" height="{h}" rx="12" style="fill: #161616; stroke: var(--dim)"/>'
+            + ''.join(ctext(*ln) for ln in lines)
+            + f'<path d="M30,{sep} H210 M120,{sep} V{y + h}" style="stroke: var(--dim); fill: none"/>'
+            f'<text x="75" y="{sep + 29}" text-anchor="middle" style="fill: var(--link); font-size: 11px">{e(left)}</text>'
+            f'<text x="165" y="{sep + 29}" text-anchor="middle" style="fill: var(--link); font-size: 11px; font-weight: 600">{e(right)}</text>')
+
+
+def phone_svg(cart_label, build_label, aria):
+    return (
+        f'<svg viewBox="0 0 240 480" role="img" aria-label="{e(aria)}">'
+        '<rect x="3" y="3" width="234" height="474" rx="30" style="fill: #000; stroke: var(--dim); stroke-width: 2"/>'
+        '<rect x="92" y="12" width="56" height="16" rx="8" style="fill: var(--line)"/>'
+        '<text x="26" y="25" class="d-note">9:41</text>'
+        f'<text x="214" y="25" text-anchor="end" class="d-note">{e(build_label)}</text>'
+        '<g data-screen="home">' + head('Shop')
+        + btn(164, 52, 52, 26, 'Cart') + item(100, 'Headphones', '$199') + item(158, 'Phone case', '$29')
+        + '<text x="26" y="236" class="d-sub">Free shipping over $50</text></g>'
+        '<g data-screen="cart">' + head('Your Cart') + '<text x="26" y="92" class="d-sub">2 items</text>'
+        + item(104, 'Headphones', '$199') + item(162, 'Phone case', '$29')
+        + '<text x="26" y="244" style="fill: var(--muted); font-size: 11px">Total</text>'
+          '<text x="214" y="244" text-anchor="end" style="fill: var(--ink); font-size: 11px">$228</text>'
+        + btn(26, 348, 188, 36, 'Edit') + btn(26, 394, 188, 42, cart_label, filled=True) + '</g>'
+        '<g data-screen="checkout">' + head('Checkout')
+        + ''.join(f'<text x="26" y="{y}" style="fill: var(--muted); font-size: 11px">{a}</text>'
+                  f'<text x="214" y="{y}" text-anchor="end" style="fill: var(--ink); font-size: 11px">{b}</text>'
+                  for y, a, b in ((112, 'Ship to', 'Home'), (140, 'Payment', 'Card'), (168, 'Total', '$228')))
+        + btn(26, 394, 188, 42, 'Pay $228', filled=True) + '</g>'
+        '<g class="ha-promo">' + dialog(168, 124, [(196, 'Promo', 13, 'var(--ink)', True),
+                                                  (216, '10% off your order today', 10.5, 'var(--muted)')],
+                                        'Not Now', 'Use Code') + '</g>'
+        '<g class="ha-sys">' + dialog(150, 146, [(176, '“Shop” Would Like to', 11.5, 'var(--ink)', True),
+                                                (192, 'Send You Notifications', 11.5, 'var(--ink)', True),
+                                                (212, 'Notifications may include alerts,', 9.5, 'var(--muted)'),
+                                                (225, 'sounds and icon badges.', 9.5, 'var(--muted)')],
+                                      'Don’t Allow', 'Allow') + '</g>'
+        '<g class="ha-toast"><rect x="22" y="282" width="196" height="46" rx="6" style="fill: #000; stroke: var(--yellow)"/>'
+        '<text class="ha-t1" x="120" y="301" text-anchor="middle" style="fill: var(--yellow); font-size: 10.5px"></text>'
+        '<text class="ha-t2" x="120" y="317" text-anchor="middle" style="fill: var(--yellow); font-size: 10.5px"></text></g>'
+        '<text class="ha-hud" x="120" y="461" text-anchor="middle"></text>'
+        '<rect class="ha-hlbox" x="0" y="0" width="0" height="0" rx="9"/>'
+        '<circle class="ha-tapring" cx="0" cy="0" r="16"/>'
+        '</svg>')
+
+
+def code_pane(lines, swap=None, insert_after=None, inserts=()):
+    """The test's source with a status gutter; a swapped line shows old then new, inserted lines show once healed."""
+    out = []
+    for i, line in enumerate(lines, 1):
+        if not line.strip() and i == len(lines):
+            continue
+        if swap and i == swap[0]:
+            body_ = f'<span class="old">{e(line)}</span><span class="new">{e(swap[1])}</span>'
+        else:
+            body_ = e(line)
+        out.append(f'<span data-line="{i}"><span class="ln">{i:>2}</span><span class="mk"></span>{body_}</span>')
+        if i == insert_after:
+            out += [f'<span data-line="g" class="ins"><span class="ln"> +</span><span class="mk"></span>{e(x)}</span>'
+                    for x in inserts]
+    return ''.join(out)
+
+
+CART, NOTNOW, DONT, CONT = [190, 65], [75, 267], [75, 271], [120, 415]
+YOURCART, PRIMARY, DONT_BOX = [20, 50, 116, 30], [22, 390, 196, 50], [32, 248, 86, 46]
+NEW_LABEL = changed[0][2]
 S = lambda **k: k
-steps = [
-    S(screen='home', line=6, status='run 51 · new build', ms=1900, kind='info',
+ok_path = lambda lines: [[ln, 'ok'] for ln in lines]
+
+rename_steps = [
+    S(screen='home', line=6, status='run 51 · new build', ms=1900, kind='info', clear=True, hud='run 51 · new build',
       log='Run 51 on the new build. Its test logs stream back over the serial protocol.'),
-    S(screen='home', line=6, status='run 51 · new build', ms=1500, kind='ok',
+    S(screen='home', line=6, status='run 51 · new build', ms=1500, kind='ok', marks=ok_path([5, 6]), hud='L6 ✓ Home',
       log='L6 app.launch(): Home. Prior: Home, 1.00. ✓'),
-    S(screen='home', line=7, tap=CART, status='run 51 · new build', ms=1300, kind='ok',
+    S(screen='home', line=7, tap=CART, status='run 51 · new build', ms=1300, kind='ok', marks=ok_path([7]), hud='L7 ✓ tap Cart',
       log='L7 tap buttons["Cart"]. ✓'),
-    S(screen='cart', line=8, hl=YOURCART, status='run 51 · new build', ms=1600, kind='ok',
+    S(screen='cart', line=8, hl=YOURCART, status='run 51 · new build', ms=1600, kind='ok', marks=ok_path([8]), hud='L8 ✓ Your Cart',
       log='L8 wait for staticTexts["Your Cart"]: Cart. Prior: Cart, 1.00. ✓'),
-    S(screen='cart', line=9, status='run 51 · new build', ms=1600, kind='ok',
+    S(screen='cart', line=9, status='run 51 · new build', ms=1600, kind='ok', marks=ok_path([9]), hud=f'L9 ✓ no promo ({1 - p_promo:.2f})',
       log=f'L9 alerts["Promo"] absent: the {1 - p_promo:.2f} branch. ✓'),
-    S(screen='cart', line=12, toast=True, status='run 51 · deviation', ms=2800, kind='dev',
+    S(screen='cart', line=12, toast=['No button matches', '“Checkout”'], status='run 51 · deviation', ms=2800, kind='dev',
+      marks=[[12, 'dev']], hud='L12 ✗ no match',
       log=f'L12 tap buttons["Checkout"]: no match. Still on Cart, which {"none" if stayed_on_cart == 0 else stayed_on_cart} of {RUNS} runs did. ✗ Deviation from the prior.'),
-    S(screen='cart', line=12, hl=CONT_BOX, hlc='yellow', status='worker · reasoning packet', ms=3400, kind='info',
+    S(screen='cart', line=12, hl=PRIMARY, hlc='yellow', status='worker · reasoning packet', ms=3400, kind='info', hud='worker: reasoning packet',
       log=f'Worker: the screenshot shows the buttons "Edit" and "{NEW_LABEL}". Packet: adjust buttons["Checkout"]; '
           f'100% of its words are in "{NEW_LABEL}".'),
-    S(screen='cart', line=12, code='new', status='agent · editing', ms=2200, kind='heal',
+    S(screen='cart', line=12, code='new', status='agent · editing', ms=2200, kind='heal', hud='editing line 12',
       log=f'Agent edits line 12: buttons["{NEW_LABEL}"].'),
-    S(screen='cart', line=12, code='new', status='agent · recompiling', ms=2000, kind='heal',
+    S(screen='cart', line=12, code='new', status='agent · recompiling', ms=2000, kind='heal', hud='recompiled ✓',
       log=f'Recompile and re-parse: 1 node changed ({changed[0][0]}). ✓'),
-    S(screen='home', line=6, code='new', status='run 52 · new build', ms=1500, kind='info',
+    S(screen='home', line=6, code='new', clear=True, status='run 52 · new build', ms=1500, kind='info', hud='run 52 · healed test',
       log='Run 52 on the new build, with the healed test.'),
-    S(screen='home', line=7, code='new', tap=CART, status='run 52 · new build', ms=1300, kind='ok',
-      log='L6-L9 match the prior. ✓'),
-    S(screen='cart', line=12, code='new', tap=CONT, status='run 52 · new build', ms=1500, kind='ok',
+    S(screen='home', line=7, code='new', tap=CART, status='run 52 · new build', ms=1300, kind='ok', marks=ok_path([5, 6, 7, 8, 9]),
+      hud='L6–L9 ✓', log='L6-L9 match the prior. ✓'),
+    S(screen='cart', line=12, code='new', tap=CONT, status='run 52 · new build', ms=1500, kind='ok', marks=ok_path([12]), hud='L12 ✓ Checkout',
       log=f'L12 tap buttons["{NEW_LABEL}"]: Checkout. Prior: Checkout, 1.00. ✓'),
-    S(screen='checkout', line=13, code='new', hl=PAY, status='healed', ms=3000, kind='heal',
+    S(screen='checkout', line=13, code='new', hl=PRIMARY, status='healed', ms=3000, kind='heal', marks=ok_path([13]), hud='✓ healed',
       log=f'L13 buttons["Pay"].isEnabled. ✓ {matches} of {matches} statements match the prior. Healed.'),
 ]
-for st in steps:
-    st.setdefault('code', 'old')
+
+n_orig = len(orig_st)
+sys_steps = [
+    S(screen='home', line=6, overlay='sys', status='run 51 · new OS build', ms=2000, kind='info', clear=True, hud='run 51 · new OS build',
+      log='Run 51 on a new OS build. Its test logs stream back over the serial protocol.'),
+    S(screen='home', line=6, overlay='sys', status='run 51 · new OS build', ms=2400, kind='info', marks=ok_path([5, 6]), hud='L6 Home, under an alert',
+      log=f'L6 app.launch(): Home, under a system alert. Prior: Home, 1.00; a system alert in {SYS_ALERTS} of {RUNS} runs.'),
+    S(screen='home', line=7, overlay='sys', tap=CART, status='run 51 · deviation', ms=2800, kind='dev', marks=[[7, 'dev']],
+      hud='L7 ✗ alert in front',
+      log=f'L7 tap buttons["Cart"]: not hittable, the alert is in front. Still on Home, which none of {RUNS} runs did. ✗ Deviation from the prior.'),
+    S(screen='home', line=7, overlay='sys', hl=DONT_BOX, hlc='yellow', status='worker · reasoning packet', ms=3600, kind='info',
+      hud='worker: reasoning packet',
+      log='Worker: the screenshot shows a system alert with "Don\'t Allow" and "Allow". No predicate on the path covers it, '
+          'so the packet asks for a new one before line 7: dismiss the alert.'),
+    S(screen='home', line='g', overlay='sys', code='new', status='agent · editing', ms=2400, kind='heal', hud='inserting a guard',
+      log='Agent inserts a guard after line 6: if the system alert shows, tap "Don\'t Allow".'),
+    S(screen='home', line='g', overlay='sys', code='new', status='agent · recompiling', ms=2400, kind='heal', hud='recompiled ✓',
+      log=f'Recompile and re-parse: {n_added} statements added after line 6 ({", ".join(added_kinds)}); '
+          f'the {n_orig} original statements unchanged. ✓'),
+    S(screen='home', line=6, overlay='sys', code='new', clear=True, status='run 52 · new OS build', ms=1600, kind='info',
+      hud='run 52 · healed test', log='Run 52 on the new OS build, with the healed test.'),
+    S(screen='home', line='g', overlay='sys', code='new', tap=DONT, status='run 52 · new OS build', ms=1700, kind='ok',
+      marks=ok_path([5, 6, 'g']), hud='guard ✓ Don’t Allow', log='Guard: the alert is there; tap "Don\'t Allow". ✓'),
+    S(screen='home', line=7, code='new', tap=CART, status='run 52 · new OS build', ms=1400, kind='ok', marks=ok_path([7]),
+      hud='L7 ✓ tap Cart', log='L7 tap buttons["Cart"]. ✓'),
+    S(screen='cart', line=12, code='new', tap=CONT, status='run 52 · new OS build', ms=1600, kind='ok', marks=ok_path([8, 9, 12]),
+      hud='L8–L12 ✓', log='L8-L12 match the prior. ✓'),
+    S(screen='checkout', line=13, code='new', hl=PRIMARY, status='healed', ms=3000, kind='heal', marks=ok_path([13]), hud='✓ healed',
+      log=f'L13 buttons["Pay"].isEnabled. ✓ All {n_orig} original statements match the prior. Healed.'),
+]
+
+promo_path = [5, 6, 7, 8, 9, 10, 12, 13]  # the promo branch: one more statement than the no-alert path
+false_steps = [
+    S(screen='home', line=6, status='run 51 · new build', ms=1900, kind='info', clear=True, hud='run 51 · new build',
+      log='Run 51 on a new build. Its test logs stream back over the serial protocol.'),
+    S(screen='home', line=7, tap=CART, status='run 51 · new build', ms=1500, kind='ok', marks=ok_path([5, 6, 7]), hud='L6–L7 ✓',
+      log='L6-L7: Home, then tap buttons["Cart"]. ✓'),
+    S(screen='cart', line=9, overlay='promo', status='run 51 · new build', ms=2600, kind='ok', marks=ok_path([8, 9]),
+      hud=f'L9 ✓ promo ({p_promo:.2f})',
+      log=f'L8 Cart. ✓ L9 alerts["Promo"] shown: the {p_promo:.2f} branch, seen in {PROMO} of {RUNS} runs. ✓ Not a deviation.'),
+    S(screen='cart', line=10, overlay='promo', tap=NOTNOW, status='run 51 · new build', ms=1500, kind='ok', marks=ok_path([10]),
+      hud='L10 ✓ Not Now', log='L10 tap "Not Now". ✓'),
+    S(screen='cart', line=12, tap=CONT, status='run 51 · new build', ms=1500, kind='ok', marks=ok_path([12]), hud='L12 ✓ Checkout',
+      log='L12 tap buttons["Checkout"]: Checkout. ✓'),
+    S(screen='checkout', line=13, hl=PRIMARY, status='run 51 · new build', ms=1600, kind='ok', marks=ok_path([13]), hud='L13 ✓ Pay enabled',
+      log='L13 buttons["Pay"].isEnabled. ✓'),
+    S(screen='checkout', line=13, toast=['Runner: FAILED', 'device disconnected'], status='run 51 · reported failed', ms=2800,
+      kind='warn', hud='runner: FAILED', log='The runner reports FAILED: the device disconnected during teardown.'),
+    S(screen='checkout', line=13, status='worker · reasoning packet', ms=3800, kind='info', hud='worker: no deviation',
+      log=f'Worker: all {len(promo_path)} statements on the charted path match the prior, the promo branch included. '
+          'The failure came after the test, not from it. No predicate to adjust.'),
+    S(screen='checkout', line=None, status='no edit', ms=2400, kind='ok', hud='no edit',
+      log='No edit. Marked a false error report.'),
+    S(screen='home', line=6, clear=True, status='run 52 · new build', ms=1600, kind='info', hud='run 52 · same test',
+      log='Run 52 on the same build, test unchanged.'),
+    S(screen='checkout', line=13, hl=PRIMARY, status='passed', ms=3000, kind='heal', marks=ok_path(promo_path), hud='✓ passed, no edit',
+      log=f'All {len(promo_path)} statements match the prior. Passed, with no heal needed.'),
+]
+
+SCENARIOS = [
+    dict(id='rename', title='Renamed button', blurb='A UI change renames Checkout. One string literal heals.',
+         build='new build', cart=NEW_LABEL, steps=rename_steps,
+         code=code_pane(src, swap=(fail_line, healed_src[fail_line - 1])),
+         aria=f'A fake shop app on the new build: Home, Cart and Checkout. On Cart the button now reads {NEW_LABEL}.',
+         gif_alt=f'Replay: the Checkout button is renamed {NEW_LABEL}, the run deviates at line 12, the agent edits the '
+                 'string, and the rerun reaches Checkout.'),
+    dict(id='sysalert', title='New system alert', blurb='An OS quirk puts an alert in front of the app. A guard is added.',
+         build='new OS', cart='Checkout', steps=sys_steps,
+         code=code_pane(src, insert_after=6, inserts=inserted),
+         aria='A fake shop app on a new OS build: a system notification alert covers the Home screen at launch.',
+         gif_alt='Replay: a system alert covers the app at launch, the run deviates at line 7, the agent inserts a guard '
+                 'that dismisses it, and the rerun reaches Checkout.'),
+    dict(id='falsealarm', title='False alarm', blurb='The runner reports a failure the screens contradict. No edit.',
+         build='new build', cart='Checkout', steps=false_steps, code=code_pane(src),
+         aria='A fake shop app on a new build: the run passes through the promo alert to Checkout.',
+         gif_alt='Replay: every step matches the prior, the runner still reports a failure from teardown, and the agent '
+                 'leaves the test unchanged; the rerun passes.'),
+]
 
 import json
-code_lines = []
-for i, line in enumerate(src, 1):
-    if not line.strip() and i == len(src):
-        continue
-    if i == fail_line:
-        body_ = (f'<span class="old">{e(line)}</span><span class="new">{e(healed_src[i - 1])}</span>')
-    else:
-        body_ = e(line)
-    code_lines.append(f'<span data-line="{i}"><span class="ln">{i:>2}</span> {body_}</span>')
-log_items = '\n'.join(f'          <li class="k-{st["kind"]}">{e(st["log"])}</li>' for st in steps)
-anim = f"""    <div id="heal-anim" class="heal-anim">
-      <div class="phone" data-screen="cart">{phone_svg}</div>
+for sc in SCENARIOS:
+    for st in sc['steps']:
+        st.setdefault('code', 'old')
+
+
+def player(sc, first):
+    steps = sc['steps']
+    log_items = '\n'.join(f'          <li class="k-{st["kind"]}">{e(st["log"])}</li>' for st in steps)
+    return f"""    <div id="heal-{sc['id']}" class="heal-anim"{'' if first else ' hidden'}>
+      <div class="phone" data-screen="home">{phone_svg(sc['cart'], sc['build'], sc['aria'])}</div>
       <div class="agent">
-        <div class="agent-head"><span class="dot"></span><b>Agent</b><span class="ha-status">run 51 · new build</span></div>
-        <pre class="code">{''.join(code_lines)}</pre>
+        <div class="agent-head"><span class="dot"></span><b>{e(sc['title'])}</b><span class="ha-status">{e(steps[0]['status'])}</span></div>
+        <pre class="code">{sc['code']}</pre>
         <ol class="ha-log" aria-label="The agent's log">
 {log_items}
         </ol>
-        <div class="ha-controls"><button class="btn" type="button" data-act="play">Play</button><button class="btn" type="button" data-act="step">Step</button><button class="btn" type="button" data-act="reset">Restart</button><span class="ha-count"></span></div>
+        <div class="ha-controls"><button class="btn" type="button" data-act="play">Play</button><button class="btn" type="button" data-act="back" aria-label="Previous step">&larr;</button><button class="btn" type="button" data-act="step" aria-label="Next step">&rarr;</button><input class="ha-scrub" type="range" min="1" max="{len(steps)}" value="1" aria-label="Step"><span class="ha-count"></span></div>
       </div>
-    </div>
-    <script type="application/json" id="ha-steps">{json.dumps(steps, ensure_ascii=False)}</script>"""
+      <script type="application/json">{json.dumps(steps, ensure_ascii=False)}</script>
+    </div>"""
+
+
+cards = '\n'.join(
+    f"""      <button class="replay-card" type="button" data-target="heal-{sc['id']}" aria-pressed="{'true' if i == 0 else 'false'}">
+        <picture><source media="(prefers-reduced-motion: reduce)" srcset="replays/{sc['id']}.png?v=1"><img src="replays/{sc['id']}.gif?v=1" alt="{e(sc['gif_alt'])}" width="180" height="360" loading="lazy"></picture>
+        <b>{e(sc['title'])}</b><span>{e(sc['blurb'])}</span>
+      </button>""" for i, sc in enumerate(SCENARIOS))
 
 block = f"""{START}
-  <figure id="fig-example">
-    <figcaption>
-      <h2>A worked example: healing one test</h2>
-      <span class="note">Sample test written for this page; runs simulated. Not Apple code or Apple data.</span>
-    </figcaption>
-    <p>Here is one heal worked end to end. The tree is the real parse of a sample test from the public Swift compiler, standing in for David&rsquo;s parser. The plan prior is calculated from {RUNS} passing runs on earlier builds: each step&rsquo;s expected screen, and the chance the run reaches it (the promo alert showed in {PROMO} of {RUNS} runs, so its branch carries {p_promo:.2f}). On the new build the Checkout button is renamed, and the run leaves the prior at line {fail_line}. Press Play to watch the agent work through it.</p>
-{anim}
-    <div class="scroll">{''.join(svg)}</div>
-    <div class="legend">
-      <span style="--c: var(--blue)"><i></i>Plan prior</span>
-      <span style="--c: var(--green)"><i></i>Matches the prior</span>
-      <span style="--c: var(--yellow)"><i></i>Deviation and the predicate to adjust</span>
+  <section id="watch">
+    <h2>Watch it heal</h2>
+    <p class="note">Three replays on a sample shop app. Pick one to step through it.</p>
+    <div class="replay-cards">
+{cards}
     </div>
-    <div class="heal-grid">
-      <div>
-        <h3>The reasoning packet</h3>
-        <p class="note">Each element predicate on the charted path, checked against the screen the run&rsquo;s logs carried back.</p>
-        <div class="scroll"><table class="packet">
-          <thead><tr><th>Predicate</th><th>Line</th><th>On screen</th><th>Verdict</th></tr></thead>
-          <tbody>
+{chr(10).join(player(sc, i == 0) for i, sc in enumerate(SCENARIOS))}
+    <p class="fine">Sample test written for this page; runs simulated. Not Apple code or Apple data. The plan prior comes from {RUNS} simulated passing runs on earlier builds (the promo alert showed in {PROMO}).</p>
+    <details class="deep">
+      <summary>Under the hood of the renamed-button heal: the parse tree, the reasoning packet and the diff</summary>
+      <p>The tree is the real parse of the sample test from the public Swift compiler, standing in for David&rsquo;s parser. Each row carries the plan prior: the screen the step should reach, and the chance the run gets there.</p>
+      <div class="scroll">{''.join(svg)}</div>
+      <div class="legend">
+        <span style="--c: var(--blue)"><i></i>Plan prior</span>
+        <span style="--c: var(--green)"><i></i>Matches the prior</span>
+        <span style="--c: var(--yellow)"><i></i>Deviation and the predicate to adjust</span>
+      </div>
+      <div class="heal-grid">
+        <div>
+          <h3>The reasoning packet</h3>
+          <p class="note">Each element predicate on the charted path, checked against the screen the run&rsquo;s logs carried back.</p>
+          <div class="scroll"><table class="packet">
+            <thead><tr><th>Predicate</th><th>Line</th><th>On screen</th><th>Verdict</th></tr></thead>
+            <tbody>
 {packet_rows}
-          </tbody>
-        </table></div>
+            </tbody>
+          </table></div>
+        </div>
+        <div>
+          <h3>The heal</h3>
+          <p class="note">One edit, then a re-parse: the tree changes in exactly one node, the <code>{changed[0][0]}</code> on line {fail_line}.</p>
+          <pre class="code">{code}</pre>
+        </div>
       </div>
-      <div>
-        <h3>The heal</h3>
-        <p class="note">One edit, then a re-parse: the tree changes in exactly one node, the <code>{changed[0][0]}</code> on line {fail_line}.</p>
-        <pre class="code">{code}</pre>
-      </div>
-    </div>
-    <p>Run again on the new build, the healed test matches the prior at all {matches} statements on its path, and the run is back on a path the prior gives {path_prior:.2f}. At line {fail_line} the unhealed run had stayed on the Cart screen, which {'none' if stayed_on_cart == 0 else stayed_on_cart} of the {RUNS} earlier runs did.</p>
-  </figure>
+      <p>Run again on the new build, the healed test matches the prior at all {matches} statements on its path, and the run is back on a path the prior gives {path_prior:.2f}. At line {fail_line} the unhealed run had stayed on the Cart screen, which {'none' if stayed_on_cart == 0 else stayed_on_cart} of the {RUNS} earlier runs did.</p>
+    </details>
+  </section>
 {END}"""
 
 page = open(PAGE).read()
-if START in page:
-    a, b = page.index(START), page.index(END) + len(END)
-    page = page[:a] + block + page[b:]
-else:
-    anchor = '  <section>\n    <h2>The test infrastructure around it</h2>'
-    assert page.count(anchor) == 1
-    page = page.replace(anchor, '  ' + block + '\n\n' + anchor)
+assert page.count(START) == 1 and page.count(END) == 1, 'the page needs one pair of heal-example markers'
+a, b = page.index(START), page.index(END) + len(END)
+page = page[:a] + block + page[b:]
 open(PAGE, 'w').write(page)
-print('wrote the heal example: %d tree rows, deviation at line %d, %d statements match after the heal'
-      % (len(rows), fail_line, matches))
+print('wrote %d replays: %s; renamed-button tree has %d rows, deviation at line %d, %d statements match after the heal; '
+      'system alert adds %d statements (%s)' % (len(SCENARIOS), ', '.join('%s %d steps' % (s['id'], len(s['steps'])) for s in SCENARIOS),
+                                               len(rows), fail_line, matches, n_added, ', '.join(added_kinds)))
