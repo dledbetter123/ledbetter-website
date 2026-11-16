@@ -133,7 +133,7 @@ def parse_repo_tools():
     tools = []
     for name, desc, body in re.findall(r'Name:\s*"([^"]+)",\s*Description:\s*"((?:[^"\\]|\\.)*)",(.*?)\n\t\},', block + "\n\t},", re.S):
         props, required = {}, []
-        for pname, pdesc in re.findall(r'"(repo|path)":\s*map\[string\]interface\{\}\{"type": "string", "description": "((?:[^"\\]|\\.)*)"\}', body):
+        for pname, pdesc in re.findall(r'"(repo|path|command)":\s*map\[string\]interface\{\}\{"type": "string", "description": "((?:[^"\\]|\\.)*)"\}', body):
             props[pname] = {"type": "string", "description": json.loads('"' + pdesc + '"')}
         rm = re.search(r'"required":\s*\[\]string\{([^}]*)\}', body)
         if rm:
@@ -142,7 +142,7 @@ def parse_repo_tools():
         if required:
             params["required"] = required
         tools.append({"name": name, "description": json.loads('"' + desc + '"'), "parameters": params})
-    if [t["name"] for t in tools] != ["list_my_repos", "list_repo_files", "read_repo_file"]:
+    if [t["name"] for t in tools] != ["list_my_repos", "list_repo_files", "read_repo_file", "run_git"]:
         sys.exit("repoTools parse failed")
     return tools
 REPO_TOOLS = parse_repo_tools()
@@ -179,8 +179,12 @@ CATALOG_PROJECT_NAMES = go_string_list(CATALOG_GO, "catalogProjectNames")
 CODE_REQUEST_RE = go_regex(re.search(r"codeRequestRe\s*=\s*regexp\.MustCompile\(`(.*?)`\)", CATALOG_GO).group(1))
 QUOTED_RE = go_regex(re.sub(r"\\x\{([0-9A-Fa-f]{4})\}", r"\\u\1",
                             re.search(r"quotedRe\s*=\s*regexp\.MustCompile\(`(.*?)`\)", CATALOG_GO).group(1)))
-# chatHandler: likely := catalogLikely(req.Message) && (pageBlock == "" || asksForCode(req.Message))
-assert "catalogLikely(req.Message) && (pageBlock == \"\" || asksForCode(req.Message))" in MAIN_GO, "chatHandler's cataloguer gate changed; update catalog_wanted()"
+# chatHandler's cataloguer gate, mirrored by catalog_wanted(). It became wantsLibrarian(message,
+# history, pageBlock) in 37b0d41, which this mirror does not follow yet, so the widget path refuses
+# to run until it does; --path anon never reaches the cataloguer and is unaffected.
+CATALOG_GATE_MIRRORED = "catalogLikely(req.Message) && (pageBlock == \"\" || asksForCode(req.Message))" in MAIN_GO
+if ARGS.path == "widget" and not CATALOG_GATE_MIRRORED:
+    sys.exit("chatHandler's cataloguer gate changed (now wantsLibrarian); update catalog_wanted() or use --path anon")
 HANDOFF_LINES = go_string_list(CATALOG_GO, "handoffLines")
 CATALOG_MAX_ROUNDS = go_int(CATALOG_GO, "catalogMaxRounds")
 CATALOG_MAX_BYTES = go_int(CATALOG_GO, "catalogMaxBytes")
@@ -193,7 +197,7 @@ PROJECTS_JS = open(os.path.join(REPO, "frontend/src/data/projects.js")).read()
 PROJECTS = {}
 for m in re.finditer(r"slug:\s*'([^']+)',\s*title:\s*(\"[^\"]*\"|'[^']*'),(.*?)opener:\s*(\"[^\"]*\"|'[^']*'),", PROJECTS_JS, re.S):
     PROJECTS[m.group(1)] = {"title": m.group(2)[1:-1].replace("\\'", "'"), "opener": m.group(4)[1:-1].replace("\\'", "'")}
-PROJECT_GREETING = re.search(r"const greeting = `([^`]*)`", open(os.path.join(REPO, "frontend/src/components/ProjectPage/ProjectPage.js")).read()).group(1)
+PROJECT_GREETING = re.search(r"export const projectGreeting = \(project\) =>\s*`([^`]*)`", open(os.path.join(REPO, "frontend/src/lib/askContext.js")).read()).group(1)
 HOME_GREETING = re.search(r'const GREETING = "([^"]*)"', open(os.path.join(REPO, "frontend/src/components/ChatWidget/ChatWidget.js")).read()).group(1)
 
 # Page context (pagecontext.go): the block chatHandler appends to `extra` when a chat was
@@ -553,6 +557,10 @@ def run_tool(name, args):
         return tool_list_repo_files(s("repo"), s("path"))
     if name == "read_repo_file":
         return tool_read_repo_file(s("repo"), s("path"))
+    if name == "run_git":
+        # Production runs a bundled git in the Lambda (gittool.go); the eval does not, so the model
+        # gets a plain refusal and can still answer from the other tools.
+        return "run_git is unavailable right now; use list_repo_files and read_repo_file."
     return "Unknown tool: " + name
 
 
