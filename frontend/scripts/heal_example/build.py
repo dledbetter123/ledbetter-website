@@ -374,19 +374,30 @@ def phone_svg(cart_label, build_label, aria):
         '</svg>')
 
 
+BODY = ' ' * 8  # the method body's indent
+
+
+def code_line(text):
+    """A body line's shared indent goes in its own span, so the narrow layout can drop it."""
+    return f'<span class="ib">{BODY}</span>{e(text[len(BODY):])}' if text.startswith(BODY) else e(text)
+
+
 def code_pane(lines, swap=None, insert_after=None, inserts=()):
-    """The test's source with a status gutter; a swapped line shows old then new, inserted lines show once healed."""
+    """The test's source with a status gutter; a swapped line shows old then new, inserted lines show once healed.
+    Lines outside the method body get class "out", which the narrow layout hides beside the phone."""
     out = []
     for i, line in enumerate(lines, 1):
         if not line.strip() and i == len(lines):
             continue
         if swap and i == swap[0]:
-            body_ = f'<span class="old">{e(line)}</span><span class="new">{e(swap[1])}</span>'
+            assert line.startswith(BODY) and swap[1].startswith(BODY)
+            body_ = f'<span class="ib">{BODY}</span><span class="old">{e(line[len(BODY):])}</span><span class="new">{e(swap[1][len(BODY):])}</span>'
         else:
-            body_ = e(line)
-        out.append(f'<span data-line="{i}"><span class="ln">{i:>2}</span><span class="mk"></span>{body_}</span>')
+            body_ = code_line(line)
+        cls = '' if line.startswith(BODY) else ' class="out"'
+        out.append(f'<span data-line="{i}"{cls}><span class="ln">{i:>2}</span><span class="mk"></span>{body_}</span>')
         if i == insert_after:
-            out += [f'<span data-line="g" class="ins"><span class="ln"> +</span><span class="mk"></span>{e(x)}</span>'
+            out += [f'<span data-line="g" class="ins"><span class="ln"> +</span><span class="mk"></span>{code_line(x)}</span>'
                     for x in inserts]
     return ''.join(out)
 
@@ -529,10 +540,23 @@ def player(sc, first):
     </div>"""
 
 
+GIF_V = 2  # bump when record.py re-records, so browsers drop cached GIFs
+
+
+def gif_size(rid):
+    """Width and height from the recorded GIF's header (record.py writes it), for the img's aspect ratio."""
+    try:
+        with open(os.path.join(os.path.dirname(PAGE), 'replays', f'{rid}.gif'), 'rb') as f:
+            head = f.read(10)
+        return int.from_bytes(head[6:8], 'little'), int.from_bytes(head[8:10], 'little')
+    except OSError:
+        return 640, 600
+
+
 cards = '\n'.join(
     f"""      <button class="replay-card" type="button" data-target="heal-{sc['id']}" aria-pressed="{'true' if i == 0 else 'false'}">
-        <picture><source media="(prefers-reduced-motion: reduce)" srcset="replays/{sc['id']}.png?v=1"><img src="replays/{sc['id']}.gif?v=1" alt="{e(sc['gif_alt'])}" width="180" height="360" loading="lazy"></picture>
         <b>{e(sc['title'])}</b><span>{e(sc['blurb'])}</span>
+        <picture><source media="(prefers-reduced-motion: reduce)" srcset="replays/{sc['id']}.png?v={GIF_V}"><img src="replays/{sc['id']}.gif?v={GIF_V}" alt="{e(sc['gif_alt'])}" width="{gif_size(sc['id'])[0]}" height="{gif_size(sc['id'])[1]}" loading="lazy"></picture>
       </button>""" for i, sc in enumerate(SCENARIOS))
 
 block = f"""{START}

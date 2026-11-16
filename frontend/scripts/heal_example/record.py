@@ -1,10 +1,12 @@
 """Record the replay GIFs on the Self-Healing Automation page.
 
-Serves frontend/public on localhost, opens the page in headless Chrome with reduced motion (so a
-tap shows as a still ring), and captures the phone at every step of each replay through
-window.healReplay (portfolio/heal-anim.js). Each GIF frame lasts as long as its step does on the
-page. The PNG is the last frame, shown instead of the GIF under reduced motion. Writes
-public/portfolio/replays/<id>.gif and <id>.png. Run after build.py: python3 record.py
+Serves frontend/public on localhost, opens the page in headless Chrome at phone width with reduced
+motion (so a tap shows as a still ring), and captures the player's header, phone and code side by
+side at every step of each replay through window.healReplay (portfolio/heal-anim.js). Each GIF frame
+lasts as long as its step does on the page. The PNG is the last frame, shown instead of the GIF under
+reduced motion. Writes public/portfolio/replays/<id>.gif and <id>.png. Run after build.py:
+python3 record.py, then python3 build.py again if the GIF size changed (the cards' img width and
+height come from it), and bump GIF_V in build.py and the hero's ?v= in the page.
 """
 import base64
 import functools
@@ -27,7 +29,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PUBLIC = os.path.abspath(os.path.join(HERE, '..', '..', 'public'))
 OUT = os.path.join(PUBLIC, 'portfolio', 'replays')
 CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-WIDTH = 360        # GIF pixels; the cards show it at about 170 CSS px, so it stays sharp on 2x screens
+VIEW = 390         # CSS px viewport: the phone-width layout, where the phone sits beside the code
+SCALE = 3          # device pixels per CSS px while capturing
+WIDTH = 640        # GIF pixels; the cards and hero show it at about 340 CSS px, so it stays sharp on 2x screens
 HOLD_LAST = 1500   # extra ms on the last frame before the loop restarts
 COLORS = 64
 
@@ -82,7 +86,7 @@ def main():
             except Exception:
                 time.sleep(0.1)
         cdp = CDP(page['webSocketDebuggerUrl'])
-        cdp('Emulation.setDeviceMetricsOverride', width=1200, height=1600, deviceScaleFactor=2, mobile=False)
+        cdp('Emulation.setDeviceMetricsOverride', width=VIEW, height=1400, deviceScaleFactor=SCALE, mobile=False)
         cdp('Emulation.setEmulatedMedia', features=[{'name': 'prefers-reduced-motion', 'value': 'reduce'}])
         url = f'http://127.0.0.1:{httpd.server_address[1]}/portfolio/self-healing-agent.html'
         cdp('Page.navigate', url=url)
@@ -96,12 +100,17 @@ def main():
             frames = []
             for n in range(len(steps)):
                 cdp.js(f'window.healReplay.show({json.dumps(rid)}, {n}), true')
+                # The header row down to the bottom of the phone or the code, whichever is lower, plus the
+                # log's top border as a bottom edge; the code pane's reserved height keeps every frame equal.
                 r = cdp.js(f"""(() => {{
-                    const el = document.querySelector('#heal-{rid} .phone svg');
-                    el.scrollIntoView({{block: 'center'}});
+                    const root = document.querySelector('#heal-{rid}');
+                    root.querySelectorAll('.ha-log li').forEach((li) => {{ li.style.visibility = 'hidden'; }});
+                    root.scrollIntoView({{block: 'start'}});
                     return new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(() => {{
-                        const b = el.getBoundingClientRect();
-                        res({{x: b.x + scrollX, y: b.y + scrollY, w: b.width, h: b.height}});
+                        const box = (s) => root.querySelector(s).getBoundingClientRect();
+                        const a = root.getBoundingClientRect(), head = box('.agent-head');
+                        const bottom = Math.max(box('.phone').bottom, box('pre.code').bottom) + 1;
+                        res({{x: a.x + scrollX, y: head.y + scrollY, w: a.width, h: bottom - head.y}});
                     }})));
                 }})()""")
                 shot = cdp('Page.captureScreenshot', format='png',
@@ -114,12 +123,20 @@ def main():
             for f in frames:
                 sheet.paste(f, (0, y))
                 y += f.height
-            pal = sheet.quantize(colors=COLORS, method=Image.Quantize.MEDIANCUT)
+            pal = sheet.quantize(colors=COLORS - 1, method=Image.Quantize.MEDIANCUT)
             q = [f.quantize(palette=pal, dither=Image.Dither.NONE) for f in frames]
+            # Pixels that did not change since the previous frame become the transparent index, so each
+            # frame stores only what moved (the phone's screen, a code line), and the GIF shrinks.
+            clear = COLORS - 1
+            for prev, cur in zip([f.copy() for f in q], q[1:]):
+                a, b = prev.getdata(), list(cur.getdata())
+                cur.putdata([clear if x == y else y for x, y in zip(a, b)])
+                cur.info['transparency'] = clear
             durations = [s['ms'] for s in steps]
             durations[-1] += HOLD_LAST
             gif = os.path.join(OUT, f'{rid}.gif')
-            q[0].save(gif, save_all=True, append_images=q[1:], duration=durations, loop=0, disposal=1, optimize=False)
+            q[0].save(gif, save_all=True, append_images=q[1:], duration=durations, loop=0, disposal=1, optimize=False,
+                      transparency=clear)
             frames[-1].save(os.path.join(OUT, f'{rid}.png'), optimize=True)
             print(f'{rid}: {len(frames)} frames, {sum(durations) / 1000:.1f} s, {os.path.getsize(gif) // 1024} KB gif')
     finally:

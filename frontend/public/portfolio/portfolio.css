@@ -154,13 +154,14 @@ body { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
 
 /* Show, don't tell: pieces for pages that lead with examples (first used on the Self-Healing
    Automation page). A hero with a looping replay beside the text; before/after chips; a scale
-   ladder; a timeline; replay cards that pick a player; a collapsible deep dive; and a diagram whose
+   ladder; a timeline; replay cards that pick a player (titles only on phones, where the player
+   itself plays); a collapsible deep dive; and a diagram whose
    parts explain themselves on click (portfolio/explore.js). */
 .fine { font-family: var(--f-mono); font-size: 11.5px; color: var(--dim); max-width: none; }
 .hero-split { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px 40px; }
 .hero-text { display: grid; gap: 14px; min-width: 0; }
 .hero-replay { display: grid; gap: 8px; justify-items: center; text-decoration: none; font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.hero-replay img { display: block; width: 190px; height: auto; }
+.hero-replay img { display: block; width: clamp(240px, 30vw, 340px); height: auto; }
 .hero-replay:hover { color: var(--ink); }
 @media (max-width: 680px) { .hero-split { grid-template-columns: minmax(0, 1fr); } .hero-replay { display: none; } }
 
@@ -190,15 +191,17 @@ body { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
 .timeline span { font-size: 14px; color: var(--muted); }
 .timeline li.now b { color: var(--c); }
 
-.replay-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.replay-card { display: grid; gap: 6px; justify-items: start; align-content: start; text-align: left; background: none; color: var(--ink); border: 1px solid var(--line); padding: 12px; cursor: pointer; font: inherit; min-width: 0; }
-.replay-card picture, .replay-card img { display: block; width: 100%; max-width: 140px; height: auto; justify-self: center; }
+.replay-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto auto; gap: 14px; }
+/* Each card spans three shared rows (title, blurb, replay), so the replays start level and a taller one only runs longer. */
+.replay-card { display: grid; grid-row: span 3; grid-template-rows: subgrid; gap: 6px; justify-items: start; align-content: start; text-align: left; background: none; color: var(--ink); border: 1px solid var(--line); padding: 12px; cursor: pointer; font: inherit; min-width: 0; }
+.replay-card picture, .replay-card img { display: block; width: 100%; height: auto; }
 .replay-card b { font-family: var(--f-display); font-size: 17px; font-weight: 600; }
 .replay-card span { font-size: 13.5px; color: var(--muted); line-height: 1.4; }
+.replay-card picture { margin-top: 6px; }
 .replay-card:hover { border-color: var(--dim); }
 .replay-card[aria-pressed="true"] { border-color: var(--green); }
 .replay-card[aria-pressed="true"] b { color: var(--green); }
-@media (max-width: 560px) { .replay-cards { gap: 8px; } .replay-card { padding: 8px; } .replay-card span { display: none; } .replay-card b { font-size: 14px; } }
+@media (max-width: 560px) { .replay-cards { gap: 8px; grid-template-rows: none; } .replay-card { grid-row: auto; grid-template-rows: none; padding: 8px 10px; } .replay-card picture, .replay-card span { display: none; } .replay-card b { font-size: 14px; } }
 
 details.deep { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 14px; }
 details.deep > * { min-width: 0; }

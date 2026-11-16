@@ -1,5 +1,5 @@
-// Plays the heal replays on the Self-Healing Automation page: a fake app on the left, the agent on
-// the right. Each .heal-anim holds one replay and its steps (built by scripts/heal_example/build.py);
+// Plays the heal replays on the Self-Healing Automation page: a fake app beside the test code it runs,
+// at every width. Each .heal-anim holds one replay and its steps (built by scripts/heal_example/build.py);
 // the replay cards pick which one shows. The shown replay plays once when scrolled into view, never
 // on its own under reduced motion. ?hs=<id>&ha=N opens replay <id> at step N, and
 // window.healReplay lets scripts/heal_example/record.py capture each step for the GIFs.
@@ -17,6 +17,7 @@
     const hud = svg.querySelector('.ha-hud');
     const t1 = svg.querySelector('.ha-t1');
     const t2 = svg.querySelector('.ha-t2');
+    const code = root.querySelector('pre.code');
     const lines = root.querySelectorAll('[data-line]');
     const items = root.querySelectorAll('.ha-log li');
     const log = root.querySelector('.ha-log');
@@ -87,13 +88,24 @@
       run();
     };
     const go = (n) => { stop(); show(Math.max(0, Math.min(n, steps.length - 1))); stop(); };
+    // Hold the code pane at its taller state (healed or not) so the heal never pushes the controls down.
+    const fit = () => {
+      if (root.hidden) return;
+      const was = root.classList.contains('healed');
+      code.style.minHeight = '';
+      root.classList.add('healed');
+      const healed = code.offsetHeight;
+      root.classList.remove('healed');
+      code.style.minHeight = `${Math.max(healed, code.offsetHeight)}px`;
+      root.classList.toggle('healed', was);
+    };
 
     playBtn.addEventListener('click', play);
     root.querySelector('[data-act="step"]').addEventListener('click', () => go(at + 1));
     root.querySelector('[data-act="back"]').addEventListener('click', () => go(at - 1));
     scrub.addEventListener('input', () => go(Number(scrub.value) - 1));
     go(0);
-    return { root, id: root.id.replace(/^heal-/, ''), steps, show: go, stop, play, at: () => at };
+    return { root, id: root.id.replace(/^heal-/, ''), steps, show: go, stop, play, fit, at: () => at };
   };
 
   const players = roots.map(setup);
@@ -102,6 +114,7 @@
     const p = players.find((x) => x.id === id) || players[0];
     players.forEach((x) => { if (x !== p) { x.stop(); x.root.hidden = true; } });
     p.root.hidden = false;
+    p.fit();
     cards.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.target === p.root.id)));
     p.show(0);
     if (scroll) p.root.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
@@ -109,6 +122,11 @@
     return p;
   };
   cards.forEach((c) => c.addEventListener('click', () => select(c.dataset.target.replace(/^heal-/, ''), { autoplay: true, scroll: true })));
+  const refit = () => players.forEach((p) => p.fit());
+  let resized = null;
+  window.addEventListener('resize', () => { clearTimeout(resized); resized = setTimeout(refit, 150); });
+  if (document.fonts) document.fonts.ready.then(refit);
+  refit();
 
   window.healReplay = {
     ids: players.map((p) => p.id),
