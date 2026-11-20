@@ -100,9 +100,28 @@ ol.steps > li + li::before { content: "\2192"; position: absolute; left: -20px; 
 .stats.big .stat b { font-size: clamp(54px, 9vw, 84px); }
 .stats.big .stat span { font-size: 15px; max-width: 34ch; }
 
-/* Real figures from David's notebook go in a .real-figs grid (see the comment after Results). */
-.real-figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 28px; }
-.real-figs img { display: block; width: 100%; height: auto; border: 1px solid var(--line); }
+/* From the original notebooks: the genuine and spoofed pairs in two columns whose rows line up (subgrid),
+   one column on phones. Every figure opens full size in a dialog (or as the file itself, without JS). */
+.nb { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(8, auto); gap: 0 28px; }
+.nb-col { --c: var(--green); grid-row: span 8; display: grid; grid-template-rows: subgrid; row-gap: 10px; align-content: start; min-width: 0; border-top: 2px solid var(--c); padding-top: 12px; }
+.nb-col.spoof { --c: var(--yellow); }
+.nb-col > * { min-width: 0; }
+.nb-col .tag { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--c); }
+.nb-col h3 { align-self: end; }
+.nb-shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-items: end; }
+.nb-shots.small-left { grid-template-columns: minmax(0, .62fr) minmax(0, 1fr); }
+.nb-col p { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+.nb-col p b { color: var(--c); font-weight: 600; }
+a.zoom { display: block; cursor: zoom-in; align-self: end; }
+a.zoom img { display: block; width: 100%; height: auto; background: #111; border: 1px solid var(--line); }
+a.zoom:hover img { border-color: var(--link); }
+.nb-setup { font-size: 14.5px; color: var(--muted); max-width: 90ch; }
+@media (max-width: 760px) { .nb { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; row-gap: 28px; } .nb-col { grid-row: auto; grid-template-rows: none; } }
+dialog.zoombox { padding: 0; border: 1px solid var(--dim); background: #000; color: var(--ink); max-width: 96vw; max-height: 94vh; }
+dialog.zoombox::backdrop { background: rgba(0, 0, 0, .86); }
+dialog.zoombox img { display: block; max-width: 96vw; max-height: calc(94vh - 44px); width: auto; height: auto; }
+dialog.zoombox .zb-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 12px; font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+dialog.zoombox button { font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; background: none; color: var(--ink); border: 1px solid var(--dim); padding: 6px 10px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -125,9 +144,9 @@ ol.steps > li + li::before { content: "\2192"; position: absolute; left: -20px; 
   <figure id="fig-feeds">
     <figcaption>
       <h2>Spot the spoofed feed</h2>
-      <span class="note">Illustration of the idea: drawn shapes, not camera frames or results.</span>
+      <span class="note">Illustration of the idea: drawn shapes, not camera frames or results. <a href="#notebooks">Real figures below</a>.</span>
     </figcaption>
-    <p class="sr-only">Illustration: five drone feeds, A to E, drawn as small frames of the same simple scene seen from slightly different positions, so their views overlap. A line joins every pair of feeds. Spoofing a feed replaces its scene with a different one; every line touching that feed turns into a dashed line, meaning the pair disagrees, while the other pairs still agree, and that feed is flagged.</p>
+    <p class="sr-only">Illustration: five drone feeds, A to E, show overlapping slices of one drawn scene, with a line for every pair. A spoofed feed shows a different scene, every line touching it turns dashed (disagrees), and it is flagged.</p>
     <div class="feeds-grid">
       <svg viewBox="0 0 460 400" role="group" aria-label="Illustration: five drone feeds joined by a line for every pair. Pick a feed to spoof it.">
         <defs>
@@ -230,9 +249,9 @@ ol.steps > li + li::before { content: "\2192"; position: absolute; left: -20px; 
   <figure id="fig-pair">
     <figcaption>
       <h2>Inside one comparison</h2>
-      <span class="note">Illustration: drawn shapes, not MatchFormer output.</span>
+      <span class="note">Illustration: drawn shapes, not MatchFormer output. <a href="#notebooks">Real output below</a>.</span>
     </figcaption>
-    <p class="sr-only">Illustration of one pair of feeds. Feed A and Feed B see the same simple scene from slightly different positions. Lines join the local features MatchFormer would match between the two frames, and the two frames' contours are laid over each other. When Feed B is honest, the matches are consistent and the contours line up. When Feed B is spoofed, it shows a different scene: only a few matches remain, they are inconsistent, and its contours do not line up with Feed A's.</p>
+    <p class="sr-only">Illustration of one pair: Feed A and Feed B see one drawn scene from slightly different positions, with lines joining matched features and the two frames' contours overlaid.</p>
     <div class="toggle" role="toolbar" aria-label="Feed B">
       <span class="lbl">Feed B</span> 
       <button type="button" data-pair-state="honest" aria-pressed="true">Honest</button> 
@@ -365,16 +384,40 @@ ol.steps > li + li::before { content: "\2192"; position: absolute; left: -20px; 
     </div>
   </section>
 
-  <!-- REAL FIGURES (pending David's Colab notebook with the actual variance maps and match results).
-       Add them here as one section, e.g.:
-         <section id="real-figures">
-           <h2>From the notebook</h2>
-           <div class="real-figs">
-             <figure><img src="drone-feed-agreement/variance-map.png" alt="..." width="..." height="..."><figcaption>...</figcaption></figure>
-           </div>
-         </section>
-       Images go in frontend/public/portfolio/drone-feed-agreement/. Keep the illustrations above, still labeled as
-       illustrations; the real figures carry their own captions. Then rebuild (prebuild regenerates the page context). -->
+  <section id="notebooks">
+    <h2>From the original notebooks</h2>
+    <p class="note">The illustrations above are drawn. These are real outputs from David&rsquo;s Colab notebooks, the working files behind them, run on two example pairs. Two fixed cameras watching the same street stand in for two drones viewing one scene; in the spoofed pair, a stock photo of a car is fed in place of one camera. Click any figure to open it full size.</p>
+    <p class="nb-setup">Each pair goes through three checks: object detection on each view, MatchFormer feature matching between the views, and the variance map across image contours.</p>
+    <div class="nb">
+      <div class="nb-col">
+        <span class="tag">Genuine pair</span>
+        <h3>Two cameras, same street</h3>
+        <div class="nb-shots">
+          <a class="zoom" href="drone-feed-agreement/street-view-1-detections.webp"><img loading="lazy" decoding="async" src="drone-feed-agreement/street-view-1-detections.webp" width="640" height="480" alt="First camera's view of a campus street, with the people and cars the detector found boxed."></a>
+          <a class="zoom" href="drone-feed-agreement/street-view-2-detections.webp"><img loading="lazy" decoding="async" src="drone-feed-agreement/street-view-2-detections.webp" width="640" height="480" alt="Second camera's view of the same street from a different side, with the people the detector found boxed."></a>
+        </div>
+        <p>Object detection on each view: <b>6 people in each.</b></p>
+        <a class="zoom" href="drone-feed-agreement/genuine-matches.webp"><img loading="lazy" decoding="async" src="drone-feed-agreement/genuine-matches.webp" width="730" height="269" alt="MatchFormer's 128 matches between the two street views, drawn as lines joining matched points."></a>
+        <p>MatchFormer&rsquo;s matches, colored by confidence: <b>128 matches.</b></p>
+        <a class="zoom" href="drone-feed-agreement/genuine-variance.webp"><img loading="lazy" decoding="async" src="drone-feed-agreement/genuine-variance.webp" width="1280" height="480" alt="The agreement view: the two street views in grayscale, with the median neighborhood's matched points marked, circled where they land in the other view, and joined by lines."></a>
+        <p>The agreement view marks one neighborhood of matched points and circles where it lands in the other view: <b>the same structure, seen from the other side.</b></p>
+      </div>
+      <div class="nb-col spoof">
+        <span class="tag">Spoofed pair</span>
+        <h3>A stock photo in place of one view</h3>
+        <div class="nb-shots small-left">
+          <a class="zoom" href="drone-feed-agreement/stock-car-detections.webp"><img loading="lazy" decoding="async" src="drone-feed-agreement/stock-car-detections.webp" width="640" height="427" alt="The stock car photo fed in as the spoofed view, with one car boxed and no people."></a>
+          <a class="zoom" href="drone-feed-agreement/street-view-1-detections.webp"><img loading="lazy" decoding="async" src="drone-feed-agreement/street-view-1-detections.webp" width="640" height="480" alt="The real street view it is compared against, with six people boxed."></a>
+        </div>
+        <p>Object detection: <b>one car and no people</b> in the stock photo, against 6 people on the street.</p>
+        <a class="zoom" href="drone-feed-agreement/spoofed-matches.webp"><img loading="lazy" decoding="async" src="drone-feed-agreement/spoofed-matches.webp" width="730" height="269" alt="MatchFormer's 55 matches between the stock car photo and the street view, drawn as lines joining matched points."></a>
+        <p>MatchFormer still finds <b>55 matches</b>, above the 50-match floor, which is why matching alone isn&rsquo;t the test.</p>
+        <a class="zoom" href="drone-feed-agreement/spoofed-variance.webp"><img loading="lazy" decoding="async" src="drone-feed-agreement/spoofed-variance.webp" width="1280" height="480" alt="The agreement view for the spoofed pair, with the notebook's overlay reading Matches 55 and Similarity 0.511, and the median neighborhood's matched points marked and joined."></a>
+        <p>The agreement view: points on the car land on <b>unrelated rooftops and sky</b> in the street view, so the structure doesn&rsquo;t agree.</p>
+      </div>
+    </div>
+    <p class="note">These notebooks are earlier working files that show how the method works; the 75% and 58% above come from the lab work as a whole.</p>
+  </section>
 
   <section>
     <h2>In the same lab</h2>
@@ -400,14 +443,17 @@ ol.steps > li + li::before { content: "\2192"; position: absolute; left: -20px; 
   </section>
 
   <section class="sources">
-    <span>This lab work has no public repo and is not a publication. Everything on this page comes from David's CVs:</span>
+    <span>This lab work has no public repo and is not a publication. The headline claims come from David's CVs; the figures under From the original notebooks are real outputs from his Colab notebooks:</span>
     <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David's CV, standard (PDF): Ebiquity Lab entry</a>
     <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short" target="_blank" rel="noopener noreferrer">David's CV, short (PDF): Ebiquity Lab entry</a>
-    <span>The drawings are illustrations of the idea, made for this page. They are not camera frames, MatchFormer matches or measured variance maps.</span>
+    <a href="https://github.com/jamycheung/MatchFormer" target="_blank" rel="noopener noreferrer">MatchFormer (the matcher David tuned)</a>
+    <a href="https://github.com/open-mmlab/mmdetection" target="_blank" rel="noopener noreferrer">MMDetection (the DINO detector)</a>
+    <span>The drawings in the first three figures are illustrations made for this page. The notebook figures use frames from fixed street cameras as a stand-in for drones; the car is a stock photo, used only to spoof one view.</span>
   </section>
   <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
 </div>
 <a class="ask-fab" href="/projects/drone-feed-agreement">Ask LedbetterLM</a>
+<dialog class="zoombox" aria-label="Figure, full size"><div class="zb-bar"><span class="zb-cap"></span><button type="button" class="zb-close">Close</button></div><img alt=""></dialog>
 <script>
 (() => {
   // Spot the spoofed feed: pick one feed (or none). Every edge touching it disagrees; that feed is flagged.
@@ -460,6 +506,23 @@ ol.steps > li + li::before { content: "\2192"; position: absolute; left: -20px; 
     pair.querySelectorAll('[data-pair]').forEach((p) => { p.hidden = p.dataset.pair !== s; });
   };
   pairBtns.forEach((b) => b.addEventListener('click', () => setPair(b.dataset.pairState)));
+
+  // Notebook figures open full size in a dialog; a modified click (new tab) or no dialog support opens the file.
+  const box = document.querySelector('dialog.zoombox');
+  if (box && typeof box.showModal === 'function') {
+    const big = box.querySelector('img');
+    document.querySelectorAll('a.zoom').forEach((a) => a.addEventListener('click', (e) => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      const small = a.querySelector('img');
+      big.src = a.getAttribute('href');
+      big.alt = small ? small.alt : '';
+      box.querySelector('.zb-cap').textContent = small ? small.alt : '';
+      box.showModal();
+    }));
+    box.querySelector('.zb-close').addEventListener('click', () => box.close());
+    box.addEventListener('click', (e) => { if (e.target === box || e.target === big) box.close(); });
+  }
 
   // What ask.js reports as page state: what the visitor set up in the two illustrations.
   window.askState = () => [

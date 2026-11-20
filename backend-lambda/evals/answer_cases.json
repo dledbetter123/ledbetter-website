@@ -3635,8 +3635,11 @@
    "reference": [
     "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
     "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
-    "KB (2026-11-19) / page: drone feed agreement work at the Ebiquity Lab; a pixel-level change heatmap separates foreground from background; portfolio page davidamosledbetter.com/portfolio/drone-feed-agreement, whose drawings are illustrations, not real frames or results.",
-    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten, which drones were used, and any dataset are not known and are never named.",
+    "Page (2026-11-19): illustrations (a five-feed graph, one drawn comparison, and click-to-explain method steps: drone feeds, similarity graph, MatchFormer, memoized comparisons, contour variance map, ANOVA and discriminant analysis, verdict), the 75% and 58% stat tiles, then 'From the original notebooks': real figures from David's Colab notebooks (earlier working files, supporting evidence beneath the headline claims).",
+    "Notebooks / page (2026-11-19): three checks per pair. (1) DINO object detection (Swin-L backbone, COCO weights, MMDetection 3.0), detections above 0.4 confidence, people counted on their own. (2) MatchFormer, tuned for cross-view agreement: outdoor-large-LA weights, dual-softmax coarse matching at a 0.2 confidence threshold and temperature 0.1, grayscale frames at 640x480, a 50-match floor below which a pair is rejected. (3) Variance map: for each matched point, the standard deviation of distances to its neighbors within 60 px in each view (no neighbors = outlier); Levene's test on the confidence-weighted spreads of the neighborhood around the median spread.",
+    "Worked examples (real notebook outputs): genuine pair, two fixed cameras watching the same street: 128 matches, Levene p = 0.987 (9 points), 6 people in each view. Spoofed pair, a stock car photo in place of one view: 55 matches (still above the 50-match floor), Levene p = 0.708 (4 points), 0 people against 6; that run also printed a confidence-weighted score of 0.511, a different measure from the Levene p-value.",
+    "Framing: the frames are fixed street cameras standing in for drones, not shot by drones; the dataset is never named. The tuning is described only as 'tuned MatchFormer': no training runs, datasets or epochs are known, so none are given. The 75% and 58% come from the lab work as a whole, not from the two examples.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten and which drones were used are not known and are never named.",
     "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
    ],
    "must_include": [
@@ -3644,8 +3647,10 @@
    ],
    "must_not": [
     "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)",
-    "names which standard metrics were beaten, which drones were used, or a dataset, or invents numbers beyond the 75% and 58%",
-    "attaches the Crazyflie work's numbers (40% reaction time) or another project's results to this work"
+    "names which standard metrics were beaten, which drones were used, or the dataset the street frames come from, or invents numbers not on the page or in the knowledge base",
+    "attaches the Crazyflie work's numbers (40% reaction time) or another project's results to this work",
+    "claims the example frames were shot by drones",
+    "invents details of the MatchFormer tuning, such as training runs, datasets or epochs"
    ]
   },
   {
@@ -3655,8 +3660,11 @@
    "reference": [
     "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
     "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
-    "KB (2026-11-19) / page: drone feed agreement work at the Ebiquity Lab; a pixel-level change heatmap separates foreground from background; portfolio page davidamosledbetter.com/portfolio/drone-feed-agreement, whose drawings are illustrations, not real frames or results.",
-    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten, which drones were used, and any dataset are not known and are never named.",
+    "Page (2026-11-19): illustrations (a five-feed graph, one drawn comparison, and click-to-explain method steps: drone feeds, similarity graph, MatchFormer, memoized comparisons, contour variance map, ANOVA and discriminant analysis, verdict), the 75% and 58% stat tiles, then 'From the original notebooks': real figures from David's Colab notebooks (earlier working files, supporting evidence beneath the headline claims).",
+    "Notebooks / page (2026-11-19): three checks per pair. (1) DINO object detection (Swin-L backbone, COCO weights, MMDetection 3.0), detections above 0.4 confidence, people counted on their own. (2) MatchFormer, tuned for cross-view agreement: outdoor-large-LA weights, dual-softmax coarse matching at a 0.2 confidence threshold and temperature 0.1, grayscale frames at 640x480, a 50-match floor below which a pair is rejected. (3) Variance map: for each matched point, the standard deviation of distances to its neighbors within 60 px in each view (no neighbors = outlier); Levene's test on the confidence-weighted spreads of the neighborhood around the median spread.",
+    "Worked examples (real notebook outputs): genuine pair, two fixed cameras watching the same street: 128 matches, Levene p = 0.987 (9 points), 6 people in each view. Spoofed pair, a stock car photo in place of one view: 55 matches (still above the 50-match floor), Levene p = 0.708 (4 points), 0 people against 6; that run also printed a confidence-weighted score of 0.511, a different measure from the Levene p-value.",
+    "Framing: the frames are fixed street cameras standing in for drones, not shot by drones; the dataset is never named. The tuning is described only as 'tuned MatchFormer': no training runs, datasets or epochs are known, so none are given. The 75% and 58% come from the lab work as a whole, not from the two examples.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten and which drones were used are not known and are never named.",
     "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
    ],
    "must_include": [
@@ -3674,8 +3682,11 @@
    "reference": [
     "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
     "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
-    "KB (2026-11-19) / page: drone feed agreement work at the Ebiquity Lab; a pixel-level change heatmap separates foreground from background; portfolio page davidamosledbetter.com/portfolio/drone-feed-agreement, whose drawings are illustrations, not real frames or results.",
-    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten, which drones were used, and any dataset are not known and are never named.",
+    "Page (2026-11-19): illustrations (a five-feed graph, one drawn comparison, and click-to-explain method steps: drone feeds, similarity graph, MatchFormer, memoized comparisons, contour variance map, ANOVA and discriminant analysis, verdict), the 75% and 58% stat tiles, then 'From the original notebooks': real figures from David's Colab notebooks (earlier working files, supporting evidence beneath the headline claims).",
+    "Notebooks / page (2026-11-19): three checks per pair. (1) DINO object detection (Swin-L backbone, COCO weights, MMDetection 3.0), detections above 0.4 confidence, people counted on their own. (2) MatchFormer, tuned for cross-view agreement: outdoor-large-LA weights, dual-softmax coarse matching at a 0.2 confidence threshold and temperature 0.1, grayscale frames at 640x480, a 50-match floor below which a pair is rejected. (3) Variance map: for each matched point, the standard deviation of distances to its neighbors within 60 px in each view (no neighbors = outlier); Levene's test on the confidence-weighted spreads of the neighborhood around the median spread.",
+    "Worked examples (real notebook outputs): genuine pair, two fixed cameras watching the same street: 128 matches, Levene p = 0.987 (9 points), 6 people in each view. Spoofed pair, a stock car photo in place of one view: 55 matches (still above the 50-match floor), Levene p = 0.708 (4 points), 0 people against 6; that run also printed a confidence-weighted score of 0.511, a different measure from the Levene p-value.",
+    "Framing: the frames are fixed street cameras standing in for drones, not shot by drones; the dataset is never named. The tuning is described only as 'tuned MatchFormer': no training runs, datasets or epochs are known, so none are given. The 75% and 58% come from the lab work as a whole, not from the two examples.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten and which drones were used are not known and are never named.",
     "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
    ],
    "must_include": [
@@ -3683,7 +3694,7 @@
     "58% more accurate than standard (similarity) metrics"
    ],
    "must_not": [
-    "names which standard metrics were beaten, which drones were used, or a dataset, or invents numbers beyond the 75% and 58%",
+    "names which standard metrics were beaten, which drones were used, or the dataset the street frames come from, or invents numbers not on the page or in the knowledge base",
     "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)"
    ]
   },
@@ -3694,15 +3705,19 @@
    "reference": [
     "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
     "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
-    "KB (2026-11-19) / page: drone feed agreement work at the Ebiquity Lab; a pixel-level change heatmap separates foreground from background; portfolio page davidamosledbetter.com/portfolio/drone-feed-agreement, whose drawings are illustrations, not real frames or results.",
-    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten, which drones were used, and any dataset are not known and are never named.",
+    "Page (2026-11-19): illustrations (a five-feed graph, one drawn comparison, and click-to-explain method steps: drone feeds, similarity graph, MatchFormer, memoized comparisons, contour variance map, ANOVA and discriminant analysis, verdict), the 75% and 58% stat tiles, then 'From the original notebooks': real figures from David's Colab notebooks (earlier working files, supporting evidence beneath the headline claims).",
+    "Notebooks / page (2026-11-19): three checks per pair. (1) DINO object detection (Swin-L backbone, COCO weights, MMDetection 3.0), detections above 0.4 confidence, people counted on their own. (2) MatchFormer, tuned for cross-view agreement: outdoor-large-LA weights, dual-softmax coarse matching at a 0.2 confidence threshold and temperature 0.1, grayscale frames at 640x480, a 50-match floor below which a pair is rejected. (3) Variance map: for each matched point, the standard deviation of distances to its neighbors within 60 px in each view (no neighbors = outlier); Levene's test on the confidence-weighted spreads of the neighborhood around the median spread.",
+    "Worked examples (real notebook outputs): genuine pair, two fixed cameras watching the same street: 128 matches, Levene p = 0.987 (9 points), 6 people in each view. Spoofed pair, a stock car photo in place of one view: 55 matches (still above the 50-match floor), Levene p = 0.708 (4 points), 0 people against 6; that run also printed a confidence-weighted score of 0.511, a different measure from the Levene p-value.",
+    "Framing: the frames are fixed street cameras standing in for drones, not shot by drones; the dataset is never named. The tuning is described only as 'tuned MatchFormer': no training runs, datasets or epochs are known, so none are given. The 75% and 58% come from the lab work as a whole, not from the two examples.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten and which drones were used are not known and are never named.",
     "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
    ],
    "must_include": [
-    "says those details (drones, dataset, the specific standard metrics) are not something it can name"
+    "says it can't name the drones, the dataset or the specific standard metrics (it may say the page's examples use two fixed street cameras as a stand-in for drones)"
    ],
    "must_not": [
-    "names which standard metrics were beaten, which drones were used, or a dataset, or invents numbers beyond the 75% and 58%",
+    "names which standard metrics were beaten, which drones were used, or the dataset the street frames come from, or invents numbers not on the page or in the knowledge base",
+    "claims the example frames were shot by drones",
     "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)"
    ]
   },
@@ -3713,8 +3728,11 @@
    "reference": [
     "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
     "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
-    "KB (2026-11-19) / page: drone feed agreement work at the Ebiquity Lab; a pixel-level change heatmap separates foreground from background; portfolio page davidamosledbetter.com/portfolio/drone-feed-agreement, whose drawings are illustrations, not real frames or results.",
-    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten, which drones were used, and any dataset are not known and are never named.",
+    "Page (2026-11-19): illustrations (a five-feed graph, one drawn comparison, and click-to-explain method steps: drone feeds, similarity graph, MatchFormer, memoized comparisons, contour variance map, ANOVA and discriminant analysis, verdict), the 75% and 58% stat tiles, then 'From the original notebooks': real figures from David's Colab notebooks (earlier working files, supporting evidence beneath the headline claims).",
+    "Notebooks / page (2026-11-19): three checks per pair. (1) DINO object detection (Swin-L backbone, COCO weights, MMDetection 3.0), detections above 0.4 confidence, people counted on their own. (2) MatchFormer, tuned for cross-view agreement: outdoor-large-LA weights, dual-softmax coarse matching at a 0.2 confidence threshold and temperature 0.1, grayscale frames at 640x480, a 50-match floor below which a pair is rejected. (3) Variance map: for each matched point, the standard deviation of distances to its neighbors within 60 px in each view (no neighbors = outlier); Levene's test on the confidence-weighted spreads of the neighborhood around the median spread.",
+    "Worked examples (real notebook outputs): genuine pair, two fixed cameras watching the same street: 128 matches, Levene p = 0.987 (9 points), 6 people in each view. Spoofed pair, a stock car photo in place of one view: 55 matches (still above the 50-match floor), Levene p = 0.708 (4 points), 0 people against 6; that run also printed a confidence-weighted score of 0.511, a different measure from the Levene p-value.",
+    "Framing: the frames are fixed street cameras standing in for drones, not shot by drones; the dataset is never named. The tuning is described only as 'tuned MatchFormer': no training runs, datasets or epochs are known, so none are given. The 75% and 58% come from the lab work as a whole, not from the two examples.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten and which drones were used are not known and are never named.",
     "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
    ],
    "must_include": [
@@ -3732,8 +3750,11 @@
    "reference": [
     "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
     "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
-    "KB (2026-11-19) / page: drone feed agreement work at the Ebiquity Lab; a pixel-level change heatmap separates foreground from background; portfolio page davidamosledbetter.com/portfolio/drone-feed-agreement, whose drawings are illustrations, not real frames or results.",
-    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten, which drones were used, and any dataset are not known and are never named.",
+    "Page (2026-11-19): illustrations (a five-feed graph, one drawn comparison, and click-to-explain method steps: drone feeds, similarity graph, MatchFormer, memoized comparisons, contour variance map, ANOVA and discriminant analysis, verdict), the 75% and 58% stat tiles, then 'From the original notebooks': real figures from David's Colab notebooks (earlier working files, supporting evidence beneath the headline claims).",
+    "Notebooks / page (2026-11-19): three checks per pair. (1) DINO object detection (Swin-L backbone, COCO weights, MMDetection 3.0), detections above 0.4 confidence, people counted on their own. (2) MatchFormer, tuned for cross-view agreement: outdoor-large-LA weights, dual-softmax coarse matching at a 0.2 confidence threshold and temperature 0.1, grayscale frames at 640x480, a 50-match floor below which a pair is rejected. (3) Variance map: for each matched point, the standard deviation of distances to its neighbors within 60 px in each view (no neighbors = outlier); Levene's test on the confidence-weighted spreads of the neighborhood around the median spread.",
+    "Worked examples (real notebook outputs): genuine pair, two fixed cameras watching the same street: 128 matches, Levene p = 0.987 (9 points), 6 people in each view. Spoofed pair, a stock car photo in place of one view: 55 matches (still above the 50-match floor), Levene p = 0.708 (4 points), 0 people against 6; that run also printed a confidence-weighted score of 0.511, a different measure from the Levene p-value.",
+    "Framing: the frames are fixed street cameras standing in for drones, not shot by drones; the dataset is never named. The tuning is described only as 'tuned MatchFormer': no training runs, datasets or epochs are known, so none are given. The 75% and 58% come from the lab work as a whole, not from the two examples.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten and which drones were used are not known and are never named.",
     "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
    ],
    "must_include": [
@@ -3741,10 +3762,83 @@
    ],
    "must_not": [
     "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)",
-    "names which standard metrics were beaten, which drones were used, or a dataset, or invents numbers beyond the 75% and 58%"
+    "names which standard metrics were beaten, which drones were used, or the dataset the street frames come from, or invents numbers not on the page or in the knowledge base"
    ],
    "page_ctx": {
     "section": "how-agreement-is-decided"
+   }
+  },
+  {
+   "id": "dfa-examples",
+   "project": "drone-feed-agreement",
+   "question": "How did the spoofed example compare with the genuine one?",
+   "reference": [
+    "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
+    "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
+    "Page (2026-11-19): illustrations (a five-feed graph, one drawn comparison, and click-to-explain method steps: drone feeds, similarity graph, MatchFormer, memoized comparisons, contour variance map, ANOVA and discriminant analysis, verdict), the 75% and 58% stat tiles, then 'From the original notebooks': real figures from David's Colab notebooks (earlier working files, supporting evidence beneath the headline claims).",
+    "Notebooks / page (2026-11-19): three checks per pair. (1) DINO object detection (Swin-L backbone, COCO weights, MMDetection 3.0), detections above 0.4 confidence, people counted on their own. (2) MatchFormer, tuned for cross-view agreement: outdoor-large-LA weights, dual-softmax coarse matching at a 0.2 confidence threshold and temperature 0.1, grayscale frames at 640x480, a 50-match floor below which a pair is rejected. (3) Variance map: for each matched point, the standard deviation of distances to its neighbors within 60 px in each view (no neighbors = outlier); Levene's test on the confidence-weighted spreads of the neighborhood around the median spread.",
+    "Worked examples (real notebook outputs): genuine pair, two fixed cameras watching the same street: 128 matches, Levene p = 0.987 (9 points), 6 people in each view. Spoofed pair, a stock car photo in place of one view: 55 matches (still above the 50-match floor), Levene p = 0.708 (4 points), 0 people against 6; that run also printed a confidence-weighted score of 0.511, a different measure from the Levene p-value.",
+    "Framing: the frames are fixed street cameras standing in for drones, not shot by drones; the dataset is never named. The tuning is described only as 'tuned MatchFormer': no training runs, datasets or epochs are known, so none are given. The 75% and 58% come from the lab work as a whole, not from the two examples.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten and which drones were used are not known and are never named.",
+    "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
+   ],
+   "must_include": [
+    "at least two of these with the right numbers: matches 128 vs 55; Levene p 0.987 vs 0.708; people 6 and 6 vs 0 and 6"
+   ],
+   "must_not": [
+    "ties the 75% or 58% to the two worked examples, or compares the 0.511 confidence-weighted score with the 0.987 Levene p-value as if they were the same measure",
+    "claims the example frames were shot by drones",
+    "names which standard metrics were beaten, which drones were used, or the dataset the street frames come from, or invents numbers not on the page or in the knowledge base",
+    "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)"
+   ]
+  },
+  {
+   "id": "dfa-tuning",
+   "project": "drone-feed-agreement",
+   "question": "Did David train MatchFormer himself? What did tuning it involve?",
+   "reference": [
+    "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
+    "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
+    "Page (2026-11-19): illustrations (a five-feed graph, one drawn comparison, and click-to-explain method steps: drone feeds, similarity graph, MatchFormer, memoized comparisons, contour variance map, ANOVA and discriminant analysis, verdict), the 75% and 58% stat tiles, then 'From the original notebooks': real figures from David's Colab notebooks (earlier working files, supporting evidence beneath the headline claims).",
+    "Notebooks / page (2026-11-19): three checks per pair. (1) DINO object detection (Swin-L backbone, COCO weights, MMDetection 3.0), detections above 0.4 confidence, people counted on their own. (2) MatchFormer, tuned for cross-view agreement: outdoor-large-LA weights, dual-softmax coarse matching at a 0.2 confidence threshold and temperature 0.1, grayscale frames at 640x480, a 50-match floor below which a pair is rejected. (3) Variance map: for each matched point, the standard deviation of distances to its neighbors within 60 px in each view (no neighbors = outlier); Levene's test on the confidence-weighted spreads of the neighborhood around the median spread.",
+    "Worked examples (real notebook outputs): genuine pair, two fixed cameras watching the same street: 128 matches, Levene p = 0.987 (9 points), 6 people in each view. Spoofed pair, a stock car photo in place of one view: 55 matches (still above the 50-match floor), Levene p = 0.708 (4 points), 0 people against 6; that run also printed a confidence-weighted score of 0.511, a different measure from the Levene p-value.",
+    "Framing: the frames are fixed street cameras standing in for drones, not shot by drones; the dataset is never named. The tuning is described only as 'tuned MatchFormer': no training runs, datasets or epochs are known, so none are given. The 75% and 58% come from the lab work as a whole, not from the two examples.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten and which drones were used are not known and are never named.",
+    "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
+   ],
+   "must_include": [
+    "tuning means choosing MatchFormer's settings for cross-view agreement (for example the outdoor-large-LA weights, dual-softmax matching at a 0.2 threshold, 640x480 frames, the 50-match floor), not training it"
+   ],
+   "must_not": [
+    "invents details of the MatchFormer tuning, such as training runs, datasets or epochs",
+    "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)"
+   ]
+  },
+  {
+   "id": "dfa-sec-notebooks",
+   "project": "drone-feed-agreement",
+   "question": "@section",
+   "reference": [
+    "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
+    "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
+    "Page (2026-11-19): illustrations (a five-feed graph, one drawn comparison, and click-to-explain method steps: drone feeds, similarity graph, MatchFormer, memoized comparisons, contour variance map, ANOVA and discriminant analysis, verdict), the 75% and 58% stat tiles, then 'From the original notebooks': real figures from David's Colab notebooks (earlier working files, supporting evidence beneath the headline claims).",
+    "Notebooks / page (2026-11-19): three checks per pair. (1) DINO object detection (Swin-L backbone, COCO weights, MMDetection 3.0), detections above 0.4 confidence, people counted on their own. (2) MatchFormer, tuned for cross-view agreement: outdoor-large-LA weights, dual-softmax coarse matching at a 0.2 confidence threshold and temperature 0.1, grayscale frames at 640x480, a 50-match floor below which a pair is rejected. (3) Variance map: for each matched point, the standard deviation of distances to its neighbors within 60 px in each view (no neighbors = outlier); Levene's test on the confidence-weighted spreads of the neighborhood around the median spread.",
+    "Worked examples (real notebook outputs): genuine pair, two fixed cameras watching the same street: 128 matches, Levene p = 0.987 (9 points), 6 people in each view. Spoofed pair, a stock car photo in place of one view: 55 matches (still above the 50-match floor), Levene p = 0.708 (4 points), 0 people against 6; that run also printed a confidence-weighted score of 0.511, a different measure from the Levene p-value.",
+    "Framing: the frames are fixed street cameras standing in for drones, not shot by drones; the dataset is never named. The tuning is described only as 'tuned MatchFormer': no training runs, datasets or epochs are known, so none are given. The 75% and 58% come from the lab work as a whole, not from the two examples.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten and which drones were used are not known and are never named.",
+    "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
+   ],
+   "must_include": [
+    "the genuine pair (128 matches, Levene p 0.987, 6 people in each view) against the spoofed pair (55 matches, still above the 50-match floor; Levene p 0.708; one car and no people against 6)"
+   ],
+   "must_not": [
+    "ties the 75% or 58% to the two worked examples, or compares the 0.511 confidence-weighted score with the 0.987 Levene p-value as if they were the same measure",
+    "claims the example frames were shot by drones",
+    "invents details of the MatchFormer tuning, such as training runs, datasets or epochs",
+    "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)"
+   ],
+   "page_ctx": {
+    "section": "from-the-original-notebooks"
    }
   }
  ]
