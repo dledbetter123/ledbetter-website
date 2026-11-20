@@ -145,39 +145,63 @@ body { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
 .ask-fab::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: ask-pulse 1.6s ease-in-out infinite; }
 .ask-fab:hover::after { background: radial-gradient(ellipse at center, rgba(0, 210, 0, .26) 0%, rgba(0, 190, 0, .11) 55%, rgba(0, 190, 0, 0) 80%); }
 @keyframes ask-pulse { 50% { opacity: .25; } }
-/* Hover: the button excites to neon green and trills like a radio signal. The glow flickers at a
-   high rate, interference lines scroll through the glass, and the dot sends out rings. */
+/* Hover: the button excites to neon green, grows, and "talks": its size and glow jump between
+   uneven amplitudes every 60 to 80 ms like a voice on a radio, interference lines race through the
+   glass, and the dot throws out rings of two sizes. The three run on different periods, so the
+   pattern never lines up and repeats. */
 .ask-fab:hover,
 .ask-fab:focus-visible {
   color: #39ff14;
-  animation: askTrill 0.12s linear infinite alternate;
+  animation: askTalk 0.7s linear infinite;
 }
 .ask-fab:hover::after,
 .ask-fab:focus-visible::after {
   background:
-    repeating-linear-gradient(90deg, rgba(57, 255, 20, 0) 0 5px, rgba(57, 255, 20, 0.22) 5px 6px),
-    radial-gradient(ellipse at center, rgba(57, 255, 20, 0.38) 0%, rgba(57, 255, 20, 0.14) 55%, rgba(57, 255, 20, 0) 80%);
+    repeating-linear-gradient(90deg, rgba(57, 255, 20, 0) 0 5px, rgba(57, 255, 20, 0.24) 5px 6px),
+    radial-gradient(ellipse at center, rgba(57, 255, 20, 0.4) 0%, rgba(57, 255, 20, 0.15) 55%, rgba(57, 255, 20, 0) 80%);
   background-size: 12px 100%, 100% 100%;
-  animation: askCarrier 0.35s linear infinite;
+  animation: askCarrier 0.2s linear infinite, askVoice 0.55s linear infinite;
 }
 .ask-fab:hover::before,
 .ask-fab:focus-visible::before {
   opacity: 1;
-  box-shadow: 0 0 8px #39ff14;
-  animation: askRings 0.9s ease-out infinite;
+  animation: askRings 0.8s ease-out infinite;
 }
-@keyframes askTrill {
-  from { text-shadow: 0 0 2px #39ff14, 0 0 8px #39ff14, 0 0 18px rgba(57, 255, 20, 0.55); translate: 0 0; }
-  to   { text-shadow: 0 0 4px #39ff14, 0 0 14px #39ff14, 0 0 32px rgba(57, 255, 20, 0.9); translate: 0.4px -0.4px; }
+@keyframes askTalk {
+  0% { transform: translateX(-50%) translate(0, 0) scale(1.3); text-shadow: 0 0 3px #39ff14, 0 0 10px #39ff14, 0 0 20px rgba(57, 255, 20, 0.5); }
+  9% { transform: translateX(-50%) translate(0.5px, -0.4px) scale(1.38); text-shadow: 0 0 5px #39ff14, 0 0 18px #39ff14, 0 0 40px rgba(57, 255, 20, 0.9); }
+  17% { transform: translateX(-50%) translate(-0.3px, 0.3px) scale(1.33); text-shadow: 0 0 3px #39ff14, 0 0 12px #39ff14, 0 0 24px rgba(57, 255, 20, 0.6); }
+  26% { transform: translateX(-50%) translate(0.4px, 0.4px) scale(1.42); text-shadow: 0 0 6px #39ff14, 0 0 20px #39ff14, 0 0 46px rgba(57, 255, 20, 0.95); }
+  34% { transform: translateX(-50%) translate(0, -0.3px) scale(1.31); text-shadow: 0 0 3px #39ff14, 0 0 10px #39ff14, 0 0 20px rgba(57, 255, 20, 0.5); }
+  45% { transform: translateX(-50%) translate(-0.4px, 0) scale(1.36); text-shadow: 0 0 4px #39ff14, 0 0 15px #39ff14, 0 0 32px rgba(57, 255, 20, 0.75); }
+  52% { transform: translateX(-50%) translate(0.3px, 0.3px) scale(1.3); text-shadow: 0 0 2px #39ff14, 0 0 9px #39ff14, 0 0 18px rgba(57, 255, 20, 0.45); }
+  63% { transform: translateX(-50%) translate(-0.3px, -0.4px) scale(1.4); text-shadow: 0 0 5px #39ff14, 0 0 19px #39ff14, 0 0 42px rgba(57, 255, 20, 0.9); }
+  71% { transform: translateX(-50%) translate(0.4px, 0) scale(1.34); text-shadow: 0 0 4px #39ff14, 0 0 13px #39ff14, 0 0 26px rgba(57, 255, 20, 0.65); }
+  82% { transform: translateX(-50%) translate(0, 0.4px) scale(1.39); text-shadow: 0 0 5px #39ff14, 0 0 17px #39ff14, 0 0 38px rgba(57, 255, 20, 0.85); }
+  91% { transform: translateX(-50%) translate(-0.4px, -0.3px) scale(1.32); text-shadow: 0 0 3px #39ff14, 0 0 11px #39ff14, 0 0 22px rgba(57, 255, 20, 0.55); }
+  100% { transform: translateX(-50%) translate(0, 0) scale(1.3); text-shadow: 0 0 3px #39ff14, 0 0 10px #39ff14, 0 0 20px rgba(57, 255, 20, 0.5); }
 }
 @keyframes askCarrier { to { background-position: 12px 0, 0 0; } }
+@keyframes askVoice {
+  0% { opacity: 0.7; transform: scale(1.0, 0.8); }
+  13% { opacity: 1; transform: scale(1.08, 1.25); }
+  27% { opacity: 0.75; transform: scale(1.0, 0.9); }
+  39% { opacity: 1; transform: scale(1.12, 1.4); }
+  55% { opacity: 0.8; transform: scale(1.02, 0.95); }
+  68% { opacity: 1; transform: scale(1.06, 1.2); }
+  84% { opacity: 0.72; transform: scale(1.0, 0.85); }
+  100% { opacity: 0.7; transform: scale(1.0, 0.8); }
+}
 @keyframes askRings {
-  0%   { box-shadow: 0 0 8px #39ff14, 0 0 0 0 rgba(57, 255, 20, 0.7), 0 0 0 0 rgba(57, 255, 20, 0.45); }
-  100% { box-shadow: 0 0 8px #39ff14, 0 0 0 10px rgba(57, 255, 20, 0), 0 0 0 20px rgba(57, 255, 20, 0); }
+  0%   { box-shadow: 0 0 8px #39ff14, 0 0 0 0 rgba(57, 255, 20, 0.8), 0 0 0 0 rgba(57, 255, 20, 0.5); }
+  49%  { box-shadow: 0 0 10px #39ff14, 0 0 0 7px rgba(57, 255, 20, 0), 0 0 0 12px rgba(57, 255, 20, 0); }
+  50%  { box-shadow: 0 0 8px #39ff14, 0 0 0 0 rgba(57, 255, 20, 0.9), 0 0 0 0 rgba(57, 255, 20, 0.6); }
+  100% { box-shadow: 0 0 12px #39ff14, 0 0 0 13px rgba(57, 255, 20, 0), 0 0 0 24px rgba(57, 255, 20, 0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ask-fab:hover, .ask-fab:hover::after, .ask-fab:hover::before,
-  .ask-fab:focus-visible, .ask-fab:focus-visible::after, .ask-fab:focus-visible::before { animation: none; }
+  .ask-fab:hover, .ask-fab:focus-visible { animation: none; transform: translateX(-50%) scale(1.25); text-shadow: 0 0 4px #39ff14, 0 0 14px #39ff14; }
+  .ask-fab:hover::after, .ask-fab:hover::before,
+  .ask-fab:focus-visible::after, .ask-fab:focus-visible::before { animation: none; }
 }
 .cta { gap: 14px; padding-block: 24px 8px; }
 .cta h2 { font-size: clamp(24px, 4vw, 34px); }
