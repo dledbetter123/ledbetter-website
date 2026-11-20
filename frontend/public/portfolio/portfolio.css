@@ -166,18 +166,18 @@ body { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   animation: askIdleRings 1.2s ease-out infinite;
 }
 @keyframes askIdleTalk {
-  0% { transform: translateX(-50%) scale(1.000); text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 3px rgba(34, 204, 34, 0.22); }
-  9% { transform: translateX(-50%) scale(1.015); text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 7px rgba(34, 204, 34, 0.4); }
-  17% { transform: translateX(-50%) scale(1.005); text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 4px rgba(34, 204, 34, 0.26); }
-  26% { transform: translateX(-50%) scale(1.020); text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 9px rgba(34, 204, 34, 0.45); }
-  34% { transform: translateX(-50%) scale(1.000); text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 3px rgba(34, 204, 34, 0.22); }
-  45% { transform: translateX(-50%) scale(1.010); text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 6px rgba(34, 204, 34, 0.34); }
-  52% { transform: translateX(-50%) scale(1.000); text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 2px rgba(34, 204, 34, 0.2); }
-  63% { transform: translateX(-50%) scale(1.018); text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 8px rgba(34, 204, 34, 0.42); }
-  71% { transform: translateX(-50%) scale(1.005); text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 5px rgba(34, 204, 34, 0.3); }
-  82% { transform: translateX(-50%) scale(1.015); text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 7px rgba(34, 204, 34, 0.38); }
-  91% { transform: translateX(-50%) scale(1.002); text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 4px rgba(34, 204, 34, 0.24); }
-  100% { transform: translateX(-50%) scale(1.000); text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 3px rgba(34, 204, 34, 0.22); }
+  0% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 3px rgba(34, 204, 34, 0.22); }
+  9% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 7px rgba(34, 204, 34, 0.4); }
+  17% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 4px rgba(34, 204, 34, 0.26); }
+  26% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 9px rgba(34, 204, 34, 0.45); }
+  34% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 3px rgba(34, 204, 34, 0.22); }
+  45% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 6px rgba(34, 204, 34, 0.34); }
+  52% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 2px rgba(34, 204, 34, 0.2); }
+  63% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 8px rgba(34, 204, 34, 0.42); }
+  71% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 5px rgba(34, 204, 34, 0.3); }
+  82% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 7px rgba(34, 204, 34, 0.38); }
+  91% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 4px rgba(34, 204, 34, 0.24); }
+  100% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 3px rgba(34, 204, 34, 0.22); }
 }
 @keyframes askIdleVoice {
   0% { opacity: 0.35; transform: scale(1.0, 0.9); }
@@ -199,7 +199,7 @@ body { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   .ask-fab, .ask-fab::after, .ask-fab::before { animation: none; }
 }
 
-/* Hover: the button excites to neon green, grows 5 to 10%, and "talks": its size and glow jump between
+/* Hover: the button excites to neon green, "talks": its glow jumps between
    uneven amplitudes every 60 to 80 ms like a voice on a radio, waveforms race through the
    glass, and the dot throws out rings of two sizes. The three run on different periods, so the
    pattern never lines up and repeats. */
@@ -225,29 +225,29 @@ body { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   animation: askRings 0.8s ease-out infinite;
 }
 @keyframes askTalk {
-  0% { transform: translateX(-50%) translate(0, 0) scale(1.050); text-shadow: 0 0 3px #39ff14, 0 0 10px #39ff14, 0 0 20px rgba(57, 255, 20, 0.5); }
-  9% { transform: translateX(-50%) translate(0.5px, -0.4px) scale(1.083); text-shadow: 0 0 5px #39ff14, 0 0 18px #39ff14, 0 0 40px rgba(57, 255, 20, 0.9); }
-  17% { transform: translateX(-50%) translate(-0.3px, 0.3px) scale(1.062); text-shadow: 0 0 3px #39ff14, 0 0 12px #39ff14, 0 0 24px rgba(57, 255, 20, 0.6); }
-  26% { transform: translateX(-50%) translate(0.4px, 0.4px) scale(1.100); text-shadow: 0 0 6px #39ff14, 0 0 20px #39ff14, 0 0 46px rgba(57, 255, 20, 0.95); }
-  34% { transform: translateX(-50%) translate(0, -0.3px) scale(1.054); text-shadow: 0 0 3px #39ff14, 0 0 10px #39ff14, 0 0 20px rgba(57, 255, 20, 0.5); }
-  45% { transform: translateX(-50%) translate(-0.4px, 0) scale(1.075); text-shadow: 0 0 4px #39ff14, 0 0 15px #39ff14, 0 0 32px rgba(57, 255, 20, 0.75); }
-  52% { transform: translateX(-50%) translate(0.3px, 0.3px) scale(1.050); text-shadow: 0 0 2px #39ff14, 0 0 9px #39ff14, 0 0 18px rgba(57, 255, 20, 0.45); }
-  63% { transform: translateX(-50%) translate(-0.3px, -0.4px) scale(1.092); text-shadow: 0 0 5px #39ff14, 0 0 19px #39ff14, 0 0 42px rgba(57, 255, 20, 0.9); }
-  71% { transform: translateX(-50%) translate(0.4px, 0) scale(1.067); text-shadow: 0 0 4px #39ff14, 0 0 13px #39ff14, 0 0 26px rgba(57, 255, 20, 0.65); }
-  82% { transform: translateX(-50%) translate(0, 0.4px) scale(1.087); text-shadow: 0 0 5px #39ff14, 0 0 17px #39ff14, 0 0 38px rgba(57, 255, 20, 0.85); }
-  91% { transform: translateX(-50%) translate(-0.4px, -0.3px) scale(1.058); text-shadow: 0 0 3px #39ff14, 0 0 11px #39ff14, 0 0 22px rgba(57, 255, 20, 0.55); }
-  100% { transform: translateX(-50%) translate(0, 0) scale(1.050); text-shadow: 0 0 3px #39ff14, 0 0 10px #39ff14, 0 0 20px rgba(57, 255, 20, 0.5); }
+  0% { text-shadow: 0 0 3px #39ff14, 0 0 10px #39ff14, 0 0 20px rgba(57, 255, 20, 0.5); }
+  9% { text-shadow: 0 0 5px #39ff14, 0 0 18px #39ff14, 0 0 40px rgba(57, 255, 20, 0.9); }
+  17% { text-shadow: 0 0 3px #39ff14, 0 0 12px #39ff14, 0 0 24px rgba(57, 255, 20, 0.6); }
+  26% { text-shadow: 0 0 6px #39ff14, 0 0 20px #39ff14, 0 0 46px rgba(57, 255, 20, 0.95); }
+  34% { text-shadow: 0 0 3px #39ff14, 0 0 10px #39ff14, 0 0 20px rgba(57, 255, 20, 0.5); }
+  45% { text-shadow: 0 0 4px #39ff14, 0 0 15px #39ff14, 0 0 32px rgba(57, 255, 20, 0.75); }
+  52% { text-shadow: 0 0 2px #39ff14, 0 0 9px #39ff14, 0 0 18px rgba(57, 255, 20, 0.45); }
+  63% { text-shadow: 0 0 5px #39ff14, 0 0 19px #39ff14, 0 0 42px rgba(57, 255, 20, 0.9); }
+  71% { text-shadow: 0 0 4px #39ff14, 0 0 13px #39ff14, 0 0 26px rgba(57, 255, 20, 0.65); }
+  82% { text-shadow: 0 0 5px #39ff14, 0 0 17px #39ff14, 0 0 38px rgba(57, 255, 20, 0.85); }
+  91% { text-shadow: 0 0 3px #39ff14, 0 0 11px #39ff14, 0 0 22px rgba(57, 255, 20, 0.55); }
+  100% { text-shadow: 0 0 3px #39ff14, 0 0 10px #39ff14, 0 0 20px rgba(57, 255, 20, 0.5); }
 }
 @keyframes askCarrier { to { background-position: 40px 50%, -24px 50%, 0 0; } }
 @keyframes askVoice {
-  0% { opacity: 0.7; transform: scale(1.0, 0.8); }
+  0% { opacity: 0.7; transform: scale(1.05, 0.8); }
   13% { opacity: 1; transform: scale(1.08, 1.25); }
-  27% { opacity: 0.75; transform: scale(1.0, 0.9); }
-  39% { opacity: 1; transform: scale(1.12, 1.4); }
-  55% { opacity: 0.8; transform: scale(1.02, 0.95); }
-  68% { opacity: 1; transform: scale(1.06, 1.2); }
-  84% { opacity: 0.72; transform: scale(1.0, 0.85); }
-  100% { opacity: 0.7; transform: scale(1.0, 0.8); }
+  27% { opacity: 0.75; transform: scale(1.05, 0.9); }
+  39% { opacity: 1; transform: scale(1.10, 1.4); }
+  55% { opacity: 0.8; transform: scale(1.06, 0.95); }
+  68% { opacity: 1; transform: scale(1.08, 1.2); }
+  84% { opacity: 0.72; transform: scale(1.05, 0.85); }
+  100% { opacity: 0.7; transform: scale(1.05, 0.8); }
 }
 @keyframes askRings {
   0%   { box-shadow: 0 0 8px #39ff14, 0 0 0 0 rgba(57, 255, 20, 0.8), 0 0 0 0 rgba(57, 255, 20, 0.5); }
@@ -256,7 +256,7 @@ body { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   100% { box-shadow: 0 0 12px #39ff14, 0 0 0 13px rgba(57, 255, 20, 0), 0 0 0 24px rgba(57, 255, 20, 0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ask-fab:hover, .ask-fab:focus-visible { animation: none; transform: translateX(-50%) scale(1.08); text-shadow: 0 0 4px #39ff14, 0 0 14px #39ff14; }
+  .ask-fab:hover, .ask-fab:focus-visible { animation: none; text-shadow: 0 0 4px #39ff14, 0 0 14px #39ff14; }
   .ask-fab:hover::after, .ask-fab:hover::before,
   .ask-fab:focus-visible::after, .ask-fab:focus-visible::before { animation: none; }
 }
