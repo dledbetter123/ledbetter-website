@@ -169,14 +169,22 @@
    so only the light of the network shows over the wall, and a radial mask fades its edges. */
 .heroBrain {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  /* The large viewport, like the glyph wall, so iOS's sliding toolbar never resizes it. */
+  height: 100vh;
+  height: 100lvh;
   z-index: 0;
   pointer-events: none;
-  background: url('./hero-brain.webp') center 38% / min(1100px, 94vw) auto no-repeat;
+  /* Sized by height, the same 80% of the screen on every device; on a phone the image runs
+     past the sides and the mask fades them, instead of shrinking it to fit the width. */
+  background: url('./hero-brain.webp') center 45% / auto 80vh no-repeat;
+  background-size: auto 80lvh;
   mix-blend-mode: screen;
   filter: brightness(0.75);
-  -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 40%, #000 45%, transparent 100%);
-  mask-image: radial-gradient(ellipse 60% 55% at 50% 40%, #000 45%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 50% 45%, #000 60%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 80% at 50% 45%, #000 60%, transparent 100%);
   will-change: opacity;
 }
 
