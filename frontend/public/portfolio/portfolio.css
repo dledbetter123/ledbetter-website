@@ -145,8 +145,8 @@ body { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
 .ask-fab::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: ask-pulse 1.6s ease-in-out infinite; }
 .ask-fab:hover::after { background: radial-gradient(ellipse at center, rgba(0, 210, 0, .26) 0%, rgba(0, 190, 0, .11) 55%, rgba(0, 190, 0, 0) 80%); }
 @keyframes ask-pulse { 50% { opacity: .25; } }
-/* Desktop: a tenth of the screen above the bottom edge; phones keep it at the edge. */
-@media (min-width: 601px) { .ask-fab { bottom: calc(16px + 10vh + env(safe-area-inset-bottom, 0px)); } }
+/* Desktop: a twentieth of the screen above the bottom edge; phones keep it at the edge. */
+@media (min-width: 601px) { .ask-fab { bottom: calc(16px + 5vh + env(safe-area-inset-bottom, 0px)); } }
 /* Idle: the waveforms talk, muted. The label and the glass hold still in a darker green; only the
    two waves scroll and change height, like a voice on a quiet channel. Hover (below) lights the
    button to neon, eases the glass up 8% and holds it there, and turns the waves up. */
