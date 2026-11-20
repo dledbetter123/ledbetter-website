@@ -117,7 +117,7 @@ const IntroPage = ({ footer = null }) => {
           {welcomeText}
           {welcomeCursorVisible && <span>|</span>} {/* Cursor */}
         </h1>
-        <p style={{ fontSize: '23px' }} title={hoverTitle}>
+        <p style={{ fontSize: '20px' }} title={hoverTitle}>
           {/* Invisible full-text sizer reserves the final height so the block never
               reflows as it types — the visible text then fills strictly top-down. */}
           {/* Reserve the paragraph's height from the first paint (using the always-
