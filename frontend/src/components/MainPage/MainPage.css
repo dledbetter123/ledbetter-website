@@ -177,15 +177,26 @@
   height: 100lvh;
   z-index: 0;
   pointer-events: none;
-  /* Sized by height, the same 80% of the screen on every device; on a phone the image runs
-     past the sides and the mask fades them, instead of shrinking it to fit the width. */
-  background: url('./hero-brain.webp') center 45% / auto 80vh no-repeat;
-  background-size: auto 80lvh;
   mix-blend-mode: screen;
   filter: brightness(0.75);
-  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 50% 45%, #000 60%, transparent 100%);
-  mask-image: radial-gradient(ellipse 70% 80% at 50% 45%, #000 60%, transparent 100%);
   will-change: opacity;
+}
+/* The image itself: 80% of the screen's height on every device (on a phone it runs past the
+   sides rather than shrinking to fit the width). Its own ellipse mask fades all four of its
+   edges, since the source art is cropped at its top and bottom. */
+.heroBrain::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 9vh;
+  top: 9lvh;
+  height: 80vh;
+  height: 80lvh;
+  aspect-ratio: 3 / 2;
+  transform: translateX(-50%);
+  background: url('./hero-brain.webp') center / cover no-repeat;
+  -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
 }
 
 .content-layer {
