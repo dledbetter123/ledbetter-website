@@ -71,49 +71,37 @@
   background: radial-gradient(ellipse at center, rgba(0, 210, 0, 0.26) 0%, rgba(0, 190, 0, 0.11) 55%, rgba(0, 190, 0, 0) 80%);
 }
 
-/* Idle: the same voice, muted. The button breathes through the uneven amplitudes in a darker
-   green with a faint glow, a percent or two of size, so it reads as alive without
-   pulling the eye; hover (below) turns it up to full neon. */
+/* Idle: the waveforms talk, muted. The label and the glass hold still in a darker green; only the
+   two waves scroll and change height, like a voice on a quiet channel. Hover (below) lights the
+   button to neon, eases the glass up 8% and holds it there, and turns the waves up. */
 .chatToggle:not(.open) {
   color: #22cc22;
-  animation: chatToggleIdleTalk 0.9s linear infinite;
 }
 .chatToggle:not(.open)::after {
   background:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20' preserveAspectRatio='none'%3E%3Cpath d='M0 10 Q10.0 0 20.0 10 T40 10' fill='none' stroke='%2322cc22' stroke-opacity='0.3' stroke-width='0.9' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='20' viewBox='0 0 24 20' preserveAspectRatio='none'%3E%3Cpath d='M0 10 Q6.0 0 12.0 10 T24 10' fill='none' stroke='%2322cc22' stroke-opacity='0.18' stroke-width='0.7' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"),
     radial-gradient(ellipse at center, rgba(34, 204, 34, 0.16) 0%, rgba(34, 204, 34, 0.06) 55%, rgba(34, 204, 34, 0) 80%);
-  background-size: 40px 70%, 24px 45%, 100% 100%;
+  background-size: 40px 60%, 24px 40%, 100% 100%;
   background-repeat: repeat-x, repeat-x, no-repeat;
   background-position: 0 50%, 0 50%, 0 0;
-  animation: chatToggleCarrier 0.4s linear infinite, chatToggleIdleVoice 0.7s linear infinite;
+  transition: transform 0.25s ease-out;
+  animation: chatToggleCarrier 0.4s linear infinite, chatToggleIdleAmp 0.7s linear infinite;
 }
 .chatToggle:not(.open)::before {
   animation: chatToggleIdleRings 1.2s ease-out infinite;
 }
-@keyframes chatToggleIdleTalk {
-  0% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 3px rgba(34, 204, 34, 0.22); }
-  9% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 7px rgba(34, 204, 34, 0.4); }
-  17% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 4px rgba(34, 204, 34, 0.26); }
-  26% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 9px rgba(34, 204, 34, 0.45); }
-  34% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 3px rgba(34, 204, 34, 0.22); }
-  45% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 6px rgba(34, 204, 34, 0.34); }
-  52% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 2px rgba(34, 204, 34, 0.2); }
-  63% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 8px rgba(34, 204, 34, 0.42); }
-  71% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 5px rgba(34, 204, 34, 0.3); }
-  82% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 7px rgba(34, 204, 34, 0.38); }
-  91% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 4px rgba(34, 204, 34, 0.24); }
-  100% { text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 3px rgba(34, 204, 34, 0.22); }
-}
-@keyframes chatToggleIdleVoice {
-  0% { opacity: 0.35; transform: scale(1.0, 0.9); }
-  13% { opacity: 0.55; transform: scale(1.03, 1.08); }
-  27% { opacity: 0.38; transform: scale(1.0, 0.94); }
-  39% { opacity: 0.6; transform: scale(1.05, 1.14); }
-  55% { opacity: 0.4; transform: scale(1.01, 0.97); }
-  68% { opacity: 0.52; transform: scale(1.03, 1.06); }
-  84% { opacity: 0.36; transform: scale(1.0, 0.92); }
-  100% { opacity: 0.35; transform: scale(1.0, 0.9); }
+@keyframes chatToggleIdleAmp {
+  0% { background-size: 40px 55%, 24px 38%, 100% 100%; }
+  11% { background-size: 40px 72%, 24px 30%, 100% 100%; }
+  23% { background-size: 40px 50%, 24px 46%, 100% 100%; }
+  34% { background-size: 40px 78%, 24px 34%, 100% 100%; }
+  47% { background-size: 40px 58%, 24px 50%, 100% 100%; }
+  58% { background-size: 40px 70%, 24px 32%, 100% 100%; }
+  69% { background-size: 40px 48%, 24px 44%, 100% 100%; }
+  81% { background-size: 40px 66%, 24px 36%, 100% 100%; }
+  92% { background-size: 40px 60%, 24px 48%, 100% 100%; }
+  100% { background-size: 40px 55%, 24px 38%, 100% 100%; }
 }
 @keyframes chatToggleIdleRings {
   0%   { box-shadow: 0 0 0 0 rgba(34, 204, 34, 0.35); }
@@ -121,18 +109,12 @@
   50%  { box-shadow: 0 0 0 0 rgba(34, 204, 34, 0.25); }
   100% { box-shadow: 0 0 0 9px rgba(34, 204, 34, 0); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .chatToggle:not(.open), .chatToggle:not(.open)::after, .chatToggle:not(.open)::before { animation: none; }
-}
 
-/* Hover: the button excites to neon green, "talks": its glow jumps between
-   uneven amplitudes every 60 to 80 ms like a voice on a radio, waveforms race through the
-   glass, and the dot throws out rings of two sizes. The three run on different periods, so the
-   pattern never lines up and repeats. */
+/* Hover: neon, the glass eased up 8%, and the waves louder and faster. */
 .chatToggle:not(.open):hover,
 .chatToggle:not(.open):focus-visible {
   color: #39ff14;
-  animation: chatToggleTalk 0.7s linear infinite;
+  text-shadow: 0 0 4px #39ff14, 0 0 12px #39ff14, 0 0 26px rgba(57, 255, 20, 0.6);
 }
 .chatToggle:not(.open):hover::after,
 .chatToggle:not(.open):focus-visible::after {
@@ -143,37 +125,26 @@
   background-size: 40px 70%, 24px 45%, 100% 100%;
   background-repeat: repeat-x, repeat-x, no-repeat;
   background-position: 0 50%, 0 50%, 0 0;
-  animation: chatToggleCarrier 0.2s linear infinite, chatToggleVoice 0.55s linear infinite;
+  transform: scale(1.08);
+  animation: chatToggleCarrier 0.2s linear infinite, chatToggleAmp 0.55s linear infinite;
 }
 .chatToggle:not(.open):hover::before,
 .chatToggle:not(.open):focus-visible::before {
   opacity: 1;
   animation: chatToggleRings 0.8s ease-out infinite;
 }
-@keyframes chatToggleTalk {
-  0% { text-shadow: 0 0 3px #39ff14, 0 0 10px #39ff14, 0 0 20px rgba(57, 255, 20, 0.5); }
-  9% { text-shadow: 0 0 5px #39ff14, 0 0 18px #39ff14, 0 0 40px rgba(57, 255, 20, 0.9); }
-  17% { text-shadow: 0 0 3px #39ff14, 0 0 12px #39ff14, 0 0 24px rgba(57, 255, 20, 0.6); }
-  26% { text-shadow: 0 0 6px #39ff14, 0 0 20px #39ff14, 0 0 46px rgba(57, 255, 20, 0.95); }
-  34% { text-shadow: 0 0 3px #39ff14, 0 0 10px #39ff14, 0 0 20px rgba(57, 255, 20, 0.5); }
-  45% { text-shadow: 0 0 4px #39ff14, 0 0 15px #39ff14, 0 0 32px rgba(57, 255, 20, 0.75); }
-  52% { text-shadow: 0 0 2px #39ff14, 0 0 9px #39ff14, 0 0 18px rgba(57, 255, 20, 0.45); }
-  63% { text-shadow: 0 0 5px #39ff14, 0 0 19px #39ff14, 0 0 42px rgba(57, 255, 20, 0.9); }
-  71% { text-shadow: 0 0 4px #39ff14, 0 0 13px #39ff14, 0 0 26px rgba(57, 255, 20, 0.65); }
-  82% { text-shadow: 0 0 5px #39ff14, 0 0 17px #39ff14, 0 0 38px rgba(57, 255, 20, 0.85); }
-  91% { text-shadow: 0 0 3px #39ff14, 0 0 11px #39ff14, 0 0 22px rgba(57, 255, 20, 0.55); }
-  100% { text-shadow: 0 0 3px #39ff14, 0 0 10px #39ff14, 0 0 20px rgba(57, 255, 20, 0.5); }
-}
 @keyframes chatToggleCarrier { to { background-position: 40px 50%, -24px 50%, 0 0; } }
-@keyframes chatToggleVoice {
-  0% { opacity: 0.7; transform: scale(1.05, 0.8); }
-  13% { opacity: 1; transform: scale(1.08, 1.25); }
-  27% { opacity: 0.75; transform: scale(1.05, 0.9); }
-  39% { opacity: 1; transform: scale(1.10, 1.4); }
-  55% { opacity: 0.8; transform: scale(1.06, 0.95); }
-  68% { opacity: 1; transform: scale(1.08, 1.2); }
-  84% { opacity: 0.72; transform: scale(1.05, 0.85); }
-  100% { opacity: 0.7; transform: scale(1.05, 0.8); }
+@keyframes chatToggleAmp {
+  0% { background-size: 40px 70%, 24px 45%, 100% 100%; }
+  11% { background-size: 40px 100%, 24px 28%, 100% 100%; }
+  23% { background-size: 40px 55%, 24px 62%, 100% 100%; }
+  34% { background-size: 40px 95%, 24px 36%, 100% 100%; }
+  47% { background-size: 40px 62%, 24px 70%, 100% 100%; }
+  58% { background-size: 40px 88%, 24px 30%, 100% 100%; }
+  69% { background-size: 40px 50%, 24px 58%, 100% 100%; }
+  81% { background-size: 40px 98%, 24px 40%, 100% 100%; }
+  92% { background-size: 40px 66%, 24px 66%, 100% 100%; }
+  100% { background-size: 40px 70%, 24px 45%, 100% 100%; }
 }
 @keyframes chatToggleRings {
   0%   { box-shadow: 0 0 8px #39ff14, 0 0 0 0 rgba(57, 255, 20, 0.8), 0 0 0 0 rgba(57, 255, 20, 0.5); }
@@ -182,9 +153,8 @@
   100% { box-shadow: 0 0 12px #39ff14, 0 0 0 13px rgba(57, 255, 20, 0), 0 0 0 24px rgba(57, 255, 20, 0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .chatToggle:not(.open):hover, .chatToggle:not(.open):focus-visible { animation: none; text-shadow: 0 0 4px #39ff14, 0 0 14px #39ff14; }
-  .chatToggle:not(.open):hover::after, .chatToggle:not(.open):hover::before,
-  .chatToggle:not(.open):focus-visible::after, .chatToggle:not(.open):focus-visible::before { animation: none; }
+  .chatToggle:not(.open)::after, .chatToggle:not(.open)::before, .chatToggle:not(.open):hover::after, .chatToggle:not(.open):hover::before,
+  .chatToggle:not(.open):focus-visible::after, .chatToggle:not(.open):focus-visible::before { animation: none; transition: none; }
 }
 
 /* While the chat panel is open, the button is a quiet "Close": the same emerging glass, dark. */
