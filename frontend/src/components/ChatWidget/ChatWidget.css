@@ -71,6 +71,41 @@
   background: radial-gradient(ellipse at center, rgba(0, 210, 0, 0.26) 0%, rgba(0, 190, 0, 0.11) 55%, rgba(0, 190, 0, 0) 80%);
 }
 
+/* Hover: the button excites to neon green and trills like a radio signal. The glow flickers at a
+   high rate, interference lines scroll through the glass, and the dot sends out rings. */
+.chatToggle:not(.open):hover,
+.chatToggle:not(.open):focus-visible {
+  color: #39ff14;
+  animation: chatToggleTrill 0.12s linear infinite alternate;
+}
+.chatToggle:not(.open):hover::after,
+.chatToggle:not(.open):focus-visible::after {
+  background:
+    repeating-linear-gradient(90deg, rgba(57, 255, 20, 0) 0 5px, rgba(57, 255, 20, 0.22) 5px 6px),
+    radial-gradient(ellipse at center, rgba(57, 255, 20, 0.38) 0%, rgba(57, 255, 20, 0.14) 55%, rgba(57, 255, 20, 0) 80%);
+  background-size: 12px 100%, 100% 100%;
+  animation: chatToggleCarrier 0.35s linear infinite;
+}
+.chatToggle:not(.open):hover::before,
+.chatToggle:not(.open):focus-visible::before {
+  opacity: 1;
+  box-shadow: 0 0 8px #39ff14;
+  animation: chatToggleRings 0.9s ease-out infinite;
+}
+@keyframes chatToggleTrill {
+  from { text-shadow: 0 0 2px #39ff14, 0 0 8px #39ff14, 0 0 18px rgba(57, 255, 20, 0.55); translate: 0 0; }
+  to   { text-shadow: 0 0 4px #39ff14, 0 0 14px #39ff14, 0 0 32px rgba(57, 255, 20, 0.9); translate: 0.4px -0.4px; }
+}
+@keyframes chatToggleCarrier { to { background-position: 12px 0, 0 0; } }
+@keyframes chatToggleRings {
+  0%   { box-shadow: 0 0 8px #39ff14, 0 0 0 0 rgba(57, 255, 20, 0.7), 0 0 0 0 rgba(57, 255, 20, 0.45); }
+  100% { box-shadow: 0 0 8px #39ff14, 0 0 0 10px rgba(57, 255, 20, 0), 0 0 0 20px rgba(57, 255, 20, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chatToggle:not(.open):hover, .chatToggle:not(.open):hover::after, .chatToggle:not(.open):hover::before,
+  .chatToggle:not(.open):focus-visible, .chatToggle:not(.open):focus-visible::after, .chatToggle:not(.open):focus-visible::before { animation: none; }
+}
+
 /* While the chat panel is open, the button is a quiet "Close": the same emerging glass, dark. */
 .chatToggle.open::after {
   background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.15) 55%, rgba(0, 0, 0, 0) 80%);

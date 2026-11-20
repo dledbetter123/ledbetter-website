@@ -194,6 +194,19 @@
   .pub-carousel-style .carousel-container {
     max-width: 100%;
   }
+  /* The frame snaps to a whole number of 340px cards so it sits centered on the page. */
+  @supports (width: round(down, 100%, 340px)) {
+    .carousel-style .carousel-container,
+    .pub-carousel-style .carousel-container {
+      width: round(down, 100%, 340px);
+    }
+  }
+  /* Auto margins center a row that doesn't fill the frame (Publications) and collapse to 0
+     once the row overflows, so scrolling still reaches every card. */
+  .carousel-style .carousel-item:first-child,
+  .pub-carousel-style .carousel-item:first-child { margin-left: auto; }
+  .carousel-style .carousel-item:last-child,
+  .pub-carousel-style .carousel-item:last-child { margin-right: auto; }
 }
 
 @media (max-width: 600px) {
