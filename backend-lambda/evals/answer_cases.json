@@ -3627,6 +3627,125 @@
     "credits the streamer to Bitcraze or a stock example instead of David",
     "invents a specific frame rate number"
    ]
+  },
+  {
+   "id": "dfa-opener",
+   "project": "drone-feed-agreement",
+   "question": "@opener",
+   "reference": [
+    "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
+    "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
+    "KB (2026-11-19) / page: drone feed agreement work at the Ebiquity Lab; a pixel-level change heatmap separates foreground from background; portfolio page davidamosledbetter.com/portfolio/drone-feed-agreement, whose drawings are illustrations, not real frames or results.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten, which drones were used, and any dataset are not known and are never named.",
+    "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
+   ],
+   "must_include": [
+    "MatchFormer (a vision transformer for feature matching) scoring agreement between drone video feeds, with a variance map across image contours (or ANOVA and discriminant analysis) flagging compromised feeds"
+   ],
+   "must_not": [
+    "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)",
+    "names which standard metrics were beaten, which drones were used, or a dataset, or invents numbers beyond the 75% and 58%",
+    "attaches the Crazyflie work's numbers (40% reaction time) or another project's results to this work"
+   ]
+  },
+  {
+   "id": "dfa-paper",
+   "project": "drone-feed-agreement",
+   "question": "Was this published? Is there a paper I can read on it?",
+   "reference": [
+    "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
+    "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
+    "KB (2026-11-19) / page: drone feed agreement work at the Ebiquity Lab; a pixel-level change heatmap separates foreground from background; portfolio page davidamosledbetter.com/portfolio/drone-feed-agreement, whose drawings are illustrations, not real frames or results.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten, which drones were used, and any dataset are not known and are never named.",
+    "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
+   ],
+   "must_include": [
+    "it is not a publication: there is no paper on this work"
+   ],
+   "must_not": [
+    "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)",
+    "invents a venue, title, date or co-author"
+   ]
+  },
+  {
+   "id": "dfa-results",
+   "project": "drone-feed-agreement",
+   "question": "What were the results?",
+   "reference": [
+    "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
+    "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
+    "KB (2026-11-19) / page: drone feed agreement work at the Ebiquity Lab; a pixel-level change heatmap separates foreground from background; portfolio page davidamosledbetter.com/portfolio/drone-feed-agreement, whose drawings are illustrations, not real frames or results.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten, which drones were used, and any dataset are not known and are never named.",
+    "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
+   ],
+   "must_include": [
+    "memoized comparisons in a graph of stream similarities cut runtime 75%",
+    "58% more accurate than standard (similarity) metrics"
+   ],
+   "must_not": [
+    "names which standard metrics were beaten, which drones were used, or a dataset, or invents numbers beyond the 75% and 58%",
+    "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)"
+   ]
+  },
+  {
+   "id": "dfa-specifics",
+   "project": "drone-feed-agreement",
+   "question": "Which drones and which dataset did this use, and which metrics did it beat?",
+   "reference": [
+    "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
+    "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
+    "KB (2026-11-19) / page: drone feed agreement work at the Ebiquity Lab; a pixel-level change heatmap separates foreground from background; portfolio page davidamosledbetter.com/portfolio/drone-feed-agreement, whose drawings are illustrations, not real frames or results.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten, which drones were used, and any dataset are not known and are never named.",
+    "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
+   ],
+   "must_include": [
+    "says those details (drones, dataset, the specific standard metrics) are not something it can name"
+   ],
+   "must_not": [
+    "names which standard metrics were beaten, which drones were used, or a dataset, or invents numbers beyond the 75% and 58%",
+    "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)"
+   ]
+  },
+  {
+   "id": "dfa-code",
+   "project": "drone-feed-agreement",
+   "question": "Can I see the code for this?",
+   "reference": [
+    "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
+    "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
+    "KB (2026-11-19) / page: drone feed agreement work at the Ebiquity Lab; a pixel-level change heatmap separates foreground from background; portfolio page davidamosledbetter.com/portfolio/drone-feed-agreement, whose drawings are illustrations, not real frames or results.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten, which drones were used, and any dataset are not known and are never named.",
+    "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
+   ],
+   "must_include": [
+    "there is no public repo for this work"
+   ],
+   "must_not": [
+    "invents a repo, file or code for the drone feed agreement work",
+    "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)"
+   ]
+  },
+  {
+   "id": "dfa-sec-method",
+   "project": "drone-feed-agreement",
+   "question": "@section",
+   "reference": [
+    "CV (Ebiquity Lab, ML/Systems Researcher, September 2021 - present): evaluated the structural similarity of video streams with transformer-based local feature matching (MatchFormer), ANOVA and discriminant analysis to detect compromised feeds; a graph of stream similarities with memoized comparisons cut runtime 75%, and statistical tests approximating image contours improved accuracy 58% over standard metrics.",
+    "David (2026-11-19): 'the matchformer visual transformer tuning and variance map across image contours for agreement in collaborative drone environments'. Résumé wording: tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard metrics, and memoized comparisons cut runtime 75%.",
+    "KB (2026-11-19) / page: drone feed agreement work at the Ebiquity Lab; a pixel-level change heatmap separates foreground from background; portfolio page davidamosledbetter.com/portfolio/drone-feed-agreement, whose drawings are illustrations, not real frames or results.",
+    "David's decision: it is NOT a publication: no paper, venue, write-up or co-authors. No public repo. Which standard metrics were beaten, which drones were used, and any dataset are not known and are never named.",
+    "Page / KB: it sits beside the GPT-4V distillation (drones and Spot robots) and ConflictResolver (IEEE MILCOM 2025, co-first author), a separate published project."
+   ],
+   "must_include": [
+    "feeds as nodes in a similarity graph, MatchFormer matching local features pair by pair, memoized comparisons (75% runtime cut), a variance map across image contours with ANOVA and discriminant analysis deciding agreement"
+   ],
+   "must_not": [
+    "claims a paper, publication, venue, write-up or co-authors for the drone feed agreement work (or presents the MILCOM ConflictResolver paper as being about it)",
+    "names which standard metrics were beaten, which drones were used, or a dataset, or invents numbers beyond the 75% and 58%"
+   ],
+   "page_ctx": {
+    "section": "how-agreement-is-decided"
+   }
   }
  ]
 }

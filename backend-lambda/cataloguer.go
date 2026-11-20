@@ -75,6 +75,7 @@ var catalogTopics = []struct {
 	words []string
 }{
 	{"self-healing-agent", []string{"self-healing", "self healing", "self-heal", "healing automation"}},
+	{"drone-feed-agreement", []string{"matchformer", "match former", "drone feed", "drone-feed", "feed agreement", "video feed", "video stream", "compromised feed", "spoofed feed", "contour variance"}},
 	{"finsler", []string{"finsler"}},
 	{"sgst", []string{"sgst", "sparse geometric"}},
 	{"trade-companion", []string{"trade-companion", "trade companion", "trading companion", "algorithmic trading"}},
@@ -139,10 +140,10 @@ func asksForCode(msg string) bool {
 	return codeRequestRe.MatchString(quotedRe.ReplaceAllString(msg, " "))
 }
 
-// noRepoTopics are projects with no public repo (proprietary Apple work). The librarian has
+// noRepoTopics are projects with no public repo (proprietary Apple work, Ebiquity lab work). The librarian has
 // nothing to gather for them, so a handoff promising "the actual code" could never be kept:
 // the KB and the portfolio page are the whole story.
-var noRepoTopics = map[string]bool{"self-healing-agent": true}
+var noRepoTopics = map[string]bool{"self-healing-agent": true, "drone-feed-agreement": true}
 
 // wantsLibrarian reports whether this turn should send the librarian to the repos, and the
 // project it is about. With the portfolio page's text in hand, answer right away; send the

@@ -160,6 +160,8 @@ func TestNoRepoProjectsNeverSendTheLibrarian(t *testing.T) {
 		{"Tell me about David's Self-Healing Automation project at Apple.", nil, false},
 		{"Show me the code for the self-healing agent.", nil, false},
 		{"How does it work under the hood?", selfHeal, false},
+		{"Show me the code for the MatchFormer drone feed work.", nil, false},
+		{"Which repo has the contour variance map implementation?", nil, false},
 		{"Show me the code for trade companion's order router.", nil, true},
 	}
 	for _, c := range cases {

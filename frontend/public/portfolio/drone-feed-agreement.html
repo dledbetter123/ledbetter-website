@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Drone Feed Agreement &middot; David Ledbetter</title>
+<meta name="description" content="When a team of drones watches overlapping scenes, a spoofed or compromised feed should give itself away, because its view stops agreeing with the others. At UMBC's Ebiquity Lab, David Ledbetter tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds; a variance map across image contours flagged compromised feeds, 58% more accurate than standard similarity metrics, and memoized comparisons cut runtime 75%.">
+<link rel="icon" href="/favicon.ico">
+<meta property="og:image" content="https://www.davidamosledbetter.com/og-image.jpg?v=3">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="David Ledbetter in front of the Y Combinator Y">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://www.davidamosledbetter.com/og-image.jpg?v=3">
+<link rel="stylesheet" href="portfolio.css?v=4">
+<style>
+/* Drone Feed Agreement page: the feed graph, one pair comparison and the method steps.
+   Every drawing here is an illustration of the idea, never data. Green = a pair agrees,
+   pale lime dashed = a pair disagrees or a feed is flagged. */
+figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+figcaption .note { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+
+.toggle { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.toggle .lbl { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.toggle button { font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; background: none; color: var(--muted); border: 1px solid var(--dim); padding: 7px 12px; cursor: pointer; min-width: 40px; }
+.toggle button:hover { color: var(--ink); border-color: var(--ink); }
+.toggle button[aria-pressed="true"] { color: #000; background: var(--green); border-color: var(--green); font-weight: 600; }
+.toggle button.bad[aria-pressed="true"] { background: var(--yellow); border-color: var(--yellow); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 20px; font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { width: 22px; height: 0; border-top: 2px solid var(--green); }
+.legend i.no { border-top: 2px dashed var(--yellow); }
+.verdict { border-left: 2px solid var(--green); padding-left: 14px; min-height: 5.2em; display: grid; align-content: start; }
+.verdict p { font-size: 15.5px; color: var(--ink); }
+.verdict.flag { border-left-color: var(--yellow); }
+.verdict b { color: var(--yellow); font-weight: 600; }
+
+/* The feed graph: five feeds, an edge for every pair */
+.feeds-grid { display: grid; grid-template-columns: minmax(0, 500px) minmax(0, 1fr); gap: 18px 40px; align-items: center; }
+.feeds-side { display: grid; gap: 18px; align-content: center; min-width: 0; }
+@media (max-width: 760px) { .feeds-grid { grid-template-columns: minmax(0, 1fr); } }
+.edge { stroke: var(--green); stroke-width: 2; opacity: .8; transition: stroke .35s, opacity .35s; }
+.edge.off { stroke: var(--yellow); stroke-dasharray: 7 6; opacity: 1; }
+.scene { fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.feed { cursor: pointer; outline: none; }
+.feed .frame { fill: #000; stroke: var(--dim); stroke-width: 1.5; transition: stroke .35s; }
+.feed:hover .frame, .feed:focus-visible .frame { stroke: var(--link); }
+.feed .lblbg { fill: #000; }
+.feed .id { fill: var(--ink); font-family: var(--f-display); font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+.feed .flagbg { display: none; fill: #000; }
+.feed.flag .flagbg { display: inline; }
+.feed .flagtag { display: none; fill: var(--yellow); font-size: 11px; letter-spacing: .08em; }
+.feed .scene.fake, .feed.flag .scene.real { display: none; }
+.feed.flag .scene.fake { display: inline; stroke: var(--yellow); }
+.feed.flag .frame { stroke: var(--yellow); stroke-width: 3; }
+.feed.flag .id, .feed.flag .flagtag { fill: var(--yellow); display: inline; }
+.feed .ring { fill: none; stroke: var(--yellow); stroke-width: 2; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.feed.flag .ring { animation: ring 1.8s ease-out infinite; }
+@keyframes ring { from { opacity: .85; transform: scale(1); } to { opacity: 0; transform: scale(1.22); } }
+
+/* One pair: Feed A beside Feed B, and their contours laid over each other */
+.pair-grid { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); gap: 16px 28px; align-items: end; }
+@media (max-width: 760px) { .pair-grid { grid-template-columns: minmax(0, 1fr); } .pair-grid > div:last-child svg { max-width: 220px; } }
+.pair-grid svg .flab { fill: var(--muted); font-size: 12px; letter-spacing: .06em; }
+.pair-grid svg .flab.state { fill: var(--green); }
+.pf { fill: #000; stroke: var(--dim); stroke-width: 1.2; }
+.kp { fill: var(--green); }
+.mt { stroke: var(--green); stroke-width: 1.2; opacity: .7; }
+.mt.no { stroke: var(--yellow); stroke-dasharray: 5 4; opacity: 1; }
+.kp.no { fill: var(--yellow); }
+.ov-a { fill: none; stroke: var(--green); stroke-width: 2.4; stroke-linejoin: round; }
+.ov-b { fill: none; stroke: var(--link); stroke-width: 1.4; stroke-dasharray: 4 4; stroke-linejoin: round; }
+.ov-b.no { stroke: var(--yellow); stroke-width: 1.8; }
+#fig-pair .when-spoofed, #fig-pair.spoofed .when-honest { display: none; }
+#fig-pair.spoofed .when-spoofed { display: inline; }
+#fig-pair.spoofed .pair-grid svg .flab.state { fill: var(--yellow); }
+#fig-pair.spoofed .verdict { border-left-color: var(--yellow); }
+
+/* The method, as steps that explain themselves on click (explore.js) */
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px 26px; }
+ol.steps > li { display: grid; gap: 10px; align-content: start; position: relative; min-width: 0; }
+ol.steps > li + li::before { content: "\2192"; position: absolute; left: -20px; top: 24px; color: var(--muted); font-family: var(--f-mono); font-size: 14px; }
+.step { display: grid; gap: 4px; text-align: left; background: none; border: 1px solid var(--dim); color: var(--ink); padding: 12px; cursor: pointer; font: inherit; min-width: 0; align-content: start; }
+.step i { font-style: normal; font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; color: var(--muted); }
+.step b { font-family: var(--f-display); font-size: 17px; font-weight: 600; line-height: 1.15; }
+.step span { font-size: 13.5px; line-height: 1.35; color: var(--muted); }
+.step:hover { border-color: var(--link); }
+.step.on { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
+.step.on b { color: var(--blue); }
+.step.memo { border-style: dashed; }
+@media (max-width: 1000px) { ol.steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } ol.steps > li:nth-child(4)::before { display: none; } }
+@media (max-width: 600px) {
+  ol.steps { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  ol.steps > li + li::before, ol.steps > li:nth-child(4)::before { display: block; content: "\2193"; left: 14px; top: -21px; }
+  .step.memo { margin-left: 22px; }
+}
+
+/* Results */
+.stats.big .stat b { font-size: clamp(54px, 9vw, 84px); }
+.stats.big .stat span { font-size: 15px; max-width: 34ch; }
+
+/* Real figures from David's notebook go in a .real-figs grid (see the comment after Results). */
+.real-figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 28px; }
+.real-figs img { display: block; width: 100%; height: auto; border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="Page">
+    <a class="back" href="/#portfolio">&larr; All projects</a>
+    <div class="actions">
+      <a class="btn primary" href="/projects/drone-feed-agreement">Ask LedbetterLM about this</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">Ebiquity Lab, UMBC</div>
+    <h1>Drone Feed Agreement</h1>
+    <p class="lede">A team of drones watches overlapping scenes. If one drone&rsquo;s feed is spoofed or compromised, the others should be able to tell, because its view stops agreeing with theirs. David tuned MatchFormer, a vision transformer for feature matching, to score that agreement between video feeds in collaborative drone environments, and a variance map across image contours flags the feed that doesn&rsquo;t fit.</p>
+    <div class="meta"><span><b>Role</b> ML/Systems Researcher</span> <span><b>In the lab</b> September 2021 &ndash; Present</span></div>
+    <div class="tags"><span>MatchFormer</span> <span>Vision transformer</span> <span>Local feature matching</span> <span>Image contours</span> <span>ANOVA</span> <span>Discriminant analysis</span> <span>Similarity graph</span> <span>Memoization</span></div>
+  </header>
+
+  <figure id="fig-feeds">
+    <figcaption>
+      <h2>Spot the spoofed feed</h2>
+      <span class="note">Illustration of the idea: drawn shapes, not camera frames or results.</span>
+    </figcaption>
+    <p class="sr-only">Illustration: five drone feeds, A to E, drawn as small frames of the same simple scene seen from slightly different positions, so their views overlap. A line joins every pair of feeds. Spoofing a feed replaces its scene with a different one; every line touching that feed turns into a dashed line, meaning the pair disagrees, while the other pairs still agree, and that feed is flagged.</p>
+    <div class="feeds-grid">
+      <svg viewBox="0 0 460 400" role="group" aria-label="Illustration: five drone feeds joined by a line for every pair. Pick a feed to spoof it.">
+        <defs>
+          <clipPath id="clip-mini"><rect x="0" y="0" width="96" height="64"/></clipPath>
+          <!-- One simple scene, wider than a frame. Each feed sees a different, overlapping slice of it. -->
+          <g id="scene-real">
+            <path d="M0,56 H210"/>
+            <path d="M22,56 V32 L42,20 L62,32 V56"/>
+            <path d="M38,56 V45 H46 V56"/>
+            <rect x="80" y="10" width="14" height="46"/>
+            <circle cx="120" cy="35" r="9"/><path d="M120,44 V56"/>
+            <path d="M142,56 V38 H174 V56"/>
+            <path d="M190,56 V22 M184,30 H196"/>
+          </g>
+          <!-- A different place: what a spoofed feed replays. -->
+          <g id="scene-fake">
+            <path d="M0,44 L16,30 L30,38 L50,16 L72,40 L96,28"/>
+            <path d="M0,54 H96"/>
+            <path d="M8,60 H34 M50,60 H86"/>
+            <path d="M60,54 L66,24 L72,54 M62,40 H70"/>
+          </g>
+        </defs>
+        <g class="edges">
+          <line class="edge" data-pair="AB" x1="230" y1="65" x2="363" y2="162"/>
+          <line class="edge" data-pair="AC" x1="230" y1="65" x2="312" y2="318"/>
+          <line class="edge" data-pair="AD" x1="230" y1="65" x2="148" y2="318"/>
+          <line class="edge" data-pair="AE" x1="230" y1="65" x2="97" y2="162"/>
+          <line class="edge" data-pair="BC" x1="363" y1="162" x2="312" y2="318"/>
+          <line class="edge" data-pair="BD" x1="363" y1="162" x2="148" y2="318"/>
+          <line class="edge" data-pair="BE" x1="363" y1="162" x2="97" y2="162"/>
+          <line class="edge" data-pair="CD" x1="312" y1="318" x2="148" y2="318"/>
+          <line class="edge" data-pair="CE" x1="312" y1="318" x2="97" y2="162"/>
+          <line class="edge" data-pair="DE" x1="148" y1="318" x2="97" y2="162"/>
+        </g>
+        <g class="feed" data-feed="A" transform="translate(182,33)" tabindex="0" role="button" aria-label="Spoof feed A" aria-pressed="false">
+          <rect class="ring" x="-5" y="-5" width="106" height="74"/>
+          <rect class="frame" width="96" height="64"/>
+          <g clip-path="url(#clip-mini)"><use class="scene real" href="#scene-real" x="-4"/><use class="scene fake" href="#scene-fake"/></g>
+          <rect class="lblbg" x="20" y="68" width="56" height="17"/>
+          <text class="id" x="48" y="81" text-anchor="middle">Feed A</text>
+          <rect class="flagbg" x="22" y="87" width="52" height="15"/>
+          <text class="flagtag" x="48" y="98" text-anchor="middle">flagged</text>
+        </g>
+        <g class="feed" data-feed="B" transform="translate(315,130)" tabindex="0" role="button" aria-label="Spoof feed B" aria-pressed="false">
+          <rect class="ring" x="-5" y="-5" width="106" height="74"/>
+          <rect class="frame" width="96" height="64"/>
+          <g clip-path="url(#clip-mini)"><use class="scene real" href="#scene-real" x="-26"/><use class="scene fake" href="#scene-fake"/></g>
+          <rect class="lblbg" x="20" y="68" width="56" height="17"/>
+          <text class="id" x="48" y="81" text-anchor="middle">Feed B</text>
+          <rect class="flagbg" x="22" y="87" width="52" height="15"/>
+          <text class="flagtag" x="48" y="98" text-anchor="middle">flagged</text>
+        </g>
+        <g class="feed" data-feed="C" transform="translate(264,286)" tabindex="0" role="button" aria-label="Spoof feed C" aria-pressed="false">
+          <rect class="ring" x="-5" y="-5" width="106" height="74"/>
+          <rect class="frame" width="96" height="64"/>
+          <g clip-path="url(#clip-mini)"><use class="scene real" href="#scene-real" x="-50"/><use class="scene fake" href="#scene-fake"/></g>
+          <rect class="lblbg" x="20" y="68" width="56" height="17"/>
+          <text class="id" x="48" y="81" text-anchor="middle">Feed C</text>
+          <rect class="flagbg" x="22" y="87" width="52" height="15"/>
+          <text class="flagtag" x="48" y="98" text-anchor="middle">flagged</text>
+        </g>
+        <g class="feed" data-feed="D" transform="translate(100,286)" tabindex="0" role="button" aria-label="Spoof feed D" aria-pressed="false">
+          <rect class="ring" x="-5" y="-5" width="106" height="74"/>
+          <rect class="frame" width="96" height="64"/>
+          <g clip-path="url(#clip-mini)"><use class="scene real" href="#scene-real" x="-76"/><use class="scene fake" href="#scene-fake"/></g>
+          <rect class="lblbg" x="20" y="68" width="56" height="17"/>
+          <text class="id" x="48" y="81" text-anchor="middle">Feed D</text>
+          <rect class="flagbg" x="22" y="87" width="52" height="15"/>
+          <text class="flagtag" x="48" y="98" text-anchor="middle">flagged</text>
+        </g>
+        <g class="feed" data-feed="E" transform="translate(49,130)" tabindex="0" role="button" aria-label="Spoof feed E" aria-pressed="false">
+          <rect class="ring" x="-5" y="-5" width="106" height="74"/>
+          <rect class="frame" width="96" height="64"/>
+          <g clip-path="url(#clip-mini)"><use class="scene real" href="#scene-real" x="-104"/><use class="scene fake" href="#scene-fake"/></g>
+          <rect class="lblbg" x="20" y="68" width="56" height="17"/>
+          <text class="id" x="48" y="81" text-anchor="middle">Feed E</text>
+          <rect class="flagbg" x="22" y="87" width="52" height="15"/>
+          <text class="flagtag" x="48" y="98" text-anchor="middle">flagged</text>
+        </g>
+      </svg>
+      <div class="feeds-side">
+        <div class="toggle" role="toolbar" aria-label="Spoof a feed">
+          <span class="lbl">Spoof</span> 
+          <button type="button" data-spoof="" aria-pressed="true">None</button> 
+          <button type="button" class="bad" data-spoof="A" aria-pressed="false">A</button> 
+          <button type="button" class="bad" data-spoof="B" aria-pressed="false">B</button> 
+          <button type="button" class="bad" data-spoof="C" aria-pressed="false">C</button> 
+          <button type="button" class="bad" data-spoof="D" aria-pressed="false">D</button> 
+          <button type="button" class="bad" data-spoof="E" aria-pressed="false">E</button>
+        </div>
+        <div class="verdict" aria-live="polite">
+          <p data-verdict="none">All five feeds see overlapping slices of the same scene, so every pair agrees.</p>
+          <p data-verdict="spoofed" hidden>Feed <b data-fill="feed">C</b> now shows a scene the others don&rsquo;t. Every pair with <b data-fill="feed">C</b> disagrees while the other pairs still agree, so <b data-fill="feed">C</b> is flagged as compromised.</p>
+        </div>
+        <div class="legend"><span><i></i>pair agrees</span> <span><i class="no"></i>pair disagrees</span></div>
+      </div>
+    </div>
+  </figure>
+
+  <figure id="fig-pair">
+    <figcaption>
+      <h2>Inside one comparison</h2>
+      <span class="note">Illustration: drawn shapes, not MatchFormer output.</span>
+    </figcaption>
+    <p class="sr-only">Illustration of one pair of feeds. Feed A and Feed B see the same simple scene from slightly different positions. Lines join the local features MatchFormer would match between the two frames, and the two frames' contours are laid over each other. When Feed B is honest, the matches are consistent and the contours line up. When Feed B is spoofed, it shows a different scene: only a few matches remain, they are inconsistent, and its contours do not line up with Feed A's.</p>
+    <div class="toggle" role="toolbar" aria-label="Feed B">
+      <span class="lbl">Feed B</span> 
+      <button type="button" data-pair-state="honest" aria-pressed="true">Honest</button> 
+      <button type="button" class="bad" data-pair-state="spoofed" aria-pressed="false">Spoofed</button>
+    </div>
+    <div class="pair-grid">
+      <div>
+        <svg viewBox="0 0 520 196" role="img" aria-label="Illustration: Feed A beside Feed B, with lines joining matched local features">
+          <defs>
+            <clipPath id="clip-pf"><rect x="0" y="0" width="220" height="150"/></clipPath>
+            <g id="pscene-real">
+              <path d="M0,128 H260"/>
+              <path d="M30,128 V72 L66,46 L102,72 V128"/>
+              <path d="M58,128 V100 H74 V128"/>
+              <rect x="124" y="30" width="26" height="98"/>
+              <circle cx="186" cy="86" r="18"/><path d="M186,104 V128"/>
+              <path d="M206,128 V96 H250 V128"/>
+            </g>
+            <g id="pscene-fake">
+              <path d="M0,104 L36,74 L70,94 L118,52 L168,92 L220,70"/>
+              <path d="M0,128 H220"/>
+              <path d="M16,138 H84 M110,138 H200"/>
+              <path d="M150,128 L162,64 L174,128 M154,100 H170"/>
+            </g>
+          </defs>
+          <text class="flab" x="10" y="18">FEED A</text>
+          <text class="flab" x="290" y="18">FEED B</text>
+          <text class="flab state" x="510" y="18" text-anchor="end"><tspan class="when-honest">HONEST</tspan><tspan class="when-spoofed">SPOOFED</tspan></text>
+          <g transform="translate(10,30)">
+            <rect class="pf" width="220" height="150"/>
+            <g clip-path="url(#clip-pf)"><use class="scene" href="#pscene-real"/></g>
+          </g>
+          <g transform="translate(290,30)">
+            <rect class="pf" width="220" height="150"/>
+            <g clip-path="url(#clip-pf)">
+              <use class="scene when-honest" href="#pscene-real" x="-30" y="4"/>
+              <use class="scene when-spoofed" href="#pscene-fake"/>
+            </g>
+          </g>
+          <!-- Honest: each point in A is matched to the same point of the scene in B (shifted 30 left, 4 down). -->
+          <g class="when-honest">
+            <line class="mt" x1="76" y1="76" x2="326" y2="80"/>
+            <line class="mt" x1="112" y1="102" x2="362" y2="106"/>
+            <line class="mt" x1="68" y1="130" x2="318" y2="134"/>
+            <line class="mt" x1="84" y1="130" x2="334" y2="134"/>
+            <line class="mt" x1="134" y1="60" x2="384" y2="64"/>
+            <line class="mt" x1="160" y1="60" x2="410" y2="64"/>
+            <line class="mt" x1="112" y1="158" x2="362" y2="162"/>
+            <line class="mt" x1="134" y1="158" x2="384" y2="162"/>
+            <line class="mt" x1="196" y1="98" x2="446" y2="102"/>
+            <line class="mt" x1="216" y1="126" x2="466" y2="130"/>
+            <g class="kp-set">
+              <circle class="kp" cx="76" cy="76" r="3"/><circle class="kp" cx="326" cy="80" r="3"/>
+              <circle class="kp" cx="112" cy="102" r="3"/><circle class="kp" cx="362" cy="106" r="3"/>
+              <circle class="kp" cx="68" cy="130" r="3"/><circle class="kp" cx="318" cy="134" r="3"/>
+              <circle class="kp" cx="84" cy="130" r="3"/><circle class="kp" cx="334" cy="134" r="3"/>
+              <circle class="kp" cx="134" cy="60" r="3"/><circle class="kp" cx="384" cy="64" r="3"/>
+              <circle class="kp" cx="160" cy="60" r="3"/><circle class="kp" cx="410" cy="64" r="3"/>
+              <circle class="kp" cx="112" cy="158" r="3"/><circle class="kp" cx="362" cy="162" r="3"/>
+              <circle class="kp" cx="134" cy="158" r="3"/><circle class="kp" cx="384" cy="162" r="3"/>
+              <circle class="kp" cx="196" cy="98" r="3"/><circle class="kp" cx="446" cy="102" r="3"/>
+              <circle class="kp" cx="216" cy="126" r="3"/><circle class="kp" cx="466" cy="130" r="3"/>
+            </g>
+          </g>
+          <!-- Spoofed: a few weak matches that point every which way. -->
+          <g class="when-spoofed">
+            <line class="mt no" x1="76" y1="76" x2="408" y2="82"/>
+            <line class="mt no" x1="134" y1="60" x2="326" y2="104"/>
+            <line class="mt no" x1="216" y1="126" x2="452" y2="122"/>
+            <circle class="kp no" cx="76" cy="76" r="3"/><circle class="kp no" cx="408" cy="82" r="3"/>
+            <circle class="kp no" cx="134" cy="60" r="3"/><circle class="kp no" cx="326" cy="104" r="3"/>
+            <circle class="kp no" cx="216" cy="126" r="3"/><circle class="kp no" cx="452" cy="122" r="3"/>
+          </g>
+        </svg>
+      </div>
+      <div>
+        <svg viewBox="0 0 240 196" role="img" aria-label="Illustration: the contours of Feed A and Feed B laid over each other">
+          <text class="flab" x="10" y="18">CONTOURS, OVERLAID</text>
+          <g transform="translate(10,30)">
+            <rect class="pf" width="220" height="150"/>
+            <g clip-path="url(#clip-pf)">
+              <use class="ov-a" href="#pscene-real"/>
+              <use class="ov-b when-honest" href="#pscene-real"/>
+              <use class="ov-b no when-spoofed" href="#pscene-fake" x="30" y="-4"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="verdict" aria-live="polite">
+      <p data-pair="honest">MatchFormer matches local features between the two frames. The views overlap, so the matches are consistent and the contours line up: Feed A and Feed B agree.</p>
+      <p data-pair="spoofed" hidden>Feed B is replaying a different scene. Only a few weak matches remain, they point every which way, and its contours don&rsquo;t line up with Feed A&rsquo;s: <b>the pair disagrees</b>.</p>
+    </div>
+    <div class="legend"><span><i></i>matched features, Feed A&rsquo;s contours</span> <span><i class="no"></i>inconsistent matches, contours that don&rsquo;t line up</span></div>
+  </figure>
+
+  <figure id="fig-method" data-explore>
+    <figcaption>
+      <h2>How agreement is decided</h2>
+      <span class="note">Click a step. Schematic of the method as David describes it.</span>
+    </figcaption>
+    <ol class="steps">
+      <li><button type="button" class="step" data-node="feeds" aria-pressed="false"><i>01</i> <b>Drone feeds</b> <span>overlapping views of one scene</span></button></li>
+      <li><button type="button" class="step" data-node="graph" aria-pressed="false"><i>02</i> <b>Similarity graph</b> <span>a node per feed, an edge per pair</span></button></li>
+      <li>
+        <button type="button" class="step" data-node="match" aria-pressed="false"><i>03</i> <b>MatchFormer</b> <span>local feature matching, pair by pair</span></button>
+        <button type="button" class="step memo" data-node="memo" aria-pressed="false"><i>&#8635; memo</i> <b>Memoized comparisons</b> <span>each pair scored once</span></button>
+      </li>
+      <li><button type="button" class="step" data-node="contour" aria-pressed="false"><i>04</i> <b>Contour variance map</b> <span>tests approximating image contours</span></button></li>
+      <li><button type="button" class="step" data-node="stats" aria-pressed="false"><i>05</i> <b>ANOVA and discriminant analysis</b> <span>agree, or compromised?</span></button></li>
+      <li><button type="button" class="step" data-node="verdict" aria-pressed="false"><i>06</i> <b>Verdict</b> <span>flag the feed that doesn&rsquo;t fit</span></button></li>
+    </ol>
+    <div class="explore-info" aria-live="polite">
+      <div data-info="feeds"><h3>Drone feeds</h3><p>Each drone in the team streams video. Their cameras watch overlapping parts of the same scene, so honest feeds should agree where they overlap.</p></div>
+      <div data-info="graph" hidden><h3>A graph of stream similarities</h3><p>Every feed is a node, and every pair of feeds is an edge that holds how similar their streams are. A spoofed feed shows up as the node whose edges stop agreeing.</p></div>
+      <div data-info="match" hidden><h3>MatchFormer</h3><p>MatchFormer is a vision transformer for local feature matching: it finds the same points in two frames. David tuned it to score agreement between pairs of feeds by their structural similarity.</p></div>
+      <div data-info="memo" hidden><h3>Memoized comparisons</h3><p>Once a pair of feeds has been compared, the result is stored and reused instead of being scored again. With the similarity graph, that cut runtime 75%.</p></div>
+      <div data-info="contour" hidden><h3>Variance map across image contours</h3><p>Statistical tests approximate the image contours, and a variance map across those contours shows where two views agree and where they don&rsquo;t. A pixel-level change heatmap separates the foreground from the background.</p></div>
+      <div data-info="stats" hidden><h3>ANOVA and discriminant analysis</h3><p>Analysis of variance (ANOVA) and discriminant analysis turn those measurements into a decision: does this feed agree with the others, or is it compromised?</p></div>
+      <div data-info="verdict" hidden><h3>Verdict</h3><p>The feed that doesn&rsquo;t fit is flagged as compromised. Flagging feeds with the variance map across image contours was 58% more accurate than standard similarity metrics.</p></div>
+      <button class="btn" type="button" data-explore-next>Next step &rarr;</button>
+    </div>
+  </figure>
+
+  <section>
+    <h2>Results</h2>
+    <div class="stats big">
+      <div class="stat" style="--c: var(--green)"><b>75%</b> <span>less runtime, from a graph of stream similarities with memoized comparisons, so no pair of feeds is scored twice</span></div>
+      <div class="stat" style="--c: var(--blue)"><b>58%</b> <span>more accurate than standard similarity metrics, from statistical tests approximating image contours</span></div>
+    </div>
+  </section>
+
+  <!-- REAL FIGURES (pending David's Colab notebook with the actual variance maps and match results).
+       Add them here as one section, e.g.:
+         <section id="real-figures">
+           <h2>From the notebook</h2>
+           <div class="real-figs">
+             <figure><img src="drone-feed-agreement/variance-map.png" alt="..." width="..." height="..."><figcaption>...</figcaption></figure>
+           </div>
+         </section>
+       Images go in frontend/public/portfolio/drone-feed-agreement/. Keep the illustrations above, still labeled as
+       illustrations; the real figures carry their own captions. Then rebuild (prebuild regenerates the page context). -->
+
+  <section>
+    <h2>In the same lab</h2>
+    <div class="callouts">
+      <div class="callout" style="--c: var(--violet)">
+        <span class="tag">Ebiquity Lab</span>
+        <h3>GPT-4V distillation</h3>
+        <p>A distilled GPT-4V model for lower-latency communication with autonomous agents such as drones and Spot robots.</p>
+      </div>
+      <div class="callout" style="--c: var(--blue)">
+        <span class="tag">IEEE MILCOM 2025 &middot; co-first author</span>
+        <h3>ConflictResolver</h3>
+        <p>A policy-driven knowledge-graph framework that finds agents sharing conflicting information and resolves the conflicts through agent negotiation and reasoning. <a href="https://ieeexplore.ieee.org/abstract/document/11309858" target="_blank" rel="noopener noreferrer">The paper &#8599;</a></p>
+      </div>
+    </div>
+    <p class="note">Drone feed agreement is not a publication: there is no paper on it. ConflictResolver is a separate project.</p>
+  </section>
+
+  <section class="cta">
+    <h2>Questions about this project?</h2>
+    <p>LedbetterLM is an AI that knows David's work. Ask it how MatchFormer scores agreement between two feeds, what the contour variance map does, or why memoized comparisons cut the runtime.</p>
+    <a class="btn primary big" href="/projects/drone-feed-agreement">Ask LedbetterLM about this project &rarr;</a>
+  </section>
+
+  <section class="sources">
+    <span>This lab work has no public repo and is not a publication. Everything on this page comes from David's CVs:</span>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-standard" target="_blank" rel="noopener noreferrer">David's CV, standard (PDF): Ebiquity Lab entry</a>
+    <a href="https://davidamosledbetter-portfolio.s3.amazonaws.com/cv-short" target="_blank" rel="noopener noreferrer">David's CV, short (PDF): Ebiquity Lab entry</a>
+    <span>The drawings are illustrations of the idea, made for this page. They are not camera frames, MatchFormer matches or measured variance maps.</span>
+  </section>
+  <footer><span>David Ledbetter</span><span><a href="/#portfolio">All projects</a> &middot; <a href="https://github.com/dledbetter123" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a></span></footer>
+</div>
+<a class="ask-fab" href="/projects/drone-feed-agreement">Ask LedbetterLM</a>
+<script>
+(() => {
+  // Spot the spoofed feed: pick one feed (or none). Every edge touching it disagrees; that feed is flagged.
+  const fig = document.getElementById('fig-feeds');
+  const feeds = [...fig.querySelectorAll('.feed')];
+  const edges = [...fig.querySelectorAll('.edge')];
+  const picks = [...fig.querySelectorAll('[data-spoof]')];
+  let spoofed = '';
+  let touched = false;
+  const setSpoof = (f) => {
+    spoofed = f;
+    feeds.forEach((n) => {
+      const on = n.dataset.feed === f;
+      n.classList.toggle('flag', on);
+      n.setAttribute('aria-pressed', String(on));
+    });
+    edges.forEach((e) => e.classList.toggle('off', !!f && e.dataset.pair.includes(f)));
+    picks.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.spoof === f)));
+    fig.querySelector('[data-verdict="none"]').hidden = !!f;
+    fig.querySelector('[data-verdict="spoofed"]').hidden = !f;
+    fig.querySelector('.verdict').classList.toggle('flag', !!f);
+    if (f) fig.querySelectorAll('[data-fill="feed"]').forEach((s) => { s.textContent = f; });
+  };
+  picks.forEach((b) => b.addEventListener('click', () => { touched = true; setSpoof(b.dataset.spoof); }));
+  feeds.forEach((n) => {
+    const go = () => { touched = true; setSpoof(spoofed === n.dataset.feed ? '' : n.dataset.feed); };
+    n.addEventListener('click', go);
+    n.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } });
+  });
+  // Show the idea once: spoof feed C when the figure first comes into view (at once under reduced motion).
+  const demo = () => { if (!touched) setSpoof('C'); };
+  const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (still || !('IntersectionObserver' in window)) {
+    demo();
+  } else {
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((en) => en.isIntersecting)) { io.disconnect(); setTimeout(demo, 900); }
+    }, { threshold: 0.5 });
+    io.observe(fig.querySelector('svg'));
+  }
+
+  // Inside one comparison: Feed B honest or spoofed.
+  const pair = document.getElementById('fig-pair');
+  const pairBtns = [...pair.querySelectorAll('[data-pair-state]')];
+  let pairState = 'honest';
+  const setPair = (s) => {
+    pairState = s;
+    pair.classList.toggle('spoofed', s === 'spoofed');
+    pairBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pairState === s)));
+    pair.querySelectorAll('[data-pair]').forEach((p) => { p.hidden = p.dataset.pair !== s; });
+  };
+  pairBtns.forEach((b) => b.addEventListener('click', () => setPair(b.dataset.pairState)));
+
+  // What ask.js reports as page state: what the visitor set up in the two illustrations.
+  window.askState = () => [
+    spoofed ? 'with feed ' + spoofed + ' spoofed in the feed illustration' : '',
+    pairState === 'spoofed' ? 'with Feed B spoofed in the comparison illustration' : '',
+  ].filter(Boolean).join(', ');
+})();
+</script>
+<script src="explore.js?v=1" defer></script>
+<script src="ask.js?v=2" defer></script>
+</body>
+</html>

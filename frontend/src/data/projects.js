@@ -46,6 +46,14 @@ const projects = [
     opener: "Tell me about David's Crazyflie AI-deck drone work: the obstacle detection he ran onboard, the YOLO target tracking, and the link he ran over the I2C lines.",
   },
   {
+    // Ebiquity Lab work with no public repo and no paper: inline description, no githubUrl.
+    slug: 'drone-feed-agreement',
+    title: 'Drone Feed Agreement',
+    description:
+      "When a team of drones watches overlapping scenes, a spoofed feed gives itself away: its view stops agreeing. At UMBC's Ebiquity Lab I tuned MatchFormer, a vision transformer, to score agreement between feeds; a contour variance map was 58% more accurate than standard similarity metrics.",
+    opener: "Tell me about David's drone feed agreement work: how MatchFormer and the contour variance map tell when a drone's feed has been compromised.",
+  },
+  {
     // Personal project with private repos: inline description, links to the live product.
     slug: 'pathion',
     title: 'Pathion: In-Browser AI Coding Tutor',

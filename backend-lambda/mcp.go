@@ -169,6 +169,7 @@ const aboutDavid = `David Ledbetter is a machine-learning and full-stack softwar
 
 Projects
 - Self-Healing Automation (Apple): his flagship project on Release Validation, a dynamic system through which the automation team's test plans heal themselves. Proprietary, so there is no public repo.
+- Drone Feed Agreement (Ebiquity Lab, UMBC; https://www.davidamosledbetter.com/portfolio/drone-feed-agreement): he tuned MatchFormer, a vision transformer for feature matching, to score agreement between video feeds in collaborative drone environments; a variance map across image contours flagged compromised feeds, 58% more accurate than standard similarity metrics, and memoized comparisons cut runtime 75%. Lab work with no public repo, and not a publication.
 - Pathion (https://pathion.dev): a platform that helps students and engineers strengthen their interview readiness and learn engineering concepts, with all code running on-device in WebAssembly. He built the AI layer: an in-browser LLM tutor, the learning-data pipeline, and an adaptive Elo rating.
 - This website and LedbetterLM (https://github.com/dledbetter123/ledbetter-website): serverless AWS, with a Go Lambda running the librarian you are talking to.
 - Sparse Geometric Signal Transport (https://github.com/dledbetter123/SparseGeometricSignalTransport): attention as parallel transport on a fiber bundle.
