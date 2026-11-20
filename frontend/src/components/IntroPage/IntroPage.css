@@ -2,8 +2,8 @@
 
 .introPage {
     display: flex;
-    flex-direction: column; /* the centered intro, then the footer (contact tiles) at the bottom */
-    justify-content: center;
+    flex-direction: column; /* the intro in the top half, then the contact tiles from the middle down */
+    justify-content: flex-start;
     align-items: center;
     min-height: 100vh; /* at least the full viewport; grows if the footer doesn't fit */
     color: white; /* White text */
@@ -14,7 +14,10 @@
     box-sizing: border-box;
   }
 .introPage .content {
-  flex: 1 1 auto; /* takes the space above the footer, so the text centers in it */
+  flex: 0 0 auto;
+  /* The top half of the screen, less the page padding and the footer's 24px + half the heading,
+     so the "Contact" heading sits on the vertical center. A long paragraph (phones) still grows it. */
+  min-height: calc(50vh - 33px - max(20px, env(safe-area-inset-top)));
   max-width: 600px; /* Maximum width of the content */
   width: 100%;
   z-index: 2; /* Ensure the text is above the image */
@@ -78,7 +81,7 @@
 
 @media (max-width: 600px) {
   .introPage {
-    justify-content: center; /* Align content to the top for mobile */
+    justify-content: flex-start;
     align-items: center;
   }
 
