@@ -86,7 +86,7 @@
   background-repeat: repeat-x, repeat-x, no-repeat;
   background-position: 0 50%, 0 50%, 0 0;
   transition: transform 0.25s ease-out;
-  animation: chatToggleCarrier 0.4s linear infinite, chatToggleIdleAmp 0.7s linear infinite;
+  animation: chatToggleCarrier 0.8s linear infinite, chatToggleIdleAmp 1.1s linear infinite;
 }
 .chatToggle:not(.open)::before {
   animation: chatToggleIdleRings 1.2s ease-out infinite;
@@ -126,7 +126,7 @@
   background-repeat: repeat-x, repeat-x, no-repeat;
   background-position: 0 50%, 0 50%, 0 0;
   transform: scale(1.08);
-  animation: chatToggleCarrier 0.2s linear infinite, chatToggleAmp 0.55s linear infinite;
+  animation: chatToggleCarrier 0.5s linear infinite, chatToggleAmp 0.85s linear infinite;
 }
 .chatToggle:not(.open):hover::before,
 .chatToggle:not(.open):focus-visible::before {
