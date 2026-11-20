@@ -20,7 +20,7 @@ const CONTENT = [
   {
     key: 'b1', type: 'body', sec: 1,
     text:
-      'At Apple I build agentic AI systems. I designed Self-Healing Automation, a dynamic system through which test plans heal themselves, built around a world model of screens and their transitions.',
+      'At Apple I train machine learning models and build multi-agent systems. I designed Self-Healing Automation, a dynamic system through which test plans heal themselves, built around a world model of screens and their transitions.',
   },
   { key: 'h2', type: 'heading', tag: 'h2', sec: 2, text: 'Research' },
   {

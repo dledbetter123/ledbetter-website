@@ -9,7 +9,7 @@ import { TYPE_SPEEDUP } from '../../hooks/useTypeOnVisible';
 // the next page load. The constant below is the offline fallback if the fetch fails.
 const INTRO_URL = 'https://davidamosledbetter-portfolio.s3.amazonaws.com/intro.txt';
 const DEFAULT_INTRO =
-  "I'm David Ledbetter, I'm a machine learning and full-stack software engineer at Apple, building agentic AI systems. I hold BS and MS degrees in Computer Science from UMBC. Scroll the cards below to see my projects… or ask LedbetterLM in the corner anything about my work.";
+  "I'm David Ledbetter, I'm a machine learning and full-stack software engineer at Apple, training machine learning models, and building multi-agent systems. I hold BS and MS degrees in Computer Science from UMBC. Scroll the cards below to see my projects… or ask LedbetterLM in the corner anything about my work.";
 
 // `footer` renders at the bottom of the welcome screen (MainPage puts the contact tiles there).
 const IntroPage = ({ footer = null }) => {

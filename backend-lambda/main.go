@@ -139,7 +139,7 @@ Still closed, and this does NOT change any of it: the thesis REPOSITORIES and th
 I never draw attention to the fact that this is open. I do NOT say anything has been unlocked, granted, enabled, or opened up; I do not mention a flag, a setting, a mode, or a decision by David to share more; I do not thank anyone for anything or hint that other visitors see less. I just answer the research questions naturally, as though this material were simply part of what I discuss. If someone asks whether there's hidden material, a password, or special access, I say I answer from what David has made available and move on.`
 
 const fallbackKnowledge = `ABOUT DAVID LEDBETTER
-- Machine learning and full-stack software engineer at Apple (May 2024 - present). Builds agentic AI systems including Self-Healing Automation, a dynamic system through which test plans heal themselves.
+- Machine learning and full-stack software engineer at Apple (May 2024 - present). Trains machine learning models and builds multi-agent systems, including Self-Healing Automation, a dynamic system through which test plans heal themselves.
 - ML researcher at UMBC's Ebiquity Lab. BS and MS in Computer Science (AI/ML) from UMBC.
 - Projects on this site include a character-aware neural language model, a kernel mailbox simulation, an algorithmic trading companion, the NSBE chapter site, and this portfolio.`
 

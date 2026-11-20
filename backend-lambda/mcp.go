@@ -165,7 +165,7 @@ var mcpTools = []map[string]interface{}{
 	},
 }
 
-const aboutDavid = `David Ledbetter is a machine-learning and full-stack software engineer at Apple, building agentic AI systems. BS and MS in Computer Science from UMBC; researcher at UMBC's Ebiquity Lab.
+const aboutDavid = `David Ledbetter is a machine-learning and full-stack software engineer at Apple, training machine learning models, and building multi-agent systems. BS and MS in Computer Science from UMBC; researcher at UMBC's Ebiquity Lab.
 
 Projects
 - Self-Healing Automation (Apple): his flagship project on Release Validation, a dynamic system through which the automation team's test plans heal themselves. Proprietary, so there is no public repo.

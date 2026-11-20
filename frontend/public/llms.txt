@@ -83,6 +83,6 @@ LedbetterLM is also a remote MCP server (Streamable HTTP, no auth, no key):
 
 ## About David Ledbetter
 
-- Machine-learning & full-stack software engineer at Apple, building agentic AI systems.
+- Machine-learning & full-stack software engineer at Apple, training machine learning models, and building multi-agent systems.
 - BS & MS in Computer Science (UMBC); researcher at UMBC's Ebiquity Lab.
 - Portfolio & this site: https://www.davidamosledbetter.com
