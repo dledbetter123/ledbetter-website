@@ -43,7 +43,7 @@
   background: none;
   border: 0;
   border-radius: 0;
-  padding: 14px 24px;
+  padding: 20px 24px;
   cursor: pointer;
   transition: color 0.2s;
 }
@@ -439,6 +439,14 @@
 @media (max-width: 600px) {
   .chatPanel {
     width: calc(100vw - 40px);
+  }
+}
+
+/* Desktop: the button floats a tenth of the screen above the bottom edge. Phones keep it at the
+   edge, where iOS Safari's sliding toolbar reads as browser chrome rather than a jumping button. */
+@media (min-width: 601px) {
+  .chatWidget {
+    bottom: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 10vh);
   }
 }
 
