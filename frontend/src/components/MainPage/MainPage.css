@@ -164,6 +164,22 @@
    what Safari 26 samples to tint its floating bars (see the reference memory
    reference_ios26_safari_theme_color). */
 
+/* The brain art behind the welcome screen (MainPage.js fades it out on scroll). It sits on the
+   z-0 background with the glyph wall, painted after it. Screen blending drops the image's black,
+   so only the light of the network shows over the wall, and a radial mask fades its edges. */
+.heroBrain {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: url('/hero-brain.webp') center 38% / min(1100px, 94vw) auto no-repeat;
+  mix-blend-mode: screen;
+  filter: brightness(0.75);
+  -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 40%, #000 45%, transparent 100%);
+  mask-image: radial-gradient(ellipse 60% 55% at 50% 40%, #000 45%, transparent 100%);
+  will-change: opacity;
+}
+
 .content-layer {
   position: relative;
   z-index: 1;          /* whole content tree paints above the z-0 background wall */

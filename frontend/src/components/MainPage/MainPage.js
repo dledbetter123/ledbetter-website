@@ -129,6 +129,28 @@ const MainPage = () => {
     },
   ];
 
+  const heroBrainRef = useRef(null);
+  useEffect(() => {
+    const el = heroBrainRef.current;
+    if (!el) return undefined;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const t = Math.min(1, window.scrollY / (window.innerHeight * 0.6));
+      el.style.opacity = String(1 - t);
+      el.style.visibility = t >= 1 ? 'hidden' : 'visible';
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+
   const scrollToSection = (ref) => {
     ref.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -150,6 +172,9 @@ const MainPage = () => {
         <div className="bar"></div>
         <div className="bar"></div>
       </button>
+      {/* The brain art behind the welcome screen: full strength at the top, gone once the
+          visitor has scrolled about 60% of a screen. */}
+      <div className="heroBrain" ref={heroBrainRef} aria-hidden="true" />
       <div className="content-layer">
         {/* The contact tiles sit at the bottom of the welcome screen. */}
         <div ref={homeRef}>
