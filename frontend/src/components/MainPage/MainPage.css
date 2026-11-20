@@ -172,7 +172,7 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: url('/hero-brain.webp') center 38% / min(1100px, 94vw) auto no-repeat;
+  background: url('./hero-brain.webp') center 38% / min(1100px, 94vw) auto no-repeat;
   mix-blend-mode: screen;
   filter: brightness(0.75);
   -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 40%, #000 45%, transparent 100%);
