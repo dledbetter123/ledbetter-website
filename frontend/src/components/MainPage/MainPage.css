@@ -194,11 +194,12 @@
   .pub-carousel-style .carousel-container {
     max-width: 100%;
   }
-  /* The frame snaps to a whole number of 340px cards so it sits centered on the page. */
+  /* The frame snaps to a whole number of 340px cards plus 120px of the next one, so it sits
+     centered on the page and the partly shown card at the right edge cues a scroll. */
   @supports (width: round(down, 100%, 340px)) {
     .carousel-style .carousel-container,
     .pub-carousel-style .carousel-container {
-      width: round(down, 100%, 340px);
+      width: min(100%, max(340px, round(down, 100% - 120px, 340px)) + 120px);
     }
   }
   /* Auto margins center a row that doesn't fill the frame (Publications) and collapse to 0
