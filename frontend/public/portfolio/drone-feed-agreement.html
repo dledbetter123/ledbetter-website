@@ -387,7 +387,7 @@ dialog.zoombox button { font-family: var(--f-mono); font-size: 12px; letter-spac
   <section id="notebooks">
     <h2>From the original notebooks</h2>
     <p class="note">The illustrations above are drawn. These are real outputs from David&rsquo;s Colab notebooks, the working files behind them, run on two example pairs. Two fixed cameras watching the same street stand in for two drones viewing one scene; in the spoofed pair, a stock photo of a car is fed in place of one camera. Click any figure to open it full size.</p>
-    <p class="nb-setup">Each pair goes through three checks: object detection on each view, MatchFormer feature matching between the views, and the variance map across image contours.</p>
+    <p class="nb-setup">Each pair goes through three checks. DINO object detection (a Swin-L backbone with COCO weights, in MMDetection 3.0) counts objects above 0.4 confidence, with people counted on their own. MatchFormer, tuned for cross-view agreement, matches local features: the outdoor-large-LA weights, dual-softmax coarse matching at a 0.2 confidence threshold and a temperature of 0.1, grayscale frames at 640x480, and a 50-match floor below which a pair is rejected. The variance map takes each matched point&rsquo;s neighbors within 60 px, measures the spread of their distances in both views, and Levene&rsquo;s test on the confidence-weighted spreads asks whether they vary the same way.</p>
     <div class="nb">
       <div class="nb-col">
         <span class="tag">Genuine pair</span>
@@ -400,7 +400,7 @@ dialog.zoombox button { font-family: var(--f-mono); font-size: 12px; letter-spac
         <a class="zoom" href="drone-feed-agreement/genuine-matches.webp"><img loading="lazy" decoding="async" src="drone-feed-agreement/genuine-matches.webp" width="730" height="269" alt="MatchFormer's 128 matches between the two street views, drawn as lines joining matched points."></a>
         <p>MatchFormer&rsquo;s matches, colored by confidence: <b>128 matches.</b></p>
         <a class="zoom" href="drone-feed-agreement/genuine-variance.webp"><img loading="lazy" decoding="async" src="drone-feed-agreement/genuine-variance.webp" width="1280" height="480" alt="The agreement view: the two street views in grayscale, with the median neighborhood's matched points marked, circled where they land in the other view, and joined by lines."></a>
-        <p>The agreement view marks one neighborhood of matched points and circles where it lands in the other view: <b>the same structure, seen from the other side.</b></p>
+        <p>The agreement view marks the neighborhood around the median spread and circles where its matches land in the other view. Levene&rsquo;s test across its 9 matched points: <b>p = 0.987</b>, the score this notebook returned.</p>
       </div>
       <div class="nb-col spoof">
         <span class="tag">Spoofed pair</span>
@@ -413,10 +413,10 @@ dialog.zoombox button { font-family: var(--f-mono); font-size: 12px; letter-spac
         <a class="zoom" href="drone-feed-agreement/spoofed-matches.webp"><img loading="lazy" decoding="async" src="drone-feed-agreement/spoofed-matches.webp" width="730" height="269" alt="MatchFormer's 55 matches between the stock car photo and the street view, drawn as lines joining matched points."></a>
         <p>MatchFormer still finds <b>55 matches</b>, above the 50-match floor, which is why matching alone isn&rsquo;t the test.</p>
         <a class="zoom" href="drone-feed-agreement/spoofed-variance.webp"><img loading="lazy" decoding="async" src="drone-feed-agreement/spoofed-variance.webp" width="1280" height="480" alt="The agreement view for the spoofed pair, with the notebook's overlay reading Matches 55 and Similarity 0.511, and the median neighborhood's matched points marked and joined."></a>
-        <p>The agreement view: points on the car land on <b>unrelated rooftops and sky</b> in the street view, so the structure doesn&rsquo;t agree.</p>
+        <p>Levene&rsquo;s test across that neighborhood&rsquo;s 4 matched points: <b>p = 0.708</b>, lower than the genuine pair. The overlay&rsquo;s similarity, <b>0.511</b>, is a confidence-weighted score this run printed (its line breaks show as question marks); it measures something different from the genuine run&rsquo;s 0.987.</p>
       </div>
     </div>
-    <p class="note">These notebooks are earlier working files that show how the method works; the 75% and 58% above come from the lab work as a whole.</p>
+    <p class="note">These notebooks are earlier working files, shown as supporting evidence for how the method works. The 75% and 58% above come from David&rsquo;s lab work as a whole; these two examples don&rsquo;t measure them.</p>
   </section>
 
   <section>
