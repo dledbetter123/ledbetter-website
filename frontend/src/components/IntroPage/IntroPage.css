@@ -93,8 +93,14 @@
 .introFooter {
   width: 100%;
   max-width: 880px;
-  padding: 24px 0 56px;
+  padding: 24px 0 72px;
   z-index: 50;
+}
+/* Desktop: the button floats 5vh above the bottom edge, so the tiles clear it by that much more. */
+@media (min-width: 601px) {
+  .introFooter {
+    padding-bottom: calc(5vh + 96px);
+  }
 }
 .introFooter .contact-carousel-style {
   margin-bottom: 0;
