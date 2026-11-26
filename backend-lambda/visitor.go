@@ -20,8 +20,8 @@ import (
 // David keeps the deeper details of a few projects private (2026-11-26). For each, a
 // classifier call rates how deep a question goes (0 what it is, 1 the main idea, 2
 // specifics, 3 code or internals) and the policy sets the deepest level answered. A
-// question past that line is answered at the allowed depth with a pointer to the résumé,
-// and costs (its level minus the line) points on that topic. At the topic's limit, answers
+// question past that line gets a fixed reply (the topic's public summary and a pointer to the
+// résumé) and costs (its level minus the line) points on that topic. At the topic's limit, answers
 // about it are its fixed summary until the window runs out (each new point restarts it).
 // Strictness is per topic.
 //
@@ -212,19 +212,16 @@ func lockedReply(t *guardedTopic, p *topicPolicy) string {
 	return strings.TrimSpace(t.Summary) + "\n\n" + resumePointer(t, p)
 }
 
-var depthWords = []string{
-	"what it is, why it matters, what it found, and David's role",
-	"what it is, what it found, and the main idea of how it works, in plain terms",
-	"the main idea plus general technical specifics, but no code, pseudo-code, exact formulas, configurations, or internal details",
-	"anything except code",
-}
-
-// overDepthExtra steers the answer to a question that went past the topic's line.
-func overDepthExtra(t *guardedTopic) string {
-	return "DEPTH FOR THIS TURN: the visitor asked about " + t.Name + " in more depth than David shares publicly. " +
-		"I answer only " + depthWords[t.AnswerUpTo] + ", in at most two short sentences, and then stop. " +
-		"Nothing deeper: no equations, architecture or training specifics, numbers beyond the headline result, code, or internal details. " +
-		"I don't mention any limit; the site adds a pointer to David's résumé after my answer."
+// overDepthReply is the whole answer to a question past the topic's line, with no model call:
+// in the live test (2026-11-26) the guard model, told to stay at the main idea, still
+// explained a topic's specifics.
+func overDepthReply(tt topicTurn, p *topicPolicy) string {
+	notice := topicWarning(tt.Topic)
+	if tt.Reached {
+		notice = topicLimitNotice(tt.Topic)
+	}
+	return "That goes deeper than David shares publicly about " + tt.Topic.Name + ". In short: " +
+		strings.TrimSpace(tt.Topic.Summary) + "\n\n" + resumePointer(tt.Topic, p) + "\n\n" + notice
 }
 
 // protectionsClassifierPrompt is a second one-word filter, run beside probeClassifierPrompt:
@@ -255,31 +252,6 @@ const (
 var methodWordsRe = regexp.MustCompile(`(?i)\bcookies?\b|\bip[- ]address(es)?\b|\bip[- ]based\b|fingerprint|x-visitor|lb_sid|\bstrikes?\b|rate[- ]?limit|\btrack(s|ed|ing)? (you|visitors|users)\b`)
 
 func revealsMethod(s string) bool { return methodWordsRe.MatchString(s) }
-
-var sentenceEndRe = regexp.MustCompile(`[.!?](\s|$)`)
-
-// highLevel trims an over-depth answer to the first two sentences of its first paragraph,
-// at most about 420 characters. A backstop: overDepthExtra already asks for that.
-func highLevel(s string) string {
-	s = strings.TrimSpace(fencedCodeRe.ReplaceAllString(s, ""))
-	if i := strings.Index(s, "\n\n"); i > 0 {
-		s = s[:i]
-	}
-	if locs := sentenceEndRe.FindAllStringIndex(s, 2); len(locs) == 2 {
-		s = s[:locs[1][0]+1]
-	}
-	s = strings.TrimSpace(s)
-	if r := []rune(s); len(r) > 420 {
-		cut := string(r[:420])
-		if i := strings.LastIndexAny(cut, ",;"); i > 200 {
-			cut = cut[:i]
-		} else if i := strings.LastIndex(cut, " "); i > 0 {
-			cut = cut[:i]
-		}
-		s = strings.TrimRight(cut, " ,;:") + "."
-	}
-	return s
-}
 
 var visitorKeyRe = regexp.MustCompile(`^[0-9a-f]{32}$`)
 

@@ -88,11 +88,14 @@ func TestTopicText(t *testing.T) {
 	if got := lockedReply(f, p); !strings.HasPrefix(got, "A short public summary.\n\n") {
 		t.Errorf("lockedReply = %q", got)
 	}
-	for lv := int64(0); lv <= 3; lv++ {
-		g := guardedTopic{Name: "z", AnswerUpTo: lv}
-		if !strings.Contains(overDepthExtra(&g), depthWords[lv]) {
-			t.Errorf("overDepthExtra level %d", lv)
-		}
+	tt := topicTurn{Topic: f, Level: 3, Over: 2, Points: 2}
+	if got := overDepthReply(tt, p); !strings.Contains(got, "In short: A short public summary.") ||
+		!strings.HasSuffix(got, topicWarning(f)) || !strings.Contains(got, resumePointer(f, p)) {
+		t.Errorf("overDepthReply = %q", got)
+	}
+	tt.Reached = true
+	if got := overDepthReply(tt, p); !strings.HasSuffix(got, topicLimitNotice(f)) {
+		t.Errorf("overDepthReply at the limit = %q", got)
 	}
 }
 
@@ -101,7 +104,7 @@ func TestVisitorFacingTextHidesTheMethod(t *testing.T) {
 	p := samplePolicy()
 	f := p.topic("proj_a")
 	for _, s := range []string{topicWarning(f), topicLimitNotice(f), lockedReply(f, p), resumePointer(f, p),
-		overDepthExtra(f), protectedPathReply, guardDecline, protectionsReply} {
+		overDepthReply(topicTurn{Topic: f, Over: 1}, p), protectedPathReply, guardDecline, protectionsReply} {
 		s = strings.ReplaceAll(s, defaultResumeLink, "")
 		low := strings.ToLower(s)
 		for _, w := range []string{"ip", "address", "cookie", "session", "header", "fingerprint", "strike", "track", "device", "browser"} {
@@ -178,20 +181,5 @@ func TestRevealsMethod(t *testing.T) {
 		if revealsMethod(s) {
 			t.Errorf("false alarm: %q", s)
 		}
-	}
-}
-
-func TestHighLevel(t *testing.T) {
-	long := "Pathion is a coding platform. David leads its research. It runs a 4-bit model in the browser.\n\n- detail one\n- detail two"
-	if got := highLevel(long); got != "Pathion is a coding platform. David leads its research." {
-		t.Errorf("highLevel = %q", got)
-	}
-	one := strings.Repeat("word ", 120) + "end."
-	got := highLevel(one)
-	if len([]rune(got)) > 421 || !strings.HasSuffix(got, ".") {
-		t.Errorf("long sentence not trimmed cleanly: %d chars, %q", len(got), got[len(got)-20:])
-	}
-	if got := highLevel("Short answer."); got != "Short answer." {
-		t.Errorf("short = %q", got)
 	}
 }

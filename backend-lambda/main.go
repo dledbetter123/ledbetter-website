@@ -1567,8 +1567,9 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	// classifier, or a session flagged earlier, goes straight to the guard model with no repo
 	// tools and no gather. Questions about the site's protections get a fixed reply.
 	// Guarded topics (visitor.go) run beside them on every turn: a question past the topic's
-	// line costs points and is answered at the allowed depth with a pointer to the résumé; at
-	// the topic's limit the topic's summary is the whole answer.
+	// line costs points and gets a fixed reply (the topic's summary, a pointer to the résumé,
+	// and the warning); at the topic's limit the summary and the pointer are the whole answer.
+	// Questions within the line are answered without repo tools or the librarian.
 	probeFlag := probeReason(req.Message)
 	pol := loadPolicy(ctx)
 	var classifierCost int64
@@ -1605,14 +1606,6 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	if guardReason == "" && session != "anon" && getData(ctx, guardKey(session)) != "" {
 		guardReason = "session flagged earlier"
 	}
-	topicReason := ""
-	if tt.Over > 0 {
-		topicReason = fmt.Sprintf("deeper than David shares about %s (level %d, line %d)", tt.Topic.ID, tt.Level, tt.Topic.AnswerUpTo)
-		extra += "\n\n" + overDepthExtra(tt.Topic)
-		if guardReason == "" {
-			guardReason = topicReason
-		}
-	}
 	if pol.AnswerRules != "" {
 		extra += "\n\n" + pol.AnswerRules
 	}
@@ -1620,6 +1613,8 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	handoffReply := "" // when set, this turn IS a short LLM-free handoff (we skip the worker model)
 	if tt.Topic != nil && tt.Locked {
 		handoffReply = lockedReply(tt.Topic, pol) // past the topic's limit: its summary, no model call
+	} else if tt.Over > 0 {
+		handoffReply = overDepthReply(tt, pol) // past the topic's line: fixed text, nothing deeper can slip out
 	} else if probeFlag == protectionsFlag {
 		handoffReply = protectionsReply // fixed text: a model answer here has named methods
 	}
@@ -1732,8 +1727,8 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if guardReason != "" {
-			if session != "anon" && guardReason != topicReason {
-				putData(ctx, guardKey(session), guardReason, guardStickySec) // probing sticks; a deep topic question doesn't
+			if session != "anon" {
+				putData(ctx, guardKey(session), guardReason, guardStickySec)
 			}
 			gAnswer, gUsage, gErr := callGuard(ctx, contents, extra, guardReason)
 			if gErr != nil {
@@ -1752,17 +1747,8 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		answer = scrubResearchCode(req.Message, answer)
 	} // end of the (non-handoff) worker model branch
-	if handoffReply == "" && guardReason != "" && guardReason != topicReason && revealsMethod(answer) {
+	if handoffReply == "" && guardReason != "" && revealsMethod(answer) {
 		answer = protectionsReply
-	} else if handoffReply == "" && tt.Over > 0 {
-		answer = highLevel(answer)
-	}
-	if handoffReply == "" && tt.Over > 0 {
-		notice := topicWarning(tt.Topic)
-		if tt.Reached {
-			notice = topicLimitNotice(tt.Topic)
-		}
-		answer = strings.TrimSpace(answer) + "\n\n" + resumePointer(tt.Topic, pol) + "\n\n" + notice
 	}
 
 	// Book the cost against the session and the global daily budget.
