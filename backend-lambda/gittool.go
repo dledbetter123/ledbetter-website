@@ -293,6 +293,9 @@ func toolRunGit(ctx context.Context, repo, command string) (out string) {
 	if why := checkGitArgs(args); why != "" {
 		return why
 	}
+	if protectedGitArgs(repo, args) {
+		return protectedPathReply
+	}
 	// The file tools' gate (gateRepo), narrowed to public repos: a private repo's rules file
 	// governs what may be quoted from it, which a raw git command can't honor.
 	if isNeverRepo(repo) {
@@ -366,6 +369,7 @@ func toolRunGit(ctx context.Context, repo, command string) (out string) {
 			text = "git exited with an error: " + runErr.Error()
 		}
 	}
+	text = scrubProtectedGit(repo, text)
 	if strings.TrimSpace(text) == "" {
 		text = "(no output)"
 	}

@@ -32,6 +32,28 @@ type queuedEvent struct {
 	CostNote  string                   `json:"costNote"`
 	InTok     int                      `json:"inTok"`
 	OutTok    int                      `json:"outTok"`
+	Flag      string                   `json:"flag,omitempty"`    // probe reason, when this turn was flagged
+	Strikes   int64                    `json:"strikes,omitempty"` // visitor strikes after this turn
+	Limited   bool                     `json:"limited,omitempty"` // visitor limited to high-level answers
+	Visitor   []string                 `json:"visitor,omitempty"` // opaque edge keys (visitor.go)
+}
+
+// standing is the turn log's visitor-standing fields (empty for an ordinary turn).
+func (ev queuedEvent) standing() map[string]interface{} {
+	m := map[string]interface{}{}
+	if ev.Flag != "" {
+		m["flag"] = ev.Flag
+	}
+	if ev.Strikes > 0 {
+		m["strikes"] = ev.Strikes
+	}
+	if ev.Limited {
+		m["limited"] = true
+	}
+	if len(ev.Visitor) > 0 {
+		m["visitor"] = ev.Visitor
+	}
+	return m
 }
 
 // enqueueTurn publishes a turn event to the SQS FIFO queue and returns immediately.
@@ -74,7 +96,7 @@ func enqueueTurn(ctx context.Context, ev queuedEvent) {
 func processQueuedEvent(ctx context.Context, ev queuedEvent) error {
 	switch ev.Type {
 	case "turn", "":
-		if err := saveConversation(ev.Session, ev.Seq, ev.UserMsg, ev.Answer, ev.Tools, ev.CostMicro, ev.IP, ev.UserAgent, ev.Provider, ev.Model, ev.InTok, ev.OutTok); err != nil {
+		if err := saveConversation(ev.Session, ev.Seq, ev.UserMsg, ev.Answer, ev.Tools, ev.CostMicro, ev.IP, ev.UserAgent, ev.Provider, ev.Model, ev.InTok, ev.OutTok, ev.standing()); err != nil {
 			return err
 		}
 		emailKey := fmt.Sprintf("emailed#turn#%s#%d", ev.Session, ev.Seq)

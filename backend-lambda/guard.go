@@ -208,6 +208,12 @@ Answer with exactly one word: PROBE or OK.`
 // (false) on any error: the pattern check still applies, and the guard runs on the same
 // Cloudflare account, so an outage there would take the guard down too.
 func classifyProbe(ctx context.Context, history []chatTurn, msg string) (bool, geminiUsage) {
+	return classifyWith(ctx, probeClassifierPrompt, "PROBE", history, msg)
+}
+
+// classifyWith runs a one-word classifier prompt on the worker model over the last two turns
+// and the latest message, and reports whether the answer contains yesWord. Fails open.
+func classifyWith(ctx context.Context, prompt, yesWord string, history []chatTurn, msg string) (bool, geminiUsage) {
 	var convo strings.Builder
 	start := len(history) - 2
 	if start < 0 {
@@ -230,7 +236,7 @@ func classifyProbe(ctx context.Context, history []chatTurn, msg string) (bool, g
 	reqBody, _ := json.Marshal(oaiRequest{
 		Model: workersAIModel,
 		Messages: []oaiMessage{
-			{Role: "system", Content: probeClassifierPrompt},
+			{Role: "system", Content: prompt},
 			{Role: "user", Content: convo.String()},
 		},
 		MaxTokens:   5,
@@ -258,5 +264,5 @@ func classifyProbe(ctx context.Context, history []chatTurn, msg string) (bool, g
 		return false, geminiUsage{}
 	}
 	usage := geminiUsage{PromptTokenCount: or.Usage.PromptTokens, CandidatesTokenCount: or.Usage.CompletionTokens, TotalTokenCount: or.Usage.TotalTokens}
-	return strings.Contains(strings.ToUpper(or.Choices[0].Message.Content), "PROBE"), usage
+	return strings.Contains(strings.ToUpper(or.Choices[0].Message.Content), yesWord), usage
 }
