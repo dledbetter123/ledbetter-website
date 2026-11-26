@@ -29,31 +29,80 @@ func TestVisitorKeys(t *testing.T) {
 	}
 }
 
-func TestStrikeNotice(t *testing.T) {
-	strikeLimit = 3
+func samplePolicy() *topicPolicy {
+	p := &topicPolicy{ClassifierPrompt: "x", Topics: []guardedTopic{
+		{ID: "proj_a", Name: "the Example Project", AnswerUpTo: 1, Limit: 4, Summary: "A short public summary."},
+		{ID: "proj_b", Name: "Example's model", AnswerUpTo: 1, Limit: 3},
+		{ID: "broken", Name: "", Limit: 2},                  // dropped: no name
+		{ID: "deep", Name: "x", AnswerUpTo: 4, Limit: 2},    // dropped: level out of range
+		{ID: "nolimit", Name: "y", AnswerUpTo: 1, Limit: 0}, // dropped: no limit
+	}}
+	normalizePolicy(p)
+	return p
+}
+
+func TestNormalizePolicy(t *testing.T) {
+	p := samplePolicy()
+	if len(p.Topics) != 2 || p.WindowDays != 30 || p.ResumeURL != defaultResumeLink {
+		t.Fatalf("normalizePolicy: %d topics, window %d, resume %q", len(p.Topics), p.WindowDays, p.ResumeURL)
+	}
+	if p.topic("proj_b").Summary == "" {
+		t.Fatal("a topic without a summary gets a default one")
+	}
+}
+
+func TestParseTopic(t *testing.T) {
+	p := samplePolicy()
 	cases := []struct {
-		flagged       bool
-		before, after int64
-		want          string
+		out   string
+		topic string
+		level int64
 	}{
-		{false, 0, 0, ""},
-		{true, 0, 1, strikeWarning},
-		{true, 1, 2, strikeWarning},
-		{true, 2, 3, limitedNotice},
-		{true, 3, 4, ""},            // already limited: the decline is enough
-		{false, 5, 5, ""},           // limited, ordinary question: no repeated notice
-		{true, 0, 0, strikeWarning}, // counter write failed: still warn
+		{"proj_a 2", "proj_a", 2},
+		{"Proj_A, 3", "proj_a", 3},
+		{"proj_b 1", "proj_b", 1},
+		{"Topic: proj_b Level: 2", "proj_b", 2},
+		{"none 0", "", 0},
+		{"NONE", "", 0},
+		{"proj_a", "proj_a", 0},
+		{"2 proj_a", "proj_a", 0}, // the level must follow the id
 	}
 	for _, c := range cases {
-		if got := strikeNotice(c.flagged, c.before, c.after); got != c.want {
-			t.Errorf("strikeNotice(%v, %d, %d) = %q, want %q", c.flagged, c.before, c.after, got, c.want)
+		got, lv := parseTopic(p, c.out)
+		id := ""
+		if got != nil {
+			id = got.ID
+		}
+		if id != c.topic || lv != c.level {
+			t.Errorf("parseTopic(%q) = %q %d, want %q %d", c.out, id, lv, c.topic, c.level)
+		}
+	}
+}
+
+func TestTopicText(t *testing.T) {
+	p := samplePolicy()
+	f := p.topic("proj_a")
+	if got := resumePointer(f, p); !strings.Contains(got, "[David's résumé]("+defaultResumeLink+")") {
+		t.Errorf("résumé pointer is not a markdown link: %q", got)
+	}
+	if got := lockedReply(f, p); !strings.HasPrefix(got, "A short public summary.\n\n") {
+		t.Errorf("lockedReply = %q", got)
+	}
+	for lv := int64(0); lv <= 3; lv++ {
+		g := guardedTopic{Name: "z", AnswerUpTo: lv}
+		if !strings.Contains(overDepthExtra(&g), depthWords[lv]) {
+			t.Errorf("overDepthExtra level %d", lv)
 		}
 	}
 }
 
 // What visitors see must not say how they are recognized.
 func TestVisitorFacingTextHidesTheMethod(t *testing.T) {
-	for _, s := range []string{strikeWarning, limitedNotice, limitedExtra, protectedPathReply, guardDecline, protectionsReply} {
+	p := samplePolicy()
+	f := p.topic("proj_a")
+	for _, s := range []string{topicWarning(f), topicLimitNotice(f), lockedReply(f, p), resumePointer(f, p),
+		overDepthExtra(f), protectedPathReply, guardDecline, protectionsReply} {
+		s = strings.ReplaceAll(s, defaultResumeLink, "")
 		low := strings.ToLower(s)
 		for _, w := range []string{"ip", "address", "cookie", "session", "header", "fingerprint", "strike", "track", "device", "browser"} {
 			for _, f := range strings.FieldsFunc(low, func(r rune) bool { return !(r >= 'a' && r <= 'z') }) {

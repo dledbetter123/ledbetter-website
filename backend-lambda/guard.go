@@ -218,6 +218,13 @@ func classifyProbe(ctx context.Context, history []chatTurn, msg string) (bool, g
 // classifyWith runs a one-word classifier prompt on the worker model over the last two turns
 // and the latest message, and reports whether the answer contains yesWord. Fails open.
 func classifyWith(ctx context.Context, prompt, yesWord string, history []chatTurn, msg string) (bool, geminiUsage) {
+	out, usage, ok := askClassifier(ctx, prompt, history, msg, 5)
+	return ok && strings.Contains(strings.ToUpper(out), yesWord), usage
+}
+
+// askClassifier runs one short classifier call on Workers AI over the last two turns and the
+// latest message, and returns its raw answer (ok false when the call failed).
+func askClassifier(ctx context.Context, prompt string, history []chatTurn, msg string, maxTokens int) (string, geminiUsage, bool) {
 	var convo strings.Builder
 	start := len(history) - 2
 	if start < 0 {
@@ -243,7 +250,7 @@ func classifyWith(ctx context.Context, prompt, yesWord string, history []chatTur
 			{Role: "system", Content: prompt},
 			{Role: "user", Content: convo.String()},
 		},
-		MaxTokens:   5,
+		MaxTokens:   maxTokens,
 		Temperature: 0,
 	})
 	cctx, cancel := context.WithTimeout(ctx, 4*time.Second)
@@ -251,22 +258,22 @@ func classifyWith(ctx context.Context, prompt, yesWord string, history []chatTur
 	url := "https://api.cloudflare.com/client/v4/accounts/" + cfAccountID + "/ai/v1/chat/completions"
 	req, err := http.NewRequestWithContext(cctx, "POST", url, bytes.NewReader(reqBody))
 	if err != nil {
-		return false, geminiUsage{}
+		return "", geminiUsage{}, false
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+cfToken)
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		fmt.Printf("probe classifier unavailable (%v); pattern check only\n", err)
-		return false, geminiUsage{}
+		fmt.Printf("classifier unavailable (%v); pattern check only\n", err)
+		return "", geminiUsage{}, false
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 	var or oaiResponse
 	if resp.StatusCode != http.StatusOK || json.Unmarshal(body, &or) != nil || len(or.Choices) == 0 {
-		fmt.Printf("probe classifier bad response (status %d); pattern check only\n", resp.StatusCode)
-		return false, geminiUsage{}
+		fmt.Printf("classifier bad response (status %d); pattern check only\n", resp.StatusCode)
+		return "", geminiUsage{}, false
 	}
 	usage := geminiUsage{PromptTokenCount: or.Usage.PromptTokens, CandidatesTokenCount: or.Usage.CompletionTokens, TotalTokenCount: or.Usage.TotalTokens}
-	return strings.Contains(strings.ToUpper(or.Choices[0].Message.Content), yesWord), usage
+	return or.Choices[0].Message.Content, usage, true
 }

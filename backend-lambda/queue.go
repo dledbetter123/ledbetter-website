@@ -33,8 +33,7 @@ type queuedEvent struct {
 	InTok     int                      `json:"inTok"`
 	OutTok    int                      `json:"outTok"`
 	Flag      string                   `json:"flag,omitempty"`    // probe reason, when this turn was flagged
-	Strikes   int64                    `json:"strikes,omitempty"` // visitor strikes after this turn
-	Limited   bool                     `json:"limited,omitempty"` // visitor limited to high-level answers
+	Topic     map[string]interface{}   `json:"topic,omitempty"`   // guarded-topic standing (visitor.go topicLog)
 	Visitor   []string                 `json:"visitor,omitempty"` // opaque edge keys (visitor.go)
 }
 
@@ -44,11 +43,8 @@ func (ev queuedEvent) standing() map[string]interface{} {
 	if ev.Flag != "" {
 		m["flag"] = ev.Flag
 	}
-	if ev.Strikes > 0 {
-		m["strikes"] = ev.Strikes
-	}
-	if ev.Limited {
-		m["limited"] = true
+	if len(ev.Topic) > 0 {
+		m["topic"] = ev.Topic
 	}
 	if len(ev.Visitor) > 0 {
 		m["visitor"] = ev.Visitor
