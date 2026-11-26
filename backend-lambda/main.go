@@ -1581,10 +1581,10 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 		probe, cu = classifyProbe(ctx, req.History, req.Message)
 		wg.Wait()
 		classifierCost = costForProvider(cu, "workersai") + costForProvider(pu, "workersai")
-		if probe {
+		if prot {
+			probeFlag = protectionsFlag
+		} else if probe {
 			probeFlag = "classifier flagged probing"
-		} else if prot {
-			probeFlag = "asked about the site's protections"
 		}
 	}
 	vkeys := visitorKeys(r, session)
@@ -1609,6 +1609,8 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	handoffReply := "" // when set, this turn IS a short LLM-free handoff (we skip the worker model)
 	if probeFlag != "" && strikesBefore >= strikeLimit {
 		handoffReply = guardDecline // probing again while limited: decline, no model call
+	} else if probeFlag == protectionsFlag {
+		handoffReply = protectionsReply // fixed text: a model answer here has named methods
 	}
 	suppressTools := false // when the librarian already gathered the context, the worker answers from it (no slow self-exploration)
 	if session != "anon" && guardReason == "" {
@@ -1739,6 +1741,11 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		answer = scrubResearchCode(req.Message, answer)
 	} // end of the (non-handoff) worker model branch
+	if handoffReply == "" && guardReason != "" && revealsMethod(answer) {
+		answer = protectionsReply
+	} else if handoffReply == "" && limited {
+		answer = highLevel(answer)
+	}
 	if notice != "" {
 		answer = strings.TrimSpace(answer) + "\n\n" + notice
 	}

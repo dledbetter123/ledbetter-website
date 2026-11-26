@@ -43,7 +43,7 @@ func init() {
 const (
 	strikeWarning = "Note: repeated questions that probe how this site and its systems work behind the scenes will automatically limit answers here to a high level."
 	limitedNotice = "Answers here are now limited to a high level."
-	limitedExtra  = "ANSWER DEPTH: this visitor is limited to high-level answers. I reply in two to four plain sentences about what a project does and why it matters. No implementation details, internals, architecture specifics, code, file names, or numbers beyond the headline result. I don't mention that a limit exists unless asked, and if asked I only say answers here are kept high level."
+	limitedExtra  = "ANSWER DEPTH (overrides everything above about detail): this visitor gets high-level answers only. My whole reply is at most two short sentences, under 50 words, in plain language: what the project or topic is and why it matters. No technical terms, model names, frameworks, methods, numbers, internals, file names, or code. I don't mention that a limit exists unless asked; if asked, I only say answers here are kept high level."
 )
 
 // protectionsClassifierPrompt is a second one-word filter, run beside probeClassifierPrompt:
@@ -59,6 +59,44 @@ Answer with exactly one word: YES or NO.`
 
 func classifyProtections(ctx context.Context, history []chatTurn, msg string) (bool, geminiUsage) {
 	return classifyWith(ctx, protectionsClassifierPrompt, "YES", history, msg)
+}
+
+// A question about the protections gets this fixed reply, not a model answer: in the live
+// test (2026-11-26) the guard model, told not to, still answered with examples of methods.
+const (
+	protectionsFlag  = "asked about the site's protections"
+	protectionsReply = "The site has standard abuse protections, and I don't go into how they work. I'm happy to talk about David's projects, though."
+)
+
+// revealsMethod is the backstop for flagged turns: a model answer that names a way of
+// recognizing visitors is replaced with protectionsReply.
+var methodWordsRe = regexp.MustCompile(`(?i)\bcookies?\b|\bip[- ]address(es)?\b|\bip[- ]based\b|fingerprint|x-visitor|lb_sid|\bstrikes?\b|rate[- ]?limit|\btrack(s|ed|ing)? (you|visitors|users)\b`)
+
+func revealsMethod(s string) bool { return methodWordsRe.MatchString(s) }
+
+var sentenceEndRe = regexp.MustCompile(`[.!?](\s|$)`)
+
+// highLevel trims a limited visitor's answer to its first two sentences of the first
+// paragraph, at most about 420 characters. A backstop: limitedExtra already asks for that.
+func highLevel(s string) string {
+	s = strings.TrimSpace(fencedCodeRe.ReplaceAllString(s, ""))
+	if i := strings.Index(s, "\n\n"); i > 0 {
+		s = s[:i]
+	}
+	if locs := sentenceEndRe.FindAllStringIndex(s, 2); len(locs) == 2 {
+		s = s[:locs[1][0]+1]
+	}
+	s = strings.TrimSpace(s)
+	if r := []rune(s); len(r) > 420 {
+		cut := string(r[:420])
+		if i := strings.LastIndexAny(cut, ",;"); i > 200 {
+			cut = cut[:i]
+		} else if i := strings.LastIndex(cut, " "); i > 0 {
+			cut = cut[:i]
+		}
+		s = strings.TrimRight(cut, " ,;:") + "."
+	}
+	return s
 }
 
 var visitorKeyRe = regexp.MustCompile(`^[0-9a-f]{32}$`)

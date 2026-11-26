@@ -47,7 +47,7 @@ func TestStrikeNotice(t *testing.T) {
 
 // What visitors see must not say how they are recognized.
 func TestVisitorFacingTextHidesTheMethod(t *testing.T) {
-	for _, s := range []string{strikeWarning, limitedNotice, limitedExtra, protectedPathReply, guardDecline} {
+	for _, s := range []string{strikeWarning, limitedNotice, limitedExtra, protectedPathReply, guardDecline, protectionsReply} {
 		low := strings.ToLower(s)
 		for _, w := range []string{"ip", "address", "cookie", "session", "header", "fingerprint", "strike", "track", "device", "browser"} {
 			for _, f := range strings.FieldsFunc(low, func(r rune) bool { return !(r >= 'a' && r <= 'z') }) {
@@ -108,5 +108,35 @@ func TestScrubProtectedGit(t *testing.T) {
 	}
 	if scrubProtectedGit("other-repo", in) != in {
 		t.Error("other repos are untouched")
+	}
+}
+
+func TestRevealsMethod(t *testing.T) {
+	leak := "The site uses standard abuse\u2011prevention measures\u2014things like rate\u2011limiting, cookies or similar signals\u2014to keep interactions safe."
+	for _, s := range []string{leak, "We log your IP address.", "It tracks visitors across visits.", "After three strikes you are limited."} {
+		if !revealsMethod(s) {
+			t.Errorf("should catch: %q", s)
+		}
+	}
+	for _, s := range []string{protectionsReply, guardDecline, "Pathion gives students session summaries and hints.",
+		"David works under IP constraints from his employer.", "The NSBE site lets members sign in."} {
+		if revealsMethod(s) {
+			t.Errorf("false alarm: %q", s)
+		}
+	}
+}
+
+func TestHighLevel(t *testing.T) {
+	long := "Pathion is a coding platform. David leads its research. It runs a 4-bit model in the browser.\n\n- detail one\n- detail two"
+	if got := highLevel(long); got != "Pathion is a coding platform. David leads its research." {
+		t.Errorf("highLevel = %q", got)
+	}
+	one := strings.Repeat("word ", 120) + "end."
+	got := highLevel(one)
+	if len([]rune(got)) > 421 || !strings.HasSuffix(got, ".") {
+		t.Errorf("long sentence not trimmed cleanly: %d chars, %q", len(got), got[len(got)-20:])
+	}
+	if got := highLevel("Short answer."); got != "Short answer." {
+		t.Errorf("short = %q", got)
 	}
 }
