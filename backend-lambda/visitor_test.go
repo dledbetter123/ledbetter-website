@@ -18,6 +18,12 @@ func TestVisitorKeys(t *testing.T) {
 	if e := edgeKeys(got); len(e) != 2 || e[0] != a || e[1] != b {
 		t.Fatalf("edgeKeys = %v", e)
 	}
+	split := httptest.NewRequest("POST", "/api/chat", nil) // as the API Gateway adapter delivers "a,b"
+	split.Header.Add("X-Visitor", a)
+	split.Header.Add("X-Visitor", b)
+	if got := visitorKeys(split, "anon"); len(got) != 2 {
+		t.Fatalf("split header values: got %v", got)
+	}
 	if got := visitorKeys(httptest.NewRequest("POST", "/api/chat", nil), "anon"); len(got) != 0 {
 		t.Fatalf("no header, anon session: got %v", got)
 	}

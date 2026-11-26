@@ -105,11 +105,14 @@ var visitorKeyRe = regexp.MustCompile(`^[0-9a-f]{32}$`)
 func visitorKeys(r *http.Request, session string) []string {
 	var ids []string
 	seen := map[string]bool{}
-	for _, k := range strings.Split(r.Header.Get("X-Visitor"), ",") {
-		k = strings.TrimSpace(k)
-		if visitorKeyRe.MatchString(k) && !seen[k] && len(ids) < 4 {
-			seen[k] = true
-			ids = append(ids, "strike#v#"+k)
+	// The API Gateway adapter splits a comma-joined header into several values, so read them all.
+	for _, v := range r.Header.Values("X-Visitor") {
+		for _, k := range strings.Split(v, ",") {
+			k = strings.TrimSpace(k)
+			if visitorKeyRe.MatchString(k) && !seen[k] && len(ids) < 4 {
+				seen[k] = true
+				ids = append(ids, "strike#v#"+k)
+			}
 		}
 	}
 	if session != "anon" {
