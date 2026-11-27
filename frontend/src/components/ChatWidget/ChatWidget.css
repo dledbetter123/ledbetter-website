@@ -399,7 +399,7 @@
   border: none;
   padding: 12px;
   font-family: 'Courier New', monospace;
-  font-size: 16px; /* >=16px stops iOS Safari from zooming on focus */
+  font-size: 13px; /* matches the messages; ChatWidget.js stops iOS focus zoom */
   outline: none;
   /* Wrap text instead of scrolling on one line; grow up to a cap (set in JS), then scroll. */
   resize: none;

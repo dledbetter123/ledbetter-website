@@ -4,6 +4,18 @@ import { runScramble } from '../../lib/scramble';
 import { mdToHtml } from '../../lib/markdown';
 import OperatorMode from '../OperatorMode/OperatorMode';
 
+// iOS Safari zooms the page when an input whose text is under 16px gets focus, which is
+// why the chat input used to be 16px, larger than every message. Capping the viewport
+// scale stops that focus zoom while iOS still allows pinch zoom (it ignores the cap for
+// gestures). Android would block pinch zoom under the cap and never zooms on focus, so
+// the cap goes on iOS only (iPadOS reports itself as a Mac with touch).
+if (typeof navigator !== 'undefined' && typeof document !== 'undefined') {
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const vp = ios && document.querySelector('meta[name="viewport"]');
+  if (vp && !/maximum-scale/.test(vp.content)) vp.content += ', maximum-scale=1';
+}
+
 // LedbetterLM's opening line — kept as a constant so the character-shimmer effect
 // (below) can twinkle it without diverging from the seeded first message.
 const GREETING = "Hi, I'm LedbetterLM, David Ledbetter's librarian. I maintain a knowledge base of his experience, interests, and current projects. Ask me anything and I'll dig through it for you.";
