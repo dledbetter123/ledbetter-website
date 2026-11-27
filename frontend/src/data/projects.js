@@ -30,6 +30,7 @@ const projects = [
     // The full abstract, contributions and figures live in data/thesis.js.
     slug: 'thesis',
     title: "Master's Thesis: Lingual-First Host Intrusion Detection",
+    chatAbout: "his master's thesis",
     description:
       'Can a language model catch an attack from a host\'s audit log? I serialize system provenance into a compact language and measure what representation gives versus what learning adds. Frequency counts go far, they stop where entities interact, and SENTINEL picks up there.',
     detail: 'thesis',

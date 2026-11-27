@@ -7,7 +7,7 @@ import ChatWidget from '../ChatWidget/ChatWidget';
 import usePortfolioDescription from '../../hooks/usePortfolioDescription';
 import ThesisDetail from './ThesisDetail';
 import { projectBySlug, portfolioUrl } from '../../data/projects';
-import { askQuestion, pageFromContext, projectGreeting, projectStoreKey } from '../../lib/askContext';
+import { askQuestion, pageFromContext, projectGreeting, projectStoreKey, PROJECT_PLACEHOLDER } from '../../lib/askContext';
 import './ProjectPage.css';
 import './ThesisDetail.css';
 
@@ -86,7 +86,7 @@ const ProjectPage = () => {
           starter={project.opener}
           askNow={askQuestion(project, ctx)}
           page={page}
-          placeholder={`Ask about ${project.title}…`}
+          placeholder={PROJECT_PLACEHOLDER}
         />
       </div>
     </div>

@@ -15,8 +15,14 @@ export const askQuestion = (project, c) => {
   return '';
 };
 
+// A full title reads badly inside a sentence ("about Master's Thesis: Lingual-First Host
+// Intrusion Detection: how it works"), so the greeting names the project by its optional
+// `chatAbout` phrase, else "this project". The page heading already names it.
 export const projectGreeting = (project) =>
-  `Hi, I'm LedbetterLM, David Ledbetter's librarian. Ask me anything about ${project.title}: how it works, why he built it, what he learned.`;
+  `Hi, I'm LedbetterLM, David Ledbetter's librarian. Ask me anything about ${project.chatAbout || 'this project'}: how it works, why he built it, what he learned.`;
+
+// Input hint for a project chat: short, so it fits one line on a phone.
+export const PROJECT_PLACEHOLDER = 'Ask a question…';
 
 // The `page` field every chat request carries, so the server loads that page's text.
 export const pageFromContext = (slug, c) => ({

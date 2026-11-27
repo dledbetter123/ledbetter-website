@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import ChatWidget from './components/ChatWidget/ChatWidget';
 import { projectBySlug } from './data/projects';
-import { askQuestion, pageFromContext, projectGreeting, projectStoreKey } from './lib/askContext';
+import { askQuestion, pageFromContext, projectGreeting, projectStoreKey, PROJECT_PLACEHOLDER } from './lib/askContext';
 
 const Overlay = ({ project, inbox }) => {
   const [page, setPage] = useState(() => pageFromContext(project.slug, null));
@@ -32,7 +32,7 @@ const Overlay = ({ project, inbox }) => {
       starter={project.opener}
       page={page}
       ask={ask}
-      placeholder={`Ask about ${project.title}…`}
+      placeholder={PROJECT_PLACEHOLDER}
     />
   );
 };

@@ -380,8 +380,8 @@ const ChatWidget = ({
           </div>
           <div className={`chatNotice${operatorToken ? ' chatNotice--operator' : ''}`}>
             {operatorToken
-              ? 'Catalog mode — tell me what to remember and I’ll save it to the KB.'
-              : 'Heads up — these chats are logged.'}
+              ? 'Catalog mode: tell me what to remember and I’ll save it to the KB.'
+              : 'Heads up: these chats are logged.'}
           </div>
           <div className="chatMessages" ref={scrollRef}>
             {messages.map((m, i) => {
